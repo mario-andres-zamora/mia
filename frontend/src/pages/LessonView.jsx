@@ -71,6 +71,36 @@ export default function LessonView() {
     const [visitedLinks, setVisitedLinks] = useState(new Set());
     const [ytApiLoaded, setYtApiLoaded] = useState(!!window.YT);
     const [showCompletionModal, setShowCompletionModal] = useState(false);
+    const [uploadingAssignment, setUploadingAssignment] = useState(null);
+
+    const handleAssignmentUpload = async (contentId, e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        try {
+            setUploadingAssignment(contentId);
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const response = await axios.post(`${API_URL}/content/assignment/${contentId}/submit`, formData, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+
+            if (response.data.success) {
+                toast.success('Tarea enviada exitosamente');
+                fetchLessonData(true); // Refrescar silenciosamente
+            }
+        } catch (error) {
+            console.error('Error uploading assignment:', error);
+            toast.error(error.response?.data?.error || 'Error al enviar tarea');
+        } finally {
+            setUploadingAssignment(null);
+            e.target.value = null; // resetea el input
+        }
+    };
 
     const handleResourceDownload = async (resourceId, title) => {
         try {
@@ -513,16 +543,58 @@ export default function LessonView() {
                         <div className="flex-1 space-y-2">
                             <h3 className="text-xl font-bold text-white">{item.title}</h3>
                             <p className="text-gray-400">{data.description || 'Completa esta actividad para continuar.'}</p>
+
+                            {item.content_type === 'assignment' && item.submission && (
+                                <div className="mt-3 inline-flex items-center gap-2 p-2 rounded-xl bg-slate-900 border border-white/5 text-xs font-medium">
+                                    <span className={`px-2 py-0.5 rounded uppercase tracking-wider font-black ${item.submission.status === 'approved' ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
+                                            item.submission.status === 'rejected' ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
+                                                'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                                        }`}>
+                                        {item.submission.status === 'approved' ? 'Aprobada' : item.submission.status === 'rejected' ? 'Rechazada' : 'Enviada / Pendiente'}
+                                    </span>
+                                    <a href={`${API_URL.replace('/api', '')}${item.submission.file_url}`} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline ml-2">Ver archivo enviado</a>
+                                </div>
+                            )}
+
+                            {item.content_type === 'assignment' && item.submission?.feedback && (
+                                <p className="text-sm text-yellow-500 mt-2 p-3 bg-yellow-500/10 rounded-xl border border-yellow-500/20">
+                                    <strong>Comentario del instructor:</strong> {item.submission.feedback}
+                                </p>
+                            )}
+
                             {item.points > 0 && (
-                                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-900 rounded-lg text-xs font-bold text-gray-300 border border-white/10">
+                                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-900 rounded-lg text-xs font-bold text-gray-300 border border-white/10 mt-2">
                                     <Award className="w-3 h-3 text-yellow-500" />
                                     <span>Vale <span className="text-white">{item.points} puntos</span></span>
                                 </div>
                             )}
                         </div>
-                        <button className="btn-secondary px-8">
-                            Iniciar Actividad
-                        </button>
+
+                        {item.content_type === 'assignment' ? (
+                            <div className="relative">
+                                <input
+                                    type="file"
+                                    id={`assign-${item.id}`}
+                                    className="hidden"
+                                    onChange={(e) => handleAssignmentUpload(item.id, e)}
+                                    disabled={uploadingAssignment === item.id || item.submission?.status === 'approved'}
+                                />
+                                <label
+                                    htmlFor={`assign-${item.id}`}
+                                    className={`btn-secondary px-8 cursor-pointer inline-flex items-center justify-center gap-2 ${item.submission?.status === 'approved' ? 'opacity-50 cursor-not-allowed hidden' : ''}`}
+                                >
+                                    {uploadingAssignment === item.id ? (
+                                        <><div className="w-4 h-4 border-[3px] border-white/20 border-t-white rounded-full animate-spin"></div> Subiendo...</>
+                                    ) : (
+                                        <><Upload className="w-4 h-4" /> {item.submission ? 'Reemplazar Entrega' : 'Subir Tarea'}</>
+                                    )}
+                                </label>
+                            </div>
+                        ) : (
+                            <button className="btn-secondary px-8">
+                                Iniciar Actividad
+                            </button>
+                        )}
                     </div>
                 );
 

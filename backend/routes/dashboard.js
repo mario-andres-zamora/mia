@@ -172,11 +172,13 @@ router.get('/', authMiddleware, cacheMiddleware(300, true), async (req, res) => 
 router.get('/admin-stats', authMiddleware, adminMiddleware, async (req, res) => {
     try {
         const [userStats] = await db.query('SELECT COUNT(*) as count FROM users');
+        const [activeUserStats] = await db.query('SELECT COUNT(*) as count FROM users WHERE is_active = TRUE');
         const [moduleStats] = await db.query('SELECT COUNT(*) as count FROM modules');
 
         // Mejor enfoque: Parallel queries
         const stats = {
             users: userStats?.count || 0,
+            activeUsers: activeUserStats?.count || 0,
             modules: moduleStats?.count || 0,
             campaigns: 0
         };

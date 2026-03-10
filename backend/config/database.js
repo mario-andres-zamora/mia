@@ -17,16 +17,27 @@ const pool = mysql.createPool({
     timezone: '-06:00' // Costa Rica timezone
 });
 
-// Test de conexión
-pool.getConnection()
-    .then(connection => {
-        logger.info('✅ Conexión a MariaDB establecida correctamente');
-        connection.release();
-    })
-    .catch(err => {
-        logger.error('❌ Error conectando a MariaDB:', err);
-        process.exit(1);
-    });
+// Test de conexión con reintentos para soportar healthchecks de Docker
+const testConnection = async (retries = 5, delay = 5000) => {
+    while (retries > 0) {
+        try {
+            const connection = await pool.getConnection();
+            logger.info('✅ Conexión a MariaDB establecida correctamente');
+            connection.release();
+            return;
+        } catch (err) {
+            logger.error(`❌ Error conectando a MariaDB. Intentos restantes: ${retries - 1}`, err);
+            retries -= 1;
+            if (retries === 0) {
+                logger.error('❌ Fallo crítico de conexión a base de datos. Saliendo...');
+                process.exit(1);
+            }
+            await new Promise(res => setTimeout(res, delay));
+        }
+    }
+};
+
+testConnection();
 
 // Helper para ejecutar queries
 const query = async (sql, params) => {

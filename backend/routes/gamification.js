@@ -5,91 +5,33 @@ const { authMiddleware, adminMiddleware } = require('../middleware/auth');
 const { cacheMiddleware } = require('../middleware/cache');
 const { getLevels } = require('../utils/gamification');
 
-/**
- * @route   GET /api/gamification/leaderboard
- * @desc    Obtener el ranking global de funcionarios
- * @access  Private
- */
-router.get('/leaderboard', authMiddleware, cacheMiddleware(600, true), async (req, res) => {
+const redisClient = require('../config/redis');
+
+// Función para recalcular y cachear el Leaderboard global cada hora
+const refreshLeaderboardCache = async () => {
     try {
-        const userId = req.user.id;
-        const isAdmin = req.user.role === 'admin' && req.headers['x-view-as-student'] !== 'true';
+        if (!redisClient || !redisClient.isOpen) return;
 
-        // 0. Get user basic info
-        const [userBasic] = await db.query('SELECT email, department FROM users WHERE id = ?', [userId]);
-        const email = userBasic?.email;
-        const department = userBasic?.department;
-        const userEmailLower = email ? email.toLowerCase() : '';
-
-        // 1. Calculate INSTITUTIONAL RANK (Global) for EVERYONE in the directory
-        // Using -1 for points to ensure alphabetic tie-breaking starts after someone actually has 0 points recorded? 
-        // Actually, we want to rank based on points, then full_name.
-        const globalRanking = await db.query(
-            `SELECT LOWER(sd.email) as email, RANK() OVER (ORDER BY COALESCE(up.points, -1) DESC, sd.full_name ASC) as pos
+        const instRanking = await db.query(
+            `SELECT 
+                sd.full_name, u.first_name, u.last_name, u.profile_picture, sd.department, LOWER(sd.email) as email,
+                COALESCE(up.points, 0) as points, 
+                COALESCE(up.level, 'Novato') as level,
+                RANK() OVER (ORDER BY COALESCE(up.points, -1) DESC, sd.full_name ASC) as rank_position
              FROM staff_directory sd
              LEFT JOIN users u ON sd.email = u.email
-             LEFT JOIN user_points up ON u.id = up.user_id`
+             LEFT JOIN user_points up ON u.id = up.user_id
+             ORDER BY points DESC, sd.full_name ASC`
         );
 
-        // Find current user's rank
-        const userGlobalRankRaw = globalRanking.find(r => r.email === userEmailLower);
-        const myGlobalRankPos = userGlobalRankRaw ? userGlobalRankRaw.pos : (globalRanking.length + 1);
+        const institutionalLeaderboard = instRanking.map(r => ({
+            ...r,
+            id: r.email,
+            first_name: r.first_name || r.full_name.split(' ')[0],
+            last_name: r.last_name || r.full_name.split(' ').slice(1).join(' '),
+            rank_position: r.rank_position
+        }));
 
-        // 2. Calculate DEPARTMENT RANK and Leaderboard
-        let departmentLeaderboard = [];
-        let myDeptRankPos = null;
-
-        if (department) {
-            const deptRanking = await db.query(
-                `SELECT 
-                    sd.full_name, u.first_name, u.last_name, u.profile_picture, sd.department, sd.email,
-                    COALESCE(up.points, 0) as points, 
-                    COALESCE(up.level, 'Novato') as level,
-                    RANK() OVER (ORDER BY COALESCE(up.points, -1) DESC, sd.full_name ASC) as rank_position
-                 FROM staff_directory sd
-                 LEFT JOIN users u ON sd.email = u.email
-                 LEFT JOIN user_points up ON u.id = up.user_id
-                 WHERE sd.department = ?
-                 ORDER BY points DESC, sd.full_name ASC`,
-                [department]
-            );
-            departmentLeaderboard = deptRanking.map(r => ({
-                ...r,
-                id: r.email,
-                first_name: r.first_name || r.full_name.split(' ')[0],
-                last_name: r.last_name || r.full_name.split(' ').slice(1).join(' '),
-                rank_position: r.rank_position
-            }));
-            const myEntry = departmentLeaderboard.find(r => r.email.toLowerCase() === userEmailLower);
-            myDeptRankPos = myEntry ? myEntry.rank_position : null;
-        }
-
-        // 3. For Admins: Get full Institutional Leaderboard
-        let institutionalLeaderboard = [];
-        if (isAdmin) {
-            const instRanking = await db.query(
-                `SELECT 
-                    sd.full_name, u.first_name, u.last_name, u.profile_picture, sd.department, sd.email,
-                    COALESCE(up.points, 0) as points, 
-                    COALESCE(up.level, 'Novato') as level,
-                    RANK() OVER (ORDER BY COALESCE(up.points, -1) DESC, sd.full_name ASC) as rank_position
-                 FROM staff_directory sd
-                 LEFT JOIN users u ON sd.email = u.email
-                 LEFT JOIN user_points up ON u.id = up.user_id
-                 ORDER BY points DESC, sd.full_name ASC`
-            );
-            institutionalLeaderboard = instRanking.map(r => ({
-                ...r,
-                id: r.email,
-                first_name: r.first_name || r.full_name.split(' ')[0],
-                last_name: r.last_name || r.full_name.split(' ').slice(1).join(' '),
-                rank_position: r.rank_position
-            }));
-        }
-
-        const [userPointsData] = await db.query('SELECT points, level FROM user_points WHERE user_id = ?', [userId]);
-
-        // 4. Department Trends Summary
         const departmentRanking = await db.query(
             `SELECT 
                 sd.department, 
@@ -114,6 +56,73 @@ router.get('/leaderboard', authMiddleware, cacheMiddleware(600, true), async (re
              GROUP BY sd.department
              ORDER BY total_points DESC`
         );
+
+        await redisClient.setEx('leaderboard:institutional', 3600, JSON.stringify(institutionalLeaderboard));
+        await redisClient.setEx('leaderboard:departments', 3600, JSON.stringify(departmentRanking));
+        console.log('✅ Leaderboard cache refreshed in Redis');
+    } catch (err) {
+        console.error('❌ Error refreshing leaderboard cache:', err);
+    }
+};
+
+// Iniciar tarea en segundo plano al arrancar la app
+setTimeout(refreshLeaderboardCache, 5000);
+setInterval(refreshLeaderboardCache, 60 * 60 * 1000);
+
+/**
+ * @route   GET /api/gamification/leaderboard
+ * @desc    Obtener el ranking global de funcionarios
+ * @access  Private
+ */
+router.get('/leaderboard', authMiddleware, cacheMiddleware(60, true), async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const isAdmin = req.user.role === 'admin' && req.headers['x-view-as-student'] !== 'true';
+
+        // 0. Get user basic info
+        const [userBasic] = await db.query('SELECT email, department FROM users WHERE id = ?', [userId]);
+        const email = userBasic?.email;
+        const department = userBasic?.department;
+        const userEmailLower = email ? email.toLowerCase() : '';
+
+        let institutionalLeaderboard = [];
+        let departmentRanking = [];
+
+        // Tratar de obtener de Redis
+        if (redisClient && redisClient.isOpen) {
+            const cachedInst = await redisClient.get('leaderboard:institutional');
+            const cachedDepts = await redisClient.get('leaderboard:departments');
+            if (cachedInst && cachedDepts) {
+                institutionalLeaderboard = JSON.parse(cachedInst);
+                departmentRanking = JSON.parse(cachedDepts);
+            }
+        }
+
+        // Fallback: Si Redis falló o estaba vacío, invocar la función sincrónicamente y esperar
+        if (institutionalLeaderboard.length === 0) {
+            await refreshLeaderboardCache();
+            const cachedInst = await redisClient.get('leaderboard:institutional');
+            const cachedDepts = await redisClient.get('leaderboard:departments');
+            if (cachedInst) institutionalLeaderboard = JSON.parse(cachedInst);
+            if (cachedDepts) departmentRanking = JSON.parse(cachedDepts);
+        }
+
+        // Global Rank Position
+        const userGlobalRankRaw = institutionalLeaderboard.find(r => r.email === userEmailLower);
+        const myGlobalRankPos = userGlobalRankRaw ? userGlobalRankRaw.rank_position : (institutionalLeaderboard.length + 1);
+
+        // Department Leaderboard
+        let departmentLeaderboard = [];
+        let myDeptRankPos = null;
+        if (department) {
+            departmentLeaderboard = institutionalLeaderboard.filter(r => r.department === department);
+            // Recalcular posiciones solo dentro de este departamento
+            departmentLeaderboard.forEach((r, i) => { r.rank_position = i + 1; });
+            const myEntry = departmentLeaderboard.find(r => r.email === userEmailLower);
+            myDeptRankPos = myEntry ? myEntry.rank_position : null;
+        }
+
+        const [userPointsData] = await db.query('SELECT points, level FROM user_points WHERE user_id = ?', [userId]);
 
         res.json({
             success: true,

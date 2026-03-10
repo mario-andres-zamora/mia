@@ -11,7 +11,8 @@ import {
     ChevronRight,
     Settings,
     ShieldAlert,
-    Users
+    Users,
+    ClipboardList
 } from 'lucide-react';
 
 export default function AdminPanel() {
@@ -19,6 +20,7 @@ export default function AdminPanel() {
     const { token } = useAuthStore();
     const [stats, setStats] = useState({
         users: 0,
+        activeUsers: 0,
         modules: 0,
         campaigns: 0
     });
@@ -56,7 +58,7 @@ export default function AdminPanel() {
             icon: Users,
             path: '/admin/users',
             color: 'from-purple-500 to-pink-600',
-            stats: `${stats.users} Usuarios`
+            stats: `${stats.activeUsers} Activos / ${stats.users} Total`
         },
         {
             title: 'Gestión de Áreas',
@@ -89,6 +91,14 @@ export default function AdminPanel() {
             path: '/admin/badges',
             color: 'from-yellow-400 to-orange-500',
             stats: 'Gestión de Logros'
+        },
+        {
+            title: 'Revisión de Tareas',
+            description: 'Evaluar y retroalimentar las entregas pendientes de los estudiantes.',
+            icon: ClipboardList,
+            path: '/admin/assignments',
+            color: 'from-pink-500 to-rose-600',
+            stats: 'Supervisión Continua'
         },
         {
             title: 'Directorio Maestro',

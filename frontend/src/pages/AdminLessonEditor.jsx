@@ -39,6 +39,9 @@ export default function AdminLessonEditor() {
     const [editingItem, setEditingItem] = useState(null);
 
     // Modal Form State
+    const [viewingAssignment, setViewingAssignment] = useState(null);
+    const [assignmentSubmissions, setAssignmentSubmissions] = useState([]);
+
     const [formData, setFormData] = useState({
         title: '',
         content_type: 'text', // text, video, image, file, link, quiz, survey, assignment, note, heading
@@ -83,6 +86,36 @@ export default function AdminLessonEditor() {
             toast.error('Error al cargar la lección');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchSubmissions = async (contentId, title) => {
+        try {
+            const res = await axios.get(`${API_URL}/content/assignment/${contentId}/submissions`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.data.success) {
+                setAssignmentSubmissions(res.data.submissions);
+                setViewingAssignment({ id: contentId, title });
+            }
+        } catch (error) {
+            toast.error('Error al cargar entregas');
+        }
+    };
+
+    const handleGradeSubmission = async (submissionId, status, grade, feedback) => {
+        try {
+            const res = await axios.put(`${API_URL}/content/assignment/submission/${submissionId}`, { status, grade, feedback }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.data.success) {
+                toast.success('Evaluación guardada');
+                setAssignmentSubmissions(prev => prev.map(sub =>
+                    sub.id === submissionId ? { ...sub, status, grade, feedback } : sub
+                ));
+            }
+        } catch (error) {
+            toast.error('Error evaluando entrega');
         }
     };
 
@@ -380,6 +413,15 @@ export default function AdminLessonEditor() {
                                 </div>
 
                                 <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    {item.content_type === 'assignment' && (
+                                        <button
+                                            onClick={() => fetchSubmissions(item.id, item.title)}
+                                            className="p-2 bg-slate-800 text-green-400 rounded-lg hover:bg-green-500 hover:text-white transition-colors"
+                                            title="Ver Entregas"
+                                        >
+                                            <ClipboardList className="w-4 h-4" />
+                                        </button>
+                                    )}
                                     <button
                                         onClick={() => handleOpenModal(null, item)}
                                         className="p-2 bg-slate-800 text-blue-400 rounded-lg hover:bg-blue-500 hover:text-white transition-colors"
@@ -593,6 +635,82 @@ export default function AdminLessonEditor() {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Submissions Modal */}
+            {viewingAssignment && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+                    <div className="card w-full max-w-4xl bg-[#1b2341] border-slate-700 p-0 overflow-hidden shadow-2xl animate-fade-in-up flex flex-col max-h-[90vh]">
+                        <div className="p-6 border-b border-white/5 bg-slate-900/50 flex justify-between items-center shrink-0">
+                            <div>
+                                <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                                    <ClipboardList className="w-5 h-5 text-green-400" />
+                                    Entregas: {viewingAssignment.title}
+                                </h2>
+                                <p className="text-sm text-gray-400 mt-1">{assignmentSubmissions.length} entregas totales</p>
+                            </div>
+                            <button onClick={() => setViewingAssignment(null)} className="text-gray-400 hover:text-white">✕</button>
+                        </div>
+
+                        <div className="p-6 overflow-y-auto flex-1 custom-scrollbar space-y-4">
+                            {assignmentSubmissions.length === 0 ? (
+                                <div className="text-center py-12 bg-slate-900/30 rounded-2xl border border-white/5 border-dashed">
+                                    <p className="text-gray-500">Nadie ha enviado esta tarea aún.</p>
+                                </div>
+                            ) : (
+                                assignmentSubmissions.map((sub) => (
+                                    <div key={sub.id} className="p-5 bg-slate-900/50 border border-white/10 rounded-2xl flex flex-col md:flex-row gap-6">
+                                        <div className="flex-1 space-y-2">
+                                            <div className="flex items-center gap-3">
+                                                <h4 className="text-white font-bold">{sub.first_name} {sub.last_name}</h4>
+                                                <span className="text-xs text-gray-500">{sub.email}</span>
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <span className={`text-[10px] uppercase font-black px-2 py-0.5 rounded-full border ${sub.status === 'approved' ? 'bg-green-500/20 text-green-400 border-green-500/30' :
+                                                        sub.status === 'rejected' ? 'bg-red-500/20 text-red-400 border-red-500/30' :
+                                                            'bg-blue-500/20 text-blue-400 border-blue-500/30'
+                                                    }`}>
+                                                    {sub.status === 'approved' ? 'Aprobada' : sub.status === 'rejected' ? 'Rechazada' : 'Pendiente'}
+                                                </span>
+                                                <span className="text-xs text-gray-500">{new Date(sub.submitted_at).toLocaleString()}</span>
+                                            </div>
+                                            <div>
+                                                <a href={`${API_URL.replace('/api', '')}${sub.file_url}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 mt-2 px-4 py-1.5 bg-primary-500/10 text-primary-400 border border-primary-500/20 rounded-lg text-xs font-bold hover:bg-primary-500 hover:text-white transition-colors">
+                                                    <FileText className="w-3 h-3" /> Ver Archivo Subido
+                                                </a>
+                                            </div>
+                                        </div>
+                                        <div className="w-full md:w-72 space-y-3 bg-slate-950/50 p-4 rounded-xl border border-white/5">
+                                            <div>
+                                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-1">Calificación / Feedback</label>
+                                                <textarea
+                                                    className="input-field bg-slate-900 border-white/10 text-sm h-20"
+                                                    placeholder="Escribe un comentario..."
+                                                    defaultValue={sub.feedback || ''}
+                                                    id={`feedback-${sub.id}`}
+                                                />
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={() => handleGradeSubmission(sub.id, 'approved', 100, document.getElementById(`feedback-${sub.id}`).value)}
+                                                    className="flex-1 py-2 text-[10px] font-black uppercase bg-green-500/20 text-green-400 border border-green-500/30 rounded-lg hover:bg-green-500 hover:text-white transition-colors"
+                                                >
+                                                    Aprobar
+                                                </button>
+                                                <button
+                                                    onClick={() => handleGradeSubmission(sub.id, 'rejected', 0, document.getElementById(`feedback-${sub.id}`).value)}
+                                                    className="flex-1 py-2 text-[10px] font-black uppercase bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg hover:bg-red-500 hover:text-white transition-colors"
+                                                >
+                                                    Rechazar
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
                     </div>
                 </div>
             )}

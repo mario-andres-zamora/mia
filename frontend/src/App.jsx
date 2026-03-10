@@ -22,6 +22,7 @@ import AdminDepartments from './pages/AdminDepartments';
 import AdminBadges from './pages/AdminBadges';
 import AdminLessonEditor from './pages/AdminLessonEditor';
 import AdminSettings from './pages/AdminSettings';
+import AdminAssignments from './pages/AdminAssignments';
 import NotFound from './pages/NotFound';
 import ServerError from './pages/ServerError';
 import Maintenance from './pages/Maintenance';
@@ -97,6 +98,7 @@ function App() {
               <Route path="/admin/areas" element={<AdminDepartments />} />
               <Route path="/admin/badges" element={<AdminBadges />} />
               <Route path="/admin/settings" element={<AdminSettings />} />
+              <Route path="/admin/assignments" element={<AdminAssignments />} />
               <Route path="/admin/lessons/:id/editor" element={<AdminLessonEditor />} />
             </Route>
 

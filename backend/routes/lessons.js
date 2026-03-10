@@ -191,6 +191,27 @@ router.post('/:id/complete', authMiddleware, async (req, res) => {
         const [lesson] = await db.query('SELECT module_id FROM lessons WHERE id = ?', [lessonId]);
         if (!lesson) return res.status(404).json({ error: 'Lección no encontrada' });
 
+        // 0. Verificar que no haya tareas obligatorias pendientes o rechazadas
+        const assignments = await db.query(
+            `SELECT lc.id, lc.title, asub.status 
+             FROM lesson_contents lc 
+             LEFT JOIN assignment_submissions asub ON lc.id = asub.content_id AND asub.user_id = ?
+             WHERE lc.lesson_id = ? AND lc.content_type = 'assignment'`,
+            [userId, lessonId]
+        );
+
+        for (const assignment of assignments) {
+            if (!assignment.status) {
+                return res.status(400).json({ message: `No puedes finalizar: Te falta enviar la tarea "${assignment.title}".` });
+            }
+            if (assignment.status === 'rejected') {
+                return res.status(400).json({ message: `No puedes finalizar: La tarea "${assignment.title}" fue rechazada. Revísala y reenvíala.` });
+            }
+            if (assignment.status === 'pending') {
+                return res.status(400).json({ message: `No puedes finalizar: La tarea "${assignment.title}" está pendiente de revisión.` });
+            }
+        }
+
         // 1. Calcular puntos totales de la lección
         // (Suma de puntos de cada contenido + puntos base desde settings)
         const [contentPoints] = await db.query(

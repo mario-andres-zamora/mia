@@ -47,21 +47,175 @@ const upload = multer({
 router.get('/lesson/:lessonId', authMiddleware, async (req, res) => {
     try {
         const { lessonId } = req.params;
+        const userId = req.user.id;
         const contents = await db.query(
-            'SELECT * FROM lesson_contents WHERE lesson_id = ? ORDER BY order_index ASC',
-            [lessonId]
+            `SELECT lc.*, 
+                asub.id as asub_id,
+                asub.file_url as asub_file_url,
+                asub.status as asub_status,
+                asub.grade as asub_grade,
+                asub.feedback as asub_feedback,
+                asub.submitted_at as asub_submitted_at
+             FROM lesson_contents lc
+             LEFT JOIN assignment_submissions asub ON asub.content_id = lc.id AND asub.user_id = ?
+             WHERE lc.lesson_id = ?
+             ORDER BY lc.order_index ASC`,
+            [userId, lessonId]
         );
 
         // Parsear el campo JSON 'data'
-        const parsedContents = contents.map(item => ({
-            ...item,
-            data: typeof item.data === 'string' ? JSON.parse(item.data) : item.data
-        }));
+        const parsedContents = contents.map(item => {
+            let userSubmission = null;
+            if (item.asub_id) {
+                userSubmission = {
+                    id: item.asub_id,
+                    file_url: item.asub_file_url,
+                    status: item.asub_status,
+                    grade: item.asub_grade,
+                    feedback: item.asub_feedback,
+                    submitted_at: item.asub_submitted_at
+                };
+            }
+
+            return {
+                id: item.id,
+                lesson_id: item.lesson_id,
+                title: item.title,
+                content_type: item.content_type,
+                data: typeof item.data === 'string' ? JSON.parse(item.data) : (item.data || {}),
+                order_index: item.order_index,
+                points: item.points,
+                is_required: item.is_required,
+                submission: userSubmission
+            };
+        });
 
         res.json({ success: true, contents: parsedContents });
     } catch (error) {
         console.error('Error obteniendo contenidos:', error);
         res.status(500).json({ error: 'Error al cargar contenidos' });
+    }
+});
+
+/**
+ * @route   POST /api/content/assignment/:contentId/submit
+ * @desc    Submit an assignment file for a lesson content
+ * @access  Private
+ */
+router.post('/assignment/:contentId/submit', authMiddleware, upload.single('file'), async (req, res) => {
+    try {
+        const { contentId } = req.params;
+        const userId = req.user.id;
+
+        if (!req.file) {
+            return res.status(400).json({ error: 'Se requiere un archivo para la tarea' });
+        }
+
+        const fileUrl = `/uploads/course_content/${req.file.filename}`;
+
+        // Verificar si ya existe un envío
+        const [existing] = await db.query(
+            'SELECT id FROM assignment_submissions WHERE content_id = ? AND user_id = ?',
+            [contentId, userId]
+        );
+
+        if (existing) {
+            // Actualizar envío existente
+            await db.query(
+                `UPDATE assignment_submissions 
+                 SET file_url = ?, status = 'pending', submitted_at = NOW()
+                 WHERE id = ?`,
+                [fileUrl, existing.id]
+            );
+        } else {
+            // Crear nuevo envío
+            await db.query(
+                `INSERT INTO assignment_submissions (content_id, user_id, file_url, status)
+                 VALUES (?, ?, ?, 'pending')`,
+                [contentId, userId, fileUrl]
+            );
+        }
+
+        res.json({ success: true, message: 'Tarea enviada correctamente', file_url: fileUrl });
+    } catch (error) {
+        console.error('Error enviando tarea:', error);
+        res.status(500).json({ error: 'Error al enviar tarea' });
+    }
+});
+
+/**
+ * @route   GET /api/content/assignments/all-submissions
+ * @desc    Get all assignment submissions across all lessons
+ * @access  Private/Admin
+ */
+router.get('/assignments/all-submissions', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const query = `
+            SELECT 
+                asub.id, asub.status, asub.grade, asub.feedback, asub.file_url, asub.submitted_at,
+                u.first_name, u.last_name, u.email,
+                lc.title as assignment_title, lc.id as content_id,
+                l.title as lesson_title, l.id as lesson_id,
+                m.title as module_title, m.id as module_id
+            FROM assignment_submissions asub
+            JOIN users u ON asub.user_id = u.id
+            JOIN lesson_contents lc ON asub.content_id = lc.id
+            JOIN lessons l ON lc.lesson_id = l.id
+            JOIN modules m ON l.module_id = m.id
+            ORDER BY asub.submitted_at DESC
+        `;
+        const submissions = await db.query(query);
+        res.json({ success: true, submissions });
+    } catch (error) {
+        console.error('Error obteniendo todas las entregas:', error);
+        res.status(500).json({ error: 'Error al cargar las entregas' });
+    }
+});
+
+/**
+ * @route   GET /api/content/assignment/:contentId/submissions
+ * @desc    Get all submissions for an assignment
+ * @access  Private/Admin
+ */
+router.get('/assignment/:contentId/submissions', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const { contentId } = req.params;
+        const submissions = await db.query(
+            `SELECT asub.*, u.first_name, u.last_name, u.email 
+             FROM assignment_submissions asub
+             JOIN users u ON asub.user_id = u.id
+             WHERE asub.content_id = ?
+             ORDER BY asub.submitted_at DESC`,
+            [contentId]
+        );
+        res.json({ success: true, submissions });
+    } catch (error) {
+        console.error('Error obteniendo entregas:', error);
+        res.status(500).json({ error: 'Error al cargar entregas' });
+    }
+});
+
+/**
+ * @route   PUT /api/content/assignment/submission/:submissionId
+ * @desc    Grade an assignment submission
+ * @access  Private/Admin
+ */
+router.put('/assignment/submission/:submissionId', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const { submissionId } = req.params;
+        const { status, grade, feedback } = req.body;
+
+        await db.query(
+            `UPDATE assignment_submissions 
+             SET status = ?, grade = ?, feedback = ?
+             WHERE id = ?`,
+            [status || 'pending', grade || 0, feedback || null, submissionId]
+        );
+
+        res.json({ success: true, message: 'Entrega evaluada correctamente' });
+    } catch (error) {
+        console.error('Error evaluando entrega:', error);
+        res.status(500).json({ error: 'Error al evaluar entrega' });
     }
 });
 
