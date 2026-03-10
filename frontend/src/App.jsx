@@ -10,6 +10,7 @@ import Modules from './pages/Modules';
 import ModuleDetail from './pages/ModuleDetail';
 import LessonView from './pages/LessonView';
 import QuizView from './pages/QuizView';
+import SurveyView from './pages/SurveyView';
 import CertificateView from './pages/CertificateView';
 import Profile from './pages/Profile';
 import Leaderboard from './pages/Leaderboard';
@@ -85,6 +86,7 @@ function App() {
               <Route path="/modules/:id" element={<ModuleDetail />} />
               <Route path="/lessons/:id" element={<LessonView />} />
               <Route path="/quizzes/:id" element={<QuizView />} />
+              <Route path="/surveys/:id" element={<SurveyView />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/leaderboard" element={<Leaderboard />} />
 

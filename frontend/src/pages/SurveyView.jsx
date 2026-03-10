@@ -1,0 +1,314 @@
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { useAuthStore } from '../store/authStore';
+import {
+    ClipboardList,
+    Star,
+    ChevronRight,
+    ChevronLeft,
+    CheckCircle2,
+    ArrowLeft,
+    MessageSquare
+} from 'lucide-react';
+import toast from 'react-hot-toast';
+import { useNotificationStore } from '../store/notificationStore';
+import CyberCat from '../components/CyberCat';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+export default function SurveyView() {
+    const { id } = useParams();
+    const navigate = useNavigate();
+    const { token, updateUser } = useAuthStore();
+
+    const [surveyData, setSurveyData] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+    const [answers, setAnswers] = useState({}); // { questionId: { text: '', optionId: null } }
+    const [submitting, setSubmitting] = useState(false);
+    const [completed, setCompleted] = useState(false);
+    const [pointsEarned, setPointsEarned] = useState(0);
+
+    useEffect(() => {
+        fetchSurvey();
+    }, [id]);
+
+    const fetchSurvey = async () => {
+        try {
+            setLoading(true);
+            const response = await axios.get(`${API_URL}/surveys/${id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (response.data.success) {
+                setSurveyData(response.data);
+                if (response.data.isCompleted) {
+                    setCompleted(true);
+                }
+            }
+        } catch (error) {
+            toast.error('Error al cargar la encuesta');
+            navigate(-1);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleAnswerChange = (questionId, value, type) => {
+        if (completed) return;
+
+        let answerObj = { ...answers[questionId] };
+
+        if (type === 'multiple_choice') {
+            answerObj = { optionId: value };
+        } else if (type === 'rating') {
+            answerObj = { text: value.toString() }; // We store rating as text or we could add a numeric field, but text is fine.
+        } else if (type === 'text') {
+            answerObj = { text: value };
+        }
+
+        setAnswers(prev => ({ ...prev, [questionId]: answerObj }));
+    };
+
+    const handleSubmit = async () => {
+        // Validation: Required questions
+        const unansweredRequired = surveyData.questions.filter(q => q.is_required && !answers[q.id]);
+        if (unansweredRequired.length > 0) {
+            toast.error('Por favor responde las preguntas obligatorias.');
+            return;
+        }
+
+        try {
+            setSubmitting(true);
+            const response = await axios.post(`${API_URL}/surveys/${id}/submit`, {
+                answers
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            if (response.data.success) {
+                setCompleted(true);
+                setPointsEarned(response.data.pointsAwarded || 0);
+
+                if (response.data.pointsAwarded > 0) {
+                    updateUser({ points: (useAuthStore.getState().user.points || 0) + response.data.pointsAwarded });
+                }
+
+                toast.success('¡Gracias por tu feedback!');
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.error || 'Error al enviar la encuesta');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[600px] animate-fade-in">
+                <div className="w-16 h-16 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+                <p className="text-gray-400 font-medium">Cargando encuesta...</p>
+            </div>
+        );
+    }
+
+    if (!surveyData) return null;
+
+    const { survey, questions } = surveyData;
+    const currentQuestion = questions[currentQuestionIndex];
+    const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
+
+    if (completed) {
+        return (
+            <div className="max-w-3xl mx-auto space-y-8 animate-fade-in pb-20">
+                <div className="card overflow-hidden border-t-8 border-yellow-500 bg-yellow-500/5">
+                    <div className="p-12 text-center space-y-8">
+                        <div className="flex justify-center">
+                            <div className="w-48 h-48 rounded-full bg-yellow-500/10 flex items-center justify-center ring-[12px] ring-yellow-500/5 mb-6 backdrop-blur-md relative shadow-[0_0_50px_rgba(234,179,8,0.15)]">
+                                <CyberCat
+                                    className="w-32 h-32 animate-float-subtle"
+                                    variant="success"
+                                    color="#eab308"
+                                />
+                                <div className="absolute inset-0 rounded-full animate-pulse bg-yellow-500/5 blur-xl"></div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-3">
+                            <h1 className="text-4xl font-black text-white uppercase tracking-tight">¡Encuesta Completada!</h1>
+                            <p className="text-gray-400 font-bold uppercase tracking-widest text-sm">
+                                Tu feedback es fundamental para mejorar nuestra plataforma.
+                            </p>
+                        </div>
+
+                        {pointsEarned > 0 && (
+                            <div className="inline-flex items-center gap-2 px-8 py-3 bg-secondary-500/20 border border-secondary-500/30 rounded-full text-secondary-500 font-black text-sm animate-bounce">
+                                <Star className="w-5 h-5 fill-secondary-500" /> +{pointsEarned} PUNTOS DE EXPERIENCIA
+                            </div>
+                        )}
+
+                        <div className="pt-8">
+                            <button
+                                onClick={() => navigate(-1)}
+                                className="px-12 py-4 bg-white text-slate-900 rounded-2xl font-black uppercase tracking-widest text-xs hover:scale-105 transition-all shadow-xl"
+                            >
+                                Volver a la Lección
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="max-w-4xl mx-auto space-y-8 animate-fade-in pb-20">
+            {/* Header */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="space-y-1">
+                    <button
+                        onClick={() => navigate(-1)}
+                        className="flex items-center gap-2 text-gray-500 hover:text-white transition-colors text-[10px] font-black uppercase tracking-widest mb-2"
+                    >
+                        <ArrowLeft className="w-4 h-4" /> Salir de la encuesta
+                    </button>
+                    <h1 className="text-2xl font-black text-white uppercase tracking-tight">{survey.title}</h1>
+                </div>
+                <div className="text-right">
+                    <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Pregunta</p>
+                    <p className="text-xl font-black text-white">{currentQuestionIndex + 1} <span className="text-gray-600">/ {questions.length}</span></p>
+                </div>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden p-0.5 border border-white/5 shadow-inner">
+                <div
+                    className="h-full bg-gradient-to-r from-yellow-500 to-amber-500 rounded-full transition-all duration-500 shadow-[0_0_10px_rgba(234,179,8,0.3)]"
+                    style={{ width: `${progress}%` }}
+                ></div>
+            </div>
+
+            {/* Question Card */}
+            <div className="card p-8 md:p-12 space-y-8 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-500/5 rounded-bl-full blur-2xl"></div>
+
+                <div className="space-y-6 relative z-10">
+                    <div className="flex flex-col gap-3">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-yellow-500/10 rounded-full border border-yellow-500/20 self-start">
+                            <ClipboardList className="w-3.5 h-3.5 text-yellow-500" />
+                            <span className="text-[9px] font-black text-yellow-400 uppercase tracking-widest">Feedback Institucional</span>
+                        </div>
+                        {survey.description && (
+                            <p className="text-gray-300 text-sm md:text-base font-semibold italic border-l-4 border-yellow-500/40 pl-4 py-1 max-w-2xl leading-relaxed">
+                                {survey.description}
+                            </p>
+                        )}
+                    </div>
+
+                    <h2 className="text-2xl md:text-3xl font-bold text-white leading-tight">
+                        {currentQuestion.question_text}
+                        {currentQuestion.is_required && <span className="text-red-500 ml-1">*</span>}
+                    </h2>
+                </div>
+
+                {/* Question Inputs */}
+                <div className="mt-12 relative z-10">
+                    {currentQuestion.question_type === 'multiple_choice' && (
+                        <div className="grid gap-3">
+                            {currentQuestion.options.map((option) => (
+                                <button
+                                    key={option.id}
+                                    onClick={() => handleAnswerChange(currentQuestion.id, option.id, 'multiple_choice')}
+                                    className={`w-full p-6 text-left rounded-2xl border-2 transition-all duration-200 flex items-center justify-between ${answers[currentQuestion.id]?.optionId === option.id
+                                        ? 'bg-yellow-500/10 border-yellow-500 text-white shadow-[0_0_30px_rgba(234,179,8,0.15)]'
+                                        : 'bg-slate-900/50 border-white/5 text-gray-400 hover:border-white/10 hover:bg-slate-900'
+                                        }`}
+                                >
+                                    <span className="font-bold">{option.option_text}</span>
+                                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${answers[currentQuestion.id]?.optionId === option.id
+                                        ? 'border-yellow-400 bg-yellow-400'
+                                        : 'border-gray-700'
+                                        }`}>
+                                        {answers[currentQuestion.id]?.optionId === option.id && <div className="w-2 h-2 bg-black rounded-full"></div>}
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                    )}
+
+                    {currentQuestion.question_type === 'rating' && (
+                        <div className="flex flex-col items-center gap-8 py-10">
+                            <div className="flex gap-4">
+                                {[1, 2, 3, 4, 5].map((n) => (
+                                    <button
+                                        key={n}
+                                        onClick={() => handleAnswerChange(currentQuestion.id, n, 'rating')}
+                                        className={`w-14 h-14 md:w-20 md:h-20 rounded-2xl border-2 font-black text-xl md:text-3xl transition-all shadow-xl ${answers[currentQuestion.id]?.text === n.toString()
+                                            ? 'bg-yellow-500 text-black border-yellow-400 scale-110'
+                                            : 'bg-slate-900/50 border-white/5 text-gray-500 hover:border-yellow-500/50 hover:text-yellow-500'
+                                            }`}
+                                    >
+                                        {n}
+                                    </button>
+                                ))}
+                            </div>
+                            <div className="flex justify-between w-full max-w-sm text-[10px] font-black text-gray-500 uppercase tracking-widest">
+                                <span>Muy Insatisfecho</span>
+                                <span>Muy Satisfecho</span>
+                            </div>
+                        </div>
+                    )}
+
+                    {currentQuestion.question_type === 'text' && (
+                        <div className="space-y-4">
+                            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest flex items-center gap-2">
+                                <MessageSquare className="w-3.5 h-3.5" /> Tu Comentario
+                            </label>
+                            <textarea
+                                rows="6"
+                                className="w-full bg-slate-900/50 border-2 border-white/5 rounded-2xl p-6 text-white placeholder:text-gray-700 focus:border-yellow-500/50 transition-all outline-none"
+                                placeholder="Escribe aquí tu respuesta..."
+                                value={answers[currentQuestion.id]?.text || ''}
+                                onChange={(e) => handleAnswerChange(currentQuestion.id, e.target.value, 'text')}
+                            />
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Navigation Footer */}
+            <div className="flex items-center justify-between pt-4">
+                <button
+                    onClick={() => setCurrentQuestionIndex(prev => Math.max(0, prev - 1))}
+                    disabled={currentQuestionIndex === 0}
+                    className="flex items-center gap-2 px-6 py-3 text-sm font-black text-gray-500 uppercase tracking-widest hover:text-white transition-colors disabled:opacity-0"
+                >
+                    <ChevronLeft className="w-5 h-5" /> Anterior
+                </button>
+
+                {currentQuestionIndex === questions.length - 1 ? (
+                    <button
+                        onClick={handleSubmit}
+                        disabled={submitting}
+                        className="px-10 py-4 bg-yellow-500 text-black rounded-2xl font-black uppercase tracking-widest text-sm hover:scale-105 active:scale-95 transition-all shadow-xl shadow-yellow-500/20 disabled:opacity-50"
+                    >
+                        {submitting ? 'Enviando...' : 'Finalizar Encuesta'}
+                    </button>
+                ) : (
+                    <button
+                        onClick={() => {
+                            if (currentQuestion.is_required && !answers[currentQuestion.id]) {
+                                toast.error('Responde esta pregunta antes de continuar');
+                                return;
+                            }
+                            setCurrentQuestionIndex(prev => prev + 1);
+                        }}
+                        className="flex items-center gap-2 px-10 py-4 bg-slate-800 text-white rounded-2xl font-black uppercase tracking-widest text-xs border border-white/10 hover:bg-slate-700 transition-all group"
+                    >
+                        Siguiente <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                    </button>
+                )}
+            </div>
+        </div>
+    );
+}

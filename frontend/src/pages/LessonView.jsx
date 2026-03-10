@@ -604,15 +604,23 @@ export default function LessonView() {
                         ) : (
                             <button
                                 onClick={() => {
-                                    const quizId = data.quiz_id;
-                                    if (quizId) {
-                                        // Ir a repaso si está completado O si ya no tiene intentos
-                                        const url = (item.isCompleted || (item.attemptsMade >= item.maxAttempts))
-                                            ? `/quizzes/${quizId}?review=true`
-                                            : `/quizzes/${quizId}`;
-                                        navigate(url);
-                                    } else {
-                                        toast.error('Evaluación no disponible todavía');
+                                    if (item.content_type === 'quiz') {
+                                        const quizId = data.quiz_id;
+                                        if (quizId) {
+                                            const url = (item.isCompleted || (item.attemptsMade >= item.maxAttempts))
+                                                ? `/quizzes/${quizId}?review=true`
+                                                : `/quizzes/${quizId}`;
+                                            navigate(url);
+                                        } else {
+                                            toast.error('Evaluación no disponible todavía');
+                                        }
+                                    } else if (item.content_type === 'survey') {
+                                        const surveyId = data.survey_id;
+                                        if (surveyId) {
+                                            navigate(`/surveys/${surveyId}`);
+                                        } else {
+                                            toast.error('Encuesta no disponible todavía');
+                                        }
                                     }
                                 }}
                                 className={`px-8 font-black uppercase tracking-widest transition-all rounded-xl h-12 flex items-center justify-center border-2 ${item.isCompleted

@@ -29,6 +29,7 @@ const departmentRoutes = require('./routes/departments');
 const badgeRoutes = require('./routes/badges');
 const contentRoutes = require('./routes/lesson_content');
 const resourceRoutes = require('./routes/resources');
+const surveyRoutes = require('./routes/surveys');
 const certificateRoutes = require('./routes/certificates');
 const { authMiddleware, adminMiddleware } = require('./middleware/auth');
 const maintenanceMiddleware = require('./middleware/maintenance');
@@ -134,6 +135,7 @@ app.use('/api/departments', authMiddleware, maintenanceMiddleware, departmentRou
 app.use('/api/badges', badgeRoutes);
 app.use('/api/content', contentRoutes);
 app.use('/api/resources', resourceRoutes);
+app.use('/api/surveys', surveyRoutes);
 app.use('/api/certificates', authMiddleware, maintenanceMiddleware, certificateRoutes);
 
 // Ruta para obtener configuraciones globales del sistema (Admin)

@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import QuizEditorModal from '../components/QuizEditorModal';
+import SurveyEditorModal from '../components/SurveyEditorModal';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -46,6 +47,10 @@ export default function AdminLessonEditor() {
     // Quiz Editor State
     const [isQuizEditorOpen, setIsQuizEditorOpen] = useState(false);
     const [activeQuizItem, setActiveQuizItem] = useState(null);
+
+    // Survey Editor State
+    const [isSurveyEditorOpen, setIsSurveyEditorOpen] = useState(false);
+    const [activeSurveyItem, setActiveSurveyItem] = useState(null);
 
     const [formData, setFormData] = useState({
         title: '',
@@ -246,6 +251,41 @@ export default function AdminLessonEditor() {
             setContents(prev => prev.filter(c => c.id !== id));
         } catch (error) {
             toast.error('Error al eliminar');
+        }
+    };
+
+    const handleSurveySaved = async (surveyId) => {
+        if (!activeSurveyItem) return;
+
+        try {
+            const currentData = typeof activeSurveyItem.data === 'string' ? JSON.parse(activeSurveyItem.data) : (activeSurveyItem.data || {});
+            const newData = { ...currentData, survey_id: surveyId };
+
+            const dataToSubmit = new FormData();
+            dataToSubmit.append('lesson_id', lessonId);
+            dataToSubmit.append('title', activeSurveyItem.title);
+            dataToSubmit.append('content_type', activeSurveyItem.content_type);
+            dataToSubmit.append('is_required', activeSurveyItem.is_required);
+            dataToSubmit.append('points', activeSurveyItem.points);
+            dataToSubmit.append('data', JSON.stringify(newData));
+            dataToSubmit.append('order_index', activeSurveyItem.order_index);
+
+            const res = await axios.put(`${API_URL}/content/${activeSurveyItem.id}`, dataToSubmit, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+
+            if (res.data.success) {
+                toast.success('Contenido vinculado a la encuesta');
+                fetchLessonAndContents();
+            }
+        } catch (error) {
+            toast.error('Error vinculando encuesta al contenido');
+        } finally {
+            setIsSurveyEditorOpen(false);
+            setActiveSurveyItem(null);
         }
     };
 
@@ -474,6 +514,18 @@ export default function AdminLessonEditor() {
                                             title="Configurar Cuestionario"
                                         >
                                             <HelpCircle className="w-4 h-4" />
+                                        </button>
+                                    )}
+                                    {item.content_type === 'survey' && (
+                                        <button
+                                            onClick={() => {
+                                                setActiveSurveyItem(item);
+                                                setIsSurveyEditorOpen(true);
+                                            }}
+                                            className="p-2 bg-slate-800 text-yellow-500 rounded-lg hover:bg-yellow-500 hover:text-white transition-colors"
+                                            title="Configurar Encuesta"
+                                        >
+                                            <ClipboardList className="w-4 h-4" />
                                         </button>
                                     )}
                                     {item.content_type === 'assignment' && (
@@ -792,6 +844,22 @@ export default function AdminLessonEditor() {
                 moduleId={lesson?.module_id}
                 lessonId={lessonId}
                 title={activeQuizItem?.title}
+            />
+
+            {/* Survey Editor Modal */}
+            <SurveyEditorModal
+                isOpen={isSurveyEditorOpen}
+                onClose={(surveyId) => {
+                    if (surveyId) handleSurveySaved(surveyId);
+                    else {
+                        setIsSurveyEditorOpen(false);
+                        setActiveSurveyItem(null);
+                    }
+                }}
+                surveyId={activeSurveyItem?.data ? (typeof activeSurveyItem.data === 'string' ? JSON.parse(activeSurveyItem.data).survey_id : activeSurveyItem.data.survey_id) : undefined}
+                moduleId={lesson?.module_id}
+                lessonId={lessonId}
+                title={activeSurveyItem?.title}
             />
         </div>
     );

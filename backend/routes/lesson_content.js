@@ -87,6 +87,13 @@ router.get('/lesson/:lessonId', authMiddleware, async (req, res) => {
             maxAttemptsMap[q.id] = q.max_attempts;
         });
 
+        // Obtener encuestas completadas
+        const completedSurveys = await db.query(
+            'SELECT survey_id FROM survey_responses WHERE user_id = ?',
+            [userId]
+        );
+        const completedSurveyIds = completedSurveys.map(s => s.survey_id);
+
         // Parsear el campo JSON 'data'
         const parsedContents = contents.map(item => {
             let userSubmission = null;
@@ -113,6 +120,9 @@ router.get('/lesson/:lessonId', authMiddleware, async (req, res) => {
                 isCompleted = passedQuizIds.includes(qId);
                 attemptsMade = attemptsMap[qId] || 0;
                 maxAttempts = maxAttemptsMap[qId] || 3;
+            } else if (item.content_type === 'survey' && itemData.survey_id) {
+                const sId = parseInt(itemData.survey_id);
+                isCompleted = completedSurveyIds.includes(sId);
             } else if (item.content_type === 'assignment') {
                 isCompleted = item.asub_status === 'approved';
             }
