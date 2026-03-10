@@ -100,25 +100,7 @@ export default function Layout() {
 
                         {/* User Actions Section */}
                         <div className="flex items-center gap-3">
-                            {/* Admin View Mode Toggle - Better Integrated */}
-                            {user?.role === 'admin' && (
-                                <div className="hidden xl:flex items-center gap-2 px-3 py-1.5 bg-slate-900/50 rounded-full border border-white/5 shadow-lg">
-                                    <span className={`text-[8px] font-black uppercase tracking-[0.2em] ${!viewAsStudent ? 'text-secondary-500' : 'text-gray-500'}`}>
-                                        {!viewAsStudent ? 'Modo Admin' : 'Modo Est'}
-                                    </span>
-                                    <button
-                                        onClick={() => {
-                                            const newVal = !viewAsStudent;
-                                            setViewAsStudent(newVal);
-                                            toast.success(newVal ? 'Vista de estudiante activada' : 'Vista de administrador activada');
-                                            setTimeout(() => window.location.reload(), 300);
-                                        }}
-                                        className={`relative w-8 h-4 rounded-full transition-colors duration-300 focus:outline-none ${!viewAsStudent ? 'bg-secondary-600' : 'bg-slate-700'}`}
-                                    >
-                                        <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full shadow-sm transition-transform duration-300 ${!viewAsStudent ? 'translate-x-4.5' : 'translate-x-0.5'}`}></div>
-                                    </button>
-                                </div>
-                            )}
+
 
                             {/* User Profile */}
                             <div className="hidden sm:flex items-center gap-3 px-3 py-1 bg-transparent rounded-2xl border border-transparent hover:bg-white/5 transition-all duration-300 cursor-pointer" onClick={() => navigate('/profile')}>
@@ -227,6 +209,24 @@ export default function Layout() {
                             <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
                                 Version {import.meta.env.VITE_APP_VERSION || '1.8.0'}
                             </p>
+                            {user?.role === 'admin' && (
+                                <div className="flex items-center gap-2 px-3 py-1 bg-slate-900/50 rounded-full border border-white/5 shadow-lg mt-1">
+                                    <span className={`text-[8px] font-black uppercase tracking-[0.2em] ${!viewAsStudent ? 'text-secondary-500' : 'text-gray-500'}`}>
+                                        {!viewAsStudent ? 'Panel Administrador' : 'Vista Estudiante'}
+                                    </span>
+                                    <button
+                                        onClick={() => {
+                                            const newVal = !viewAsStudent;
+                                            setViewAsStudent(newVal);
+                                            toast.success(newVal ? 'Vista de estudiante activada' : 'Vista de administrador activada');
+                                            setTimeout(() => window.location.reload(), 300);
+                                        }}
+                                        className={`relative w-8 h-4 rounded-full transition-colors duration-300 focus:outline-none ${!viewAsStudent ? 'bg-secondary-600' : 'bg-slate-700'}`}
+                                    >
+                                        <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full shadow-sm transition-transform duration-300 ${!viewAsStudent ? 'translate-x-4.5' : 'translate-x-0.5'}`}></div>
+                                    </button>
+                                </div>
+                            )}
 
                         </div>
                     </div>

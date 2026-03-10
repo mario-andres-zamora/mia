@@ -4,14 +4,10 @@ import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     BookOpen,
-    Trophy,
-    Target,
     TrendingUp,
-    Clock,
     Award,
     CheckCircle,
     AlertCircle,
-    Shield,
     Lock
 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -209,7 +205,7 @@ export default function Dashboard() {
                                                         <Link
                                                             to={`/modules/${module.id}`}
                                                             onClick={(e) => e.stopPropagation()}
-                                                            className="w-full py-2.5 rounded-xl bg-primary-500 hover:bg-primary-600 text-white text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-lg shadow-primary-500/20 flex items-center justify-center gap-2 group/btn"
+                                                            className="w-full py-2.5 rounded-xl bg-secondary-500 hover:bg-secondary-600 text-white text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-lg shadow-secondary-500/20 flex items-center justify-center gap-2 group/btn"
                                                         >
                                                             {module.status === 'not_started' ? 'Empezar' : 'Continuar'} <TrendingUp className="w-3.5 h-3.5 group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-transform" />
                                                         </Link>

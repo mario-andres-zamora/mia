@@ -10,20 +10,15 @@ import {
     EyeOff,
     Search,
     Filter,
-    MoreVertical,
     Calendar,
-    Clock,
     BookOpen,
-    AlertCircle,
     CheckCircle2,
     ChevronDown,
     ChevronUp,
-    Trophy,
     Award,
     Download,
     ExternalLink,
     FileText,
-    Settings
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import axios from 'axios';
@@ -148,6 +143,21 @@ export default function AdminModules() {
             toast.success('Módulo eliminado');
         } else {
             toast.error(res.error || 'Error al eliminar');
+        }
+    };
+
+    const handleTogglePublish = async (module) => {
+        // Enviar solo los campos necesarios o el objeto completo si el store lo requiere
+        // Usualmente updateModule espera un objeto con los cambios
+        const res = await updateModule(module.id, {
+            ...module,
+            is_published: !module.is_published
+        });
+
+        if (res.success) {
+            toast.success(module.is_published ? 'Módulo movido a borradores' : 'Módulo publicado correctamente');
+        } else {
+            toast.error(res.error || 'Error al actualizar el estado');
         }
     };
 
@@ -511,14 +521,27 @@ export default function AdminModules() {
                                                 {module.release_date ? new Date(module.release_date).toLocaleDateString() : module.month}
                                             </span>
                                             {module.is_published ? (
-                                                <span className="badge badge-success py-0 px-2 text-[10px] uppercase">Publicado</span>
+                                                <span className="inline-flex items-center gap-1.5 py-0.5 px-2.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-green-500/10 text-green-500 border border-green-500/20 shadow-[0_0_10px_rgba(34,197,94,0.1)]">
+                                                    <CheckCircle2 className="w-3 h-3" /> Publicado
+                                                </span>
                                             ) : (
-                                                <span className="badge bg-slate-800 text-gray-400 border border-slate-700 py-0 px-2 text-[10px] uppercase">Borrador</span>
+                                                <span className="inline-flex items-center gap-1.5 py-0.5 px-2.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-slate-800 text-gray-400 border border-slate-700">
+                                                    <EyeOff className="w-3 h-3" /> Borrador
+                                                </span>
                                             )}
                                         </div>
                                     </div>
                                 </div>
                                 <div className="flex gap-2">
+                                    <button
+                                        onClick={() => handleTogglePublish(module)}
+                                        className={`p-2 rounded-lg transition-all ${module.is_published
+                                            ? 'text-green-500 hover:bg-green-500/10'
+                                            : 'text-gray-400 hover:text-white hover:bg-slate-800'}`}
+                                        title={module.is_published ? 'Despublicar' : 'Publicar'}
+                                    >
+                                        {module.is_published ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
+                                    </button>
                                     <button
                                         onClick={() => handleOpenModal(module)}
                                         className="p-2 text-gray-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
