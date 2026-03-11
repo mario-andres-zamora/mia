@@ -178,7 +178,7 @@ export default function SurveyEditorModal({ isOpen, onClose, surveyId, moduleId,
                 }
             }
 
-            toast.success('Encuesta guardada correctamente');
+            toast.success('Encuesta guardada correctamente', { id: 'admin-survey-save' });
             onClose(sid);
         } catch (error) {
             console.error(error);
@@ -219,7 +219,8 @@ export default function SurveyEditorModal({ isOpen, onClose, surveyId, moduleId,
                                 onChange={e => setSurvey({ ...survey, title: e.target.value })}
                             />
                         </div>
-                        <div className="space-y-2">
+                        {/* El campo de puntos se oculta ya que se configura directamente en la lección */}
+                        <div className="space-y-2 hidden">
                             <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Puntos al Completar</label>
                             <input
                                 type="number"

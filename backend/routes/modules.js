@@ -247,16 +247,20 @@ router.get('/:id', authMiddleware, cacheMiddleware(600, true), async (req, res) 
             [userId, moduleId]
         );
 
-        // Calcular porcentaje de completado basado en lecciones (OBLIGATORIAS) y quizzes
+        // Calcular porcentaje de completado basado en lecciones (OBLIGATORIAS) y elementos independientes
         const requiredLessons = lessons.filter(l => !l.is_optional);
         const completedRequiredLessons = requiredLessons.filter(l => l.status === 'completed').length;
 
-        // Por ahora asumimos que todos los quizzes son obligatorios
-        const totalQuizzesCount = quizzes.length;
-        const completedQuizzes = quizzes.filter(q => q.best_score >= q.passing_score).length;
+        // Solo contamos quices y encuestas que NO estén vinculados a una lección (para evitar conteo doble)
+        // ya que si están en una lección, su progreso ya se cuenta al completar la lección.
+        const standaloneQuizzes = quizzes.filter(q => !q.lesson_id);
+        const completedStandaloneQuizzes = standaloneQuizzes.filter(q => q.best_score >= q.passing_score).length;
 
-        const totalItems = requiredLessons.length + totalQuizzesCount + surveys.length;
-        const totalCompleted = completedRequiredLessons + completedQuizzes + surveys.filter(s => s.is_completed > 0).length;
+        const standaloneSurveys = surveys.filter(s => !s.lesson_id);
+        const completedStandaloneSurveys = standaloneSurveys.filter(s => s.is_completed > 0).length;
+
+        const totalItems = requiredLessons.length + standaloneQuizzes.length + standaloneSurveys.length;
+        const totalCompleted = completedRequiredLessons + completedStandaloneQuizzes + completedStandaloneSurveys;
 
         const completionPercentage = totalItems > 0
             ? Math.round((totalCompleted / totalItems) * 100)

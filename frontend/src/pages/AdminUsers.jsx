@@ -25,7 +25,7 @@ import ConfirmModal from '../components/ConfirmModal';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export default function AdminUsers() {
-    const { token } = useAuthStore();
+    const { token, user: currentUser, updateUser } = useAuthStore();
     const navigate = useNavigate();
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -132,6 +132,14 @@ export default function AdminUsers() {
             if (response.data.success) {
                 toast.success('El progreso del funcionario ha sido reiniciado');
                 fetchUsers();
+                
+                // Si el admin se reinicia a sí mismo, refrescar sus puntos en el header
+                if (userToReset.id === currentUser?.id) {
+                    updateUser({ 
+                        points: response.data.newPoints, 
+                        level: response.data.newLevel 
+                    });
+                }
             }
         } catch (error) {
             const msg = error.response?.data?.error || 'Error al reiniciar el usuario';
@@ -275,8 +283,8 @@ export default function AdminUsers() {
                                     </div>
                                 </td>
                                 <td className="px-6 py-5 text-center">
-                                    <p className="text-xs font-black text-white">{u.points} PTS</p>
-                                    <p className="text-[9px] text-gray-600 font-black uppercase tracking-widest">{u.level}</p>
+                                    <p className="text-xs font-black text-white">{u.points || 0} PTS</p>
+                                    <p className="text-[9px] text-gray-600 font-black uppercase tracking-widest">{u.level || 'Novato'}</p>
                                 </td>
                                 <td className="px-6 py-5 text-center">
                                     {u.is_active ? (

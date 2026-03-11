@@ -1,6 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
-import { Toaster } from 'react-hot-toast';
 import { useAuthStore } from './store/authStore';
 
 // Pages
@@ -32,6 +31,8 @@ import DisabledAccount from './pages/DisabledAccount';
 // Components
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
+import ToastSoundEffect from './components/ToastSoundEffect';
+import AppToaster from './components/AppToaster';
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || 'your-google-client-id.apps.googleusercontent.com';
 
@@ -41,35 +42,8 @@ function App() {
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
       <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <Toaster
-          position="bottom-center"
-          toastOptions={{
-            duration: 4000,
-            style: {
-              background: '#0d1127',
-              color: '#fff',
-              border: '1px solid rgba(56, 74, 153, 0.3)',
-              borderRadius: '1.2rem',
-              padding: '16px 24px',
-              fontSize: '1rem',
-              fontWeight: '600',
-              maxWidth: '500px',
-              backdropFilter: 'blur(10px)',
-            },
-            success: {
-              iconTheme: {
-                primary: '#28a9e0',
-                secondary: '#fff',
-              },
-            },
-            error: {
-              iconTheme: {
-                primary: '#e57b3c',
-                secondary: '#fff',
-              },
-            },
-          }}
-        />
+        <ToastSoundEffect />
+        <AppToaster />
 
         <Routes>
           {/* Ruta pública de login */}

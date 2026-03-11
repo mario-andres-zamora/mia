@@ -25,6 +25,16 @@ router.get('/:id', authMiddleware, async (req, res) => {
             return res.status(404).json({ error: 'Encuesta no encontrada' });
         }
 
+        // Buscar puntos en lesson_contents para sincronizar con la lección
+        const contentRows = await db.query(
+            "SELECT points FROM lesson_contents WHERE content_type = 'survey' AND JSON_VALUE(data, '$.survey_id') = ?",
+            [surveyId]
+        );
+
+        if (contentRows.length > 0) {
+            survey.points = contentRows[0].points;
+        }
+
         // 2. Verificar si el usuario ya respondió
         const responses = await db.query(
             'SELECT id, submitted_at FROM survey_responses WHERE user_id = ? AND survey_id = ?',
@@ -103,21 +113,32 @@ router.post('/:id/submit', authMiddleware, async (req, res) => {
         }
 
         // 4. Otorgar puntos de gamificación si es la primera vez
-        const [survey] = await connection.query('SELECT points FROM surveys WHERE id = ?', [surveyId]);
-        let pointsAwarded = 0;
+        // Buscamos los puntos definidos en lesson_contents (donde reside el survey vinculada a la lección)
+        const [contentRows] = await connection.query(
+            "SELECT points FROM lesson_contents WHERE content_type = 'survey' AND JSON_VALUE(data, '$.survey_id') = ?",
+            [surveyId]
+        );
 
-        if (survey.length > 0) {
-            pointsAwarded = survey[0].points || 0;
-            if (pointsAwarded > 0) {
-                await connection.query(
-                    'INSERT INTO user_points (user_id, points) VALUES (?, ?) ON DUPLICATE KEY UPDATE points = points + ?',
-                    [userId, pointsAwarded, pointsAwarded]
-                );
-                await connection.query(
-                    'INSERT INTO gamification_activities (user_id, activity_type, points_earned, reference_id) VALUES (?, "survey_completed", ?, ?)',
-                    [userId, pointsAwarded, surveyId]
-                );
+        let pointsAwarded = 0;
+        if (contentRows && contentRows.length > 0) {
+            pointsAwarded = contentRows[0].points;
+        } else {
+            // Fallback: Si no hay en lesson_contents (poco probable), revisar la tabla surveys
+            const [surveyRows] = await connection.query('SELECT points FROM surveys WHERE id = ?', [surveyId]);
+            if (surveyRows && surveyRows.length > 0) {
+                pointsAwarded = surveyRows[0].points || 0;
             }
+        }
+
+        if (pointsAwarded > 0) {
+            await connection.query(
+                'INSERT INTO user_points (user_id, points) VALUES (?, ?) ON DUPLICATE KEY UPDATE points = points + ?',
+                [userId, pointsAwarded, pointsAwarded]
+            );
+            await connection.query(
+                'INSERT INTO gamification_activities (user_id, activity_type, points_earned, reference_id) VALUES (?, "survey_completed", ?, ?)',
+                [userId, pointsAwarded, surveyId]
+            );
         }
 
         await connection.commit();

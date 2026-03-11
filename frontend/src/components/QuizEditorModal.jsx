@@ -198,7 +198,7 @@ export default function QuizEditorModal({ isOpen, onClose, quizId, moduleId, les
                 }
             }
 
-            toast.success('Quiz guardado correctamente');
+            toast.success('Quiz guardado correctamente', { id: 'admin-quiz-save' });
             onClose(qId);
         } catch (error) {
             console.error(error);

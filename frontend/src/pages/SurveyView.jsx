@@ -15,6 +15,29 @@ import toast from 'react-hot-toast';
 import { useNotificationStore } from '../store/notificationStore';
 import CyberCat from '../components/CyberCat';
 
+const PointsCounter = ({ target }) => {
+    const [count, setCount] = useState(0);
+
+    useEffect(() => {
+        if (target <= 0) return;
+        let start = 0;
+        const duration = 1000;
+        const increment = target / (duration / 16);
+        const timer = setInterval(() => {
+            start += increment;
+            if (start >= target) {
+                setCount(target);
+                clearInterval(timer);
+            } else {
+                setCount(Math.floor(start));
+            }
+        }, 16);
+        return () => clearInterval(timer);
+    }, [target]);
+
+    return <span>{count}</span>;
+};
+
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export default function SurveyView() {
@@ -24,15 +47,34 @@ export default function SurveyView() {
 
     const [surveyData, setSurveyData] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-    const [answers, setAnswers] = useState({}); // { questionId: { text: '', optionId: null } }
+    const [currentQuestionIndex, setCurrentQuestionIndex] = useState(() => {
+        const saved = localStorage.getItem(`survey_index_${id}`);
+        return saved ? parseInt(saved) : 0;
+    });
+    const [answers, setAnswers] = useState(() => {
+        const saved = localStorage.getItem(`survey_answers_${id}`);
+        return saved ? JSON.parse(saved) : {};
+    }); // { questionId: { text: '', optionId: null } }
     const [submitting, setSubmitting] = useState(false);
     const [completed, setCompleted] = useState(false);
     const [pointsEarned, setPointsEarned] = useState(0);
 
     useEffect(() => {
+        localStorage.setItem(`survey_answers_${id}`, JSON.stringify(answers));
+    }, [answers, id]);
+
+    useEffect(() => {
+        localStorage.setItem(`survey_index_${id}`, currentQuestionIndex.toString());
+    }, [currentQuestionIndex, id]);
+
+    useEffect(() => {
         fetchSurvey();
     }, [id]);
+
+    const playNextSound = () => {
+        const audio = new Audio('/next.mp3');
+        audio.play().catch(e => console.error('Error al reproducir audio next:', e));
+    };
 
     const fetchSurvey = async () => {
         try {
@@ -44,6 +86,7 @@ export default function SurveyView() {
                 setSurveyData(response.data);
                 if (response.data.isCompleted) {
                     setCompleted(true);
+                    setPointsEarned(response.data.survey.points || 0);
                 }
             }
         } catch (error) {
@@ -90,9 +133,13 @@ export default function SurveyView() {
                 setCompleted(true);
                 setPointsEarned(response.data.pointsAwarded || 0);
 
+                // Clear persistence
+                localStorage.removeItem(`survey_answers_${id}`);
+                localStorage.removeItem(`survey_index_${id}`);
+
                 // Actualizar store global
                 const currentUser = useAuthStore.getState().user;
-                updateUser({ 
+                updateUser({
                     points: (currentUser?.points || 0) + (response.data.pointsAwarded || 0),
                     level: response.data.newLevel || currentUser?.level
                 });
@@ -146,7 +193,7 @@ export default function SurveyView() {
 
                         {pointsEarned > 0 && (
                             <div className="inline-flex items-center gap-2 px-8 py-3 bg-secondary-500/20 border border-secondary-500/30 rounded-full text-secondary-500 font-black text-sm animate-bounce">
-                                <Star className="w-5 h-5 fill-secondary-500" /> +{pointsEarned} PUNTOS DE EXPERIENCIA
+                                <Star className="w-5 h-5 fill-secondary-500" /> +<PointsCounter target={pointsEarned} /> Puntos
                             </div>
                         )}
 
@@ -301,9 +348,10 @@ export default function SurveyView() {
                     <button
                         onClick={() => {
                             if (currentQuestion.is_required && !answers[currentQuestion.id]) {
-                                toast.error('Responde esta pregunta antes de continuar');
+                                toast.error('Responde esta pregunta antes de continuar', { id: 'survey-answer-required' });
                                 return;
                             }
+                            playNextSound();
                             setCurrentQuestionIndex(prev => prev + 1);
                         }}
                         className="flex items-center gap-2 px-10 py-4 bg-slate-800 text-white rounded-2xl font-black uppercase tracking-widest text-xs border border-white/10 hover:bg-slate-700 transition-all group"

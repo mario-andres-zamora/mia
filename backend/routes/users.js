@@ -332,24 +332,37 @@ router.post('/:id/reset', authMiddleware, adminMiddleware, async (req, res) => {
         // 3. Eliminar intentos de quiz
         await connection.query('DELETE FROM quiz_attempts WHERE user_id = ?', [userId]);
 
+        // 3.1 Eliminar respuestas de encuestas (Answers -> Responses)
+        await connection.query(
+            'DELETE FROM survey_answers WHERE response_id IN (SELECT id FROM survey_responses WHERE user_id = ?)',
+            [userId]
+        );
+        await connection.query('DELETE FROM survey_responses WHERE user_id = ?', [userId]);
+
         // 4. Eliminar certificados
         await connection.query('DELETE FROM certificates WHERE user_id = ?', [userId]);
 
         // 5. Eliminar insignias (Badges)
         await connection.query('DELETE FROM user_badges WHERE user_id = ?', [userId]);
 
-        // 6. Reiniciar puntos y nivel
-        // Obtenemos el nombre del primer nivel para el reset
+        // 6. Reiniciar puntos y nivel (Asegurando que el registro exista)
         const levels = await getLevels();
         const initialLevel = levels[0]?.name || 'Novato';
 
         await connection.query(
-            'UPDATE user_points SET points = 0, level = ?, last_updated = NOW() WHERE user_id = ?',
-            [initialLevel, userId]
+            `INSERT INTO user_points (user_id, points, level, last_updated) 
+             VALUES (?, 0, ?, NOW()) 
+             ON DUPLICATE KEY UPDATE points = 0, level = ?, last_updated = NOW()`,
+            [userId, initialLevel, initialLevel]
         );
 
         await connection.commit();
-        res.json({ success: true, message: 'El progreso del usuario ha sido reiniciado completamente' });
+        res.json({ 
+            success: true, 
+            message: 'El progreso del usuario ha sido reiniciado completamente',
+            newPoints: 0,
+            newLevel: initialLevel
+        });
     } catch (error) {
         await connection.rollback();
         console.error('Error al reiniciar usuario:', error);

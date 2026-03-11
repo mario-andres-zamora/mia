@@ -56,11 +56,31 @@ export default function QuizView() {
     const { token, updateUser } = useAuthStore();
     const [quizData, setQuizData] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-    const [answers, setAnswers] = useState({}); // { questionId: optionId }
+    const [currentQuestionIndex, setCurrentQuestionIndex] = useState(() => {
+        const saved = localStorage.getItem(`quiz_index_${id}`);
+        return saved ? parseInt(saved) : 0;
+    });
+    const [answers, setAnswers] = useState(() => {
+        const saved = localStorage.getItem(`quiz_answers_${id}`);
+        return saved ? JSON.parse(saved) : {};
+    }); // { questionId: optionId }
     const [results, setResults] = useState(null);
     const [submitting, setSubmitting] = useState(false);
-    const [startTime] = useState(Date.now());
+    const [startTime] = useState(() => {
+        const saved = localStorage.getItem(`quiz_start_${id}`);
+        if (saved) return parseInt(saved);
+        const now = Date.now();
+        localStorage.setItem(`quiz_start_${id}`, now.toString());
+        return now;
+    });
+
+    useEffect(() => {
+        localStorage.setItem(`quiz_answers_${id}`, JSON.stringify(answers));
+    }, [answers, id]);
+
+    useEffect(() => {
+        localStorage.setItem(`quiz_index_${id}`, currentQuestionIndex.toString());
+    }, [currentQuestionIndex, id]);
 
     useEffect(() => {
         fetchQuiz();
@@ -120,6 +140,11 @@ export default function QuizView() {
         }
     };
 
+    const playNextSound = () => {
+        const audio = new Audio('/next.mp3');
+        audio.play().catch(e => console.error('Error al reproducir audio next:', e));
+    };
+
     const handleOptionSelect = (questionId, optionId) => {
         if (results) return; // Prevent change after submit
         setAnswers(prev => ({ ...prev, [questionId]: optionId }));
@@ -128,7 +153,7 @@ export default function QuizView() {
     const handleSubmit = async () => {
         // Verificar que todas las preguntas tengan respuesta
         if (Object.keys(answers).length < quizData.questions.length) {
-            toast.error('Por favor responda todas las preguntas antes de enviar.');
+            toast.error('Por favor responda todas las preguntas antes de enviar.', { id: 'quiz-submit-incomplete' });
             return;
         }
 
@@ -144,6 +169,10 @@ export default function QuizView() {
 
             if (response.data.success) {
                 setResults(response.data);
+                // Clear persistence on success
+                localStorage.removeItem(`quiz_answers_${id}`);
+                localStorage.removeItem(`quiz_index_${id}`);
+                localStorage.removeItem(`quiz_start_${id}`);
 
                 // Actualizar stats globales en el store
                 if (response.data.newBalance !== undefined) {
@@ -169,7 +198,16 @@ export default function QuizView() {
                     useNotificationStore.getState().setPendingBadge(response.data.badgeAwarded);
                 }
 
-                toast.success(response.data.passed ? '¡Felicidades! Has aprobado.' : 'No has alcanzado la nota mínima.');
+                if (response.data.passed) {
+                    const audio = new Audio('/winner.mp3');
+                    audio.play().catch(e => console.error('Error al reproducir audio de victoria:', e));
+                    toast.success('¡Felicidades! Has aprobado.', { id: 'quiz-result' });
+                } else {
+                    const audio = new Audio('/failure.mp3');
+                    audio.play().catch(e => console.error('Error al reproducir audio de falla:', e));
+                    toast.error('No has alcanzado la nota mínima.', { id: 'quiz-result' });
+                }
+
                 window.scrollTo(0, 0);
             }
         } catch (error) {
@@ -234,8 +272,15 @@ export default function QuizView() {
                         </div>
 
                         {results.pointsAwarded > 0 && (
-                            <div className="inline-flex items-center gap-2 px-6 py-2 bg-secondary-500/20 border border-secondary-500/30 rounded-full text-secondary-500 font-black text-sm animate-bounce">
-                                <Star className="w-4 h-4 fill-secondary-500" /> +<PointsCounter target={results.pointsAwarded} /> PUNTOS DE EXPERIENCIA
+                            <div className="space-y-3 flex flex-col items-center">
+                                <div className="inline-flex items-center gap-2 px-6 py-2 bg-secondary-500/20 border border-secondary-500/30 rounded-full text-secondary-500 font-black text-sm animate-bounce">
+                                    <Star className="w-4 h-4 fill-secondary-500" /> +<PointsCounter target={results.pointsAwarded} /> PUNTOS DE EXPERIENCIA
+                                </div>
+                                {results.penaltyApplied > 0 && (
+                                    <p className="text-[10px] font-black text-red-500 uppercase tracking-widest flex items-center gap-1.5 bg-red-500/5 px-3 py-1 rounded-lg border border-red-500/10">
+                                        <AlertTriangle className="w-3 h-3" /> Penalización de {(results.attemptNumber - 1) * 10}% por intentos adicionales
+                                    </p>
+                                )}
                             </div>
                         )}
 
@@ -261,7 +306,7 @@ export default function QuizView() {
                             >
                                 Volver
                             </button>
-                            {!results.passed && (
+                            {!results.passed && results.attemptNumber < quiz.max_attempts && (
                                 <button
                                     onClick={() => window.location.reload()}
                                     className="px-10 py-4 bg-slate-800 text-white rounded-2xl font-black uppercase tracking-widest text-xs border border-white/10 hover:bg-slate-700 transition-all flex items-center justify-center gap-2"
@@ -274,62 +319,64 @@ export default function QuizView() {
                 </div>
 
                 {/* Question Feedback */}
-                <div className="space-y-6">
-                    <h2 className="text-xl font-black text-white uppercase tracking-tight flex items-center gap-3">
-                        <FileText className="w-6 h-6 text-primary-400" /> Revisión de Respuestas
-                    </h2>
-                    {questions.map((q, idx) => {
-                        const feedback = results.feedback.find(f => f.questionId === q.id);
-                        return (
-                            <div key={q.id} className={`card p-6 border-l-4 ${feedback.isCorrect ? 'border-green-500/50' : 'border-red-500/50'}`}>
-                                <div className="flex gap-4">
-                                    <span className="text-lg font-black text-gray-700">{(idx + 1).toString().padStart(2, '0')}</span>
-                                    <div className="space-y-4 flex-1">
-                                        <p className="text-white font-bold leading-tight">{q.question_text}</p>
-                                        {q.image_url && (
-                                            <div className="w-full max-h-48 rounded-xl overflow-hidden border border-white/5 bg-slate-950/20">
-                                                <img src={q.image_url} alt="Imagen de pregunta" className="w-full h-full object-contain" />
-                                            </div>
-                                        )}
-
-                                        <div className="grid gap-2">
-                                            {q.options.map(opt => {
-                                                const isUserAnswer = answers[q.id] === opt.id;
-                                                const isCorrect = opt.id === feedback.correctOptionId;
-
-                                                let bgColor = 'bg-slate-900/30 text-gray-400 border-white/5';
-                                                if (isCorrect) bgColor = 'bg-green-500/10 text-green-400 border-green-500/30';
-                                                else if (isUserAnswer && !isCorrect) bgColor = 'bg-red-500/10 text-red-400 border-red-500/30';
-
-                                                return (
-                                                    <div key={opt.id} className={`p-3 rounded-xl border text-xs font-medium flex items-center justify-between ${bgColor}`}>
-                                                        {opt.option_text}
-                                                        {isCorrect && <CheckCircle2 className="w-4 h-4" />}
-                                                        {isUserAnswer && !isCorrect && <XCircle className="w-4 h-4" />}
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-
-                                        {!feedback.isCorrect && (
-                                            <div className="p-4 bg-slate-900/50 rounded-xl border border-white/5 flex gap-4 items-start group">
-                                                <CyberCat
-                                                    className="w-10 h-10 shrink-0 animate-float-subtle"
-                                                    variant="panic"
-                                                    color="#ef4444"
-                                                />
-                                                <div className="space-y-1">
-                                                    <p className="text-[10px] font-black text-primary-400 uppercase tracking-widest">Explicación de la respuesta</p>
-                                                    <p className="text-xs text-gray-400 leading-relaxed font-medium">{feedback.explanation}</p>
+                {!!results.passed && (
+                    <div className="space-y-6">
+                        <h2 className="text-xl font-black text-white uppercase tracking-tight flex items-center gap-3">
+                            <FileText className="w-6 h-6 text-primary-400" /> Revisión de Respuestas
+                        </h2>
+                        {questions.map((q, idx) => {
+                            const feedback = results.feedback.find(f => f.questionId === q.id);
+                            return (
+                                <div key={q.id} className={`card p-6 border-l-4 ${feedback.isCorrect ? 'border-green-500/50' : 'border-red-500/50'}`}>
+                                    <div className="flex gap-4">
+                                        <span className="text-lg font-black text-gray-700">{(idx + 1).toString().padStart(2, '0')}</span>
+                                        <div className="space-y-4 flex-1">
+                                            <p className="text-white font-bold leading-tight">{q.question_text}</p>
+                                            {q.image_url && (
+                                                <div className="w-full max-h-48 rounded-xl overflow-hidden border border-white/5 bg-slate-950/20">
+                                                    <img src={q.image_url} alt="Imagen de pregunta" className="w-full h-full object-contain" />
                                                 </div>
+                                            )}
+
+                                            <div className="grid gap-2">
+                                                {q.options.map(opt => {
+                                                    const isUserAnswer = answers[q.id] === opt.id;
+                                                    const isCorrect = opt.id === feedback.correctOptionId;
+
+                                                    let bgColor = 'bg-slate-900/30 text-gray-400 border-white/5';
+                                                    if (isCorrect) bgColor = 'bg-green-500/10 text-green-400 border-green-500/30';
+                                                    else if (isUserAnswer && !isCorrect) bgColor = 'bg-red-500/10 text-red-400 border-red-500/30';
+
+                                                    return (
+                                                        <div key={opt.id} className={`p-3 rounded-xl border text-xs font-medium flex items-center justify-between ${bgColor}`}>
+                                                            {opt.option_text}
+                                                            {isCorrect && <CheckCircle2 className="w-4 h-4" />}
+                                                            {isUserAnswer && !isCorrect && <XCircle className="w-4 h-4" />}
+                                                        </div>
+                                                    );
+                                                })}
                                             </div>
-                                        )}
+
+                                            {!feedback.isCorrect && (
+                                                <div className="p-4 bg-slate-900/50 rounded-xl border border-white/5 flex gap-4 items-start group">
+                                                    <CyberCat
+                                                        className="w-10 h-10 shrink-0 animate-float-subtle"
+                                                        variant="panic"
+                                                        color="#ef4444"
+                                                    />
+                                                    <div className="space-y-1">
+                                                        <p className="text-[10px] font-black text-primary-400 uppercase tracking-widest">Explicación de la respuesta</p>
+                                                        <p className="text-xs text-gray-400 leading-relaxed font-medium">{feedback.explanation}</p>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        );
-                    })}
-                </div>
+                            );
+                        })}
+                    </div>
+                )}
             </div>
         );
     }
@@ -441,9 +488,10 @@ export default function QuizView() {
                     <button
                         onClick={() => {
                             if (!answers[currentQuestion.id]) {
-                                toast.error('Selecciona una opción antes de continuar');
+                                toast.error('Selecciona una opción antes de continuar', { id: 'quiz-answer-required' });
                                 return;
                             }
+                            playNextSound();
                             setCurrentQuestionIndex(prev => prev + 1);
                         }}
                         className="flex items-center gap-2 px-10 py-4 bg-slate-800 text-white rounded-2xl font-black uppercase tracking-widest text-xs border border-white/10 hover:bg-slate-700 transition-all group"

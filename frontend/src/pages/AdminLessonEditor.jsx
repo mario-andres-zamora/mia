@@ -278,7 +278,7 @@ export default function AdminLessonEditor() {
             });
 
             if (res.data.success) {
-                toast.success('Contenido vinculado a la encuesta');
+                toast.success('Contenido vinculado a la encuesta', { id: 'admin-survey-save' });
                 fetchLessonAndContents();
             }
         } catch (error) {
@@ -314,7 +314,7 @@ export default function AdminLessonEditor() {
             });
 
             if (res.data.success) {
-                toast.success('Contenido vinculado al quiz');
+                toast.success('Contenido vinculado al quiz', { id: 'admin-quiz-save' });
                 fetchLessonAndContents();
             }
         } catch (error) {
@@ -487,7 +487,7 @@ export default function AdminLessonEditor() {
                                 <div className="flex-1">
                                     <div className="flex items-center gap-2">
                                         <h3 className="font-bold text-white">{item.title}</h3>
-                                        {item.is_required && <span className="text-[9px] bg-red-500/20 text-red-400 px-2 py-0.5 rounded uppercase font-black tracking-wider">Obligatorio</span>}
+                                        {!!item.is_required && <span className="text-[9px] bg-red-500/20 text-red-400 px-2 py-0.5 rounded uppercase font-black tracking-wider">Obligatorio</span>}
                                         {item.points > 0 && <span className="text-[9px] bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded uppercase font-black tracking-wider">{item.points} PTS</span>}
                                     </div>
                                     <p className="text-xs text-gray-500 uppercase font-semibold mt-0.5">{item.content_type}</p>
@@ -503,7 +503,7 @@ export default function AdminLessonEditor() {
                                     )}
                                 </div>
 
-                                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div className="flex gap-2">
                                     {item.content_type === 'quiz' && (
                                         <button
                                             onClick={() => {

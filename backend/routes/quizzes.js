@@ -107,22 +107,8 @@ router.get('/:id', authMiddleware, async (req, res) => {
             [userId, quizId]
         );
 
-        if (attempts.count >= quiz.max_attempts) {
-            // Pero si ya aprobó, tal vez quiera ver sus resultados (o permitirle ver el quiz si es modo estudio)
-            // Por ahora, limitar estrictamente.
-            const [lastAttempt] = await db.query(
-                'SELECT passed FROM quiz_attempts WHERE user_id = ? AND quiz_id = ? ORDER BY attempt_number DESC LIMIT 1',
-                [userId, quizId]
-            );
-
-            if (!lastAttempt?.passed) {
-                return res.status(403).json({
-                    error: 'Has alcanzado el máximo de intentos permitidos para esta evaluación',
-                    attemptsMade: attempts.count,
-                    maxAttempts: quiz.max_attempts
-                });
-            }
-        }
+        // Eliminamos el bloqueo aquí para permitir que el usuario vea los resultados 
+        // o las preguntas aun si agotó intentos. El bloqueo real se hará en el submit.
 
         // 3. Obtener preguntas
         const questions = await db.query(
@@ -174,6 +160,34 @@ router.post('/:id/submit', authMiddleware, async (req, res) => {
         const [quiz] = await db.query('SELECT * FROM quizzes WHERE id = ?', [quizId]);
         if (!quiz) return res.status(404).json({ error: 'Quiz no encontrado' });
 
+        // 2. Verificar intentos previos ANTES de calificar
+        const [attempts] = await db.query(
+            'SELECT COUNT(*) as count FROM quiz_attempts WHERE user_id = ? AND quiz_id = ?',
+            [userId, quizId]
+        );
+
+        // Si ya aprobó, no necesita enviar más intentos
+        const [lastAttempt] = await db.query(
+            'SELECT passed FROM quiz_attempts WHERE user_id = ? AND quiz_id = ? ORDER BY attempt_number DESC LIMIT 1',
+            [userId, quizId]
+        );
+
+        if (lastAttempt?.passed) {
+            return res.status(200).json({ 
+                success: true, 
+                message: 'Ya has aprobado esta evaluación anteriormente.',
+                passed: true 
+            });
+        }
+
+        if (attempts.count >= quiz.max_attempts) {
+            return res.status(403).json({
+                error: 'Has alcanzado el máximo de intentos permitidos para esta evaluación',
+                attemptsMade: attempts.count,
+                maxAttempts: quiz.max_attempts
+            });
+        }
+
         // 2. Obtener respuestas correctas
         const questions = await db.query(
             `SELECT q.id, q.points, o.id as correct_option_id, q.explanation
@@ -208,10 +222,7 @@ router.post('/:id/submit', authMiddleware, async (req, res) => {
         const passed = score >= quiz.passing_score;
 
         // 3. Registrar el intento
-        const [attempts] = await db.query(
-            'SELECT COUNT(*) as count FROM quiz_attempts WHERE user_id = ? AND quiz_id = ?',
-            [userId, quizId]
-        );
+        // (ya tenemos attempts.count arriba)
 
         await db.query(
             `INSERT INTO quiz_attempts (user_id, quiz_id, attempt_number, score, passed, time_spent_minutes, started_at, completed_at, answers) 
@@ -219,50 +230,62 @@ router.post('/:id/submit', authMiddleware, async (req, res) => {
             [userId, quizId, attempts.count + 1, score, passed, timeSpent || 0, JSON.stringify(answers)]
         );
 
-        // 4. Si aprobó, dar puntos de gamificación y marcar lección/módulo como completado
+        // 4. Gamificación: Dar puntos si aprobó con la penalización correspondiente
         let pointsAwarded = 0;
+        let penaltyApplied = 0;
+
+        // Buscamos los puntos base del quiz para calcular penalización o premio
+        const settings = await getSystemSettings();
+        const contentEntries = await db.query(
+            `SELECT points FROM lesson_contents 
+             WHERE content_type = 'quiz' 
+             AND JSON_UNQUOTE(JSON_EXTRACT(data, '$.quiz_id')) = ?`,
+            [quizId]
+        );
+
+        let basePoints = 0;
+        let isCustomPoints = false;
+
+        if (contentEntries && contentEntries.length > 0 && contentEntries[0].points > 0) {
+            basePoints = contentEntries[0].points;
+            isCustomPoints = true;
+        } else {
+            basePoints = settings.points_per_quiz;
+        }
+
         if (passed) {
-            const settings = await getSystemSettings();
-
-            // Intentar obtener puntos específicos de la lección (definidos en lesson_contents)
-            const contentEntries = await db.query(
-                `SELECT points FROM lesson_contents 
-                 WHERE content_type = 'quiz' 
-                 AND JSON_UNQUOTE(JSON_EXTRACT(data, '$.quiz_id')) = ?`,
-                [quizId]
-            );
-
-            let basePoints = 0;
-            let isCustomPoints = false;
-
-            if (contentEntries && contentEntries.length > 0 && contentEntries[0].points > 0) {
-                basePoints = contentEntries[0].points;
-                isCustomPoints = true;
-            } else {
-                basePoints = settings.points_per_quiz;
-            }
-
             // Calcular puntos proporcionales: (nota / 100) * puntos_totales
             pointsAwarded = Math.round((score / 100) * basePoints);
 
-            // Bonus solo si usamos puntos globales y sacó 100
-            if (!isCustomPoints && score === 100) {
+            // Penalización por cada intento fallido previo (10% por cada uno)
+            const failedAttempts = attempts.count;
+            if (failedAttempts > 0) {
+                const penaltyFactor = Math.max(0, 1 - (failedAttempts * 0.1));
+                const originalPoints = pointsAwarded;
+                pointsAwarded = Math.round(pointsAwarded * penaltyFactor);
+                penaltyApplied = originalPoints - pointsAwarded;
+            }
+
+            // Bonus solo si usamos puntos globales y sacó 100 en el primer intento
+            if (!isCustomPoints && score === 100 && failedAttempts === 0) {
                 pointsAwarded += settings.bonus_perfect_score;
             }
 
             // Actualizar puntos del usuario
-            await db.query(
-                `INSERT INTO user_points (user_id, points) VALUES (?, ?) 
-                 ON DUPLICATE KEY UPDATE points = points + ?`,
-                [userId, pointsAwarded, pointsAwarded]
-            );
+            if (pointsAwarded > 0) {
+                await db.query(
+                    `INSERT INTO user_points (user_id, points) VALUES (?, ?) 
+                     ON DUPLICATE KEY UPDATE points = points + ?`,
+                    [userId, pointsAwarded, pointsAwarded]
+                );
 
-            // Registrar actividad
-            await db.query(
-                `INSERT INTO gamification_activities (user_id, activity_type, points_earned, reference_id) 
-                 VALUES (?, 'quiz_passed', ?, ?)`,
-                [userId, pointsAwarded, quizId]
-            );
+                // Registrar actividad
+                await db.query(
+                    `INSERT INTO gamification_activities (user_id, activity_type, points_earned, reference_id) 
+                     VALUES (?, 'quiz_passed', ?, ?)`,
+                    [userId, pointsAwarded, quizId]
+                );
+            }
         }
 
         // Sincronizar nivel
@@ -294,6 +317,7 @@ router.post('/:id/submit', authMiddleware, async (req, res) => {
             earnedPoints,
             totalPoints,
             pointsAwarded,
+            penaltyApplied,
             feedback,
             attemptNumber: attempts.count + 1,
             newBalance: updatedStats?.points || 0,

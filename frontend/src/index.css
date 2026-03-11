@@ -225,3 +225,128 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #4d5eb0;
 }
+
+/* Comic Bubble Toast Styles */
+.comic-bubble-toast {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 35px !important;
+  overflow: visible !important;
+  width: 100%;
+  max-width: 90vw;
+  justify-content: center;
+}
+
+/* La burbuja real */
+.comic-bubble-content {
+  background: #0d1127 !important;
+  color: white !important;
+  border: 4px solid white !important;
+  border-radius: 2.5rem !important;
+  padding: 25px 45px !important;
+  font-weight: 900 !important;
+  text-transform: uppercase !important;
+  font-size: 1.35rem !important;
+  position: relative !important;
+  box-shadow: none !important;
+  z-index: 10;
+  min-width: 200px;
+  max-width: 600px;
+  line-height: 1.2;
+}
+
+/* El puntero de la burbuja (Tail) */
+.comic-bubble-content::before {
+  content: "";
+  position: absolute;
+  left: -28px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 15px 30px 15px 0;
+  border-color: transparent white transparent transparent;
+}
+
+.comic-bubble-content::after {
+  content: "";
+  position: absolute;
+  left: -22px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 15px 30px 15px 0;
+  border-color: transparent #0d1127 transparent transparent;
+}
+
+/* Variantes de color para la burbuja */
+.comic-bubble-success { border-color: #22c55e !important; }
+.comic-bubble-success::before { border-color: transparent #22c55e transparent transparent !important; }
+
+.comic-bubble-error { border-color: #ef4444 !important; }
+.comic-bubble-error::before { border-color: transparent #ef4444 transparent transparent !important; }
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .comic-bubble-toast {
+    gap: 15px !important;
+    max-width: 95vw;
+  }
+  
+  .comic-bubble-content {
+    font-size: 1.1rem !important;
+    padding: 15px 25px !important;
+    border-width: 3px !important;
+    border-radius: 1.5rem !important;
+  }
+
+  /* Ajustar el CyberCat a través de la clase aplicada en AppToaster */
+  .comic-bubble-toast svg {
+    width: 60px !important;
+    height: 60px !important;
+  }
+
+  .comic-bubble-content::before {
+    left: -20px;
+    border-width: 10px 20px 10px 0;
+  }
+  .comic-bubble-content::after {
+    left: -16px;
+    border-width: 10px 20px 10px 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .comic-bubble-toast {
+    flex-direction: column !important; /* En móviles muy pequeños, apilar para ganar espacio */
+    gap: 10px !important;
+  }
+
+  .comic-bubble-content::before, 
+  .comic-bubble-content::after {
+    display: none !important; /* Quitar el rabillo en móviles para ahorrar ancho */
+  }
+
+  .comic-bubble-content {
+    font-size: 0.95rem !important;
+    text-align: center !important;
+    border-radius: 1.2rem !important;
+  }
+}
+
+@keyframes comic-pop {
+  0% { transform: scale(0.8) rotate(-2deg); opacity: 0; }
+  70% { transform: scale(1.05) rotate(1deg); }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+.animate-comic-pop {
+  animation: comic-pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}

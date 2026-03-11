@@ -321,7 +321,7 @@ export default function LessonView() {
         } catch (error) {
             console.error('Completion error:', error);
             playAlert();
-            toast.error(error.response?.data?.message || 'Error al marcar como completada');
+            toast.error(error.response?.data?.message || 'Error al marcar como completada', { id: 'lesson-completion-error' });
         } finally {
             setCompleting(false);
         }
@@ -417,13 +417,7 @@ export default function LessonView() {
                         <div className="rounded-2xl overflow-hidden border border-white/10 bg-black/20">
                             <img src={imgSrc} alt={item.title} className="w-full h-auto max-h-[600px] object-contain mx-auto" />
                         </div>
-                        <div className="p-4 bg-slate-900/50 rounded-xl border border-white/5 flex gap-4 items-center">
-                            <ImageIcon className="w-6 h-6 text-purple-400" />
-                            <div>
-                                <h4 className="text-white font-bold text-sm">{item.title}</h4>
-                                <p className="text-gray-500 text-xs">Imagen de referencia</p>
-                            </div>
-                        </div>
+
                     </div>
                 );
 
@@ -615,6 +609,7 @@ export default function LessonView() {
                                             toast.error('Evaluación no disponible todavía');
                                         }
                                     } else if (item.content_type === 'survey') {
+                                        if (item.isCompleted) return;
                                         const surveyId = data.survey_id;
                                         if (surveyId) {
                                             navigate(`/surveys/${surveyId}`);
@@ -623,15 +618,22 @@ export default function LessonView() {
                                         }
                                     }
                                 }}
+                                disabled={item.isCompleted && item.content_type === 'survey'}
                                 className={`px-8 font-black uppercase tracking-widest transition-all rounded-xl h-12 flex items-center justify-center border-2 ${item.isCompleted
-                                    ? 'bg-green-600 hover:bg-green-700 border-green-600 text-white shadow-lg shadow-green-500/20'
+                                    ? (item.content_type === 'survey'
+                                        ? 'bg-green-600/20 border-green-600/30 text-green-400 cursor-not-allowed shadow-none'
+                                        : 'bg-green-600 hover:bg-green-700 border-green-600 text-white shadow-lg shadow-green-500/20')
                                     : (item.attemptsMade >= item.maxAttempts)
                                         ? 'bg-red-600 hover:bg-red-700 border-red-600 text-white shadow-lg shadow-red-500/20'
                                         : 'btn-secondary'
                                     }`}
                             >
                                 {item.isCompleted ? (
-                                    <><Eye className="w-4 h-4 mr-2" /> Repasar Actividad</>
+                                    item.content_type === 'survey' ? (
+                                        <><CheckCircle className="w-4 h-4 mr-2" /> Encuesta Completada</>
+                                    ) : (
+                                        <><Eye className="w-4 h-4 mr-2" /> Repasar Actividad</>
+                                    )
                                 ) : (item.attemptsMade >= item.maxAttempts) ? (
                                     <><RotateCcw className="w-4 h-4 mr-2" /> Ver Resultados</>
                                 ) : (
@@ -920,8 +922,15 @@ export default function LessonView() {
                                         <div className="inline-flex items-center gap-2 px-6 py-2 bg-green-500/10 rounded-full border border-green-500/20 mt-2">
                                             <Award className="w-5 h-5 text-green-500" />
                                             <span className="text-green-400 text-xs font-black uppercase tracking-widest">
-                                                Recompensa obtenida: +
-                                                <PointsCounter target={progress?.points_earned || 0} />
+                                                TOTAL GANADO EN LECCIÓN: +
+                                                <PointsCounter target={
+                                                    contents.reduce((acc, item) => {
+                                                        if (item.isCompleted) return acc + (item.points || 0);
+                                                        if (item.content_type === 'video' && watchedVideos.has(item.id)) return acc + (item.points || 0);
+                                                        if (item.content_type === 'link' && visitedLinks.has(item.id)) return acc + (item.points || 0);
+                                                        return acc;
+                                                    }, 0) + (progress?.points_earned || 0)
+                                                } />
                                                 {" "}PTS
                                             </span>
                                         </div>
@@ -944,7 +953,7 @@ export default function LessonView() {
                                     </div>
                                 ) : (
                                     <p className="text-gray-400 text-sm font-medium">
-                                        ¿Has revisado todo el material? Marca la lección como terminada para continuar con tu progreso.
+                                        ¿Has revisado todo el material? Marca la lección como terminada para continuar a la siguiente lección.
                                     </p>
                                 )}
                                 <button

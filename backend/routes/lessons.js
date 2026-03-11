@@ -212,6 +212,28 @@ router.post('/:id/complete', authMiddleware, async (req, res) => {
             }
         }
 
+        // 0.1 Verificar Quizes obligatorios y estado de intentos
+        const quizzes = await db.query(
+            `SELECT lc.title, lc.is_required,
+             (SELECT passed FROM quiz_attempts qa WHERE qa.user_id = ? AND qa.quiz_id = JSON_VALUE(lc.data, '$.quiz_id') ORDER BY qa.attempt_number DESC LIMIT 1) as has_passed,
+             (SELECT COUNT(*) FROM quiz_attempts qa WHERE qa.user_id = ? AND qa.quiz_id = JSON_VALUE(lc.data, '$.quiz_id')) as attempts_made,
+             (SELECT max_attempts FROM quizzes q WHERE q.id = JSON_VALUE(lc.data, '$.quiz_id')) as max_attempts
+             FROM lesson_contents lc 
+             WHERE lc.lesson_id = ? AND lc.content_type = 'quiz'`,
+            [userId, userId, lessonId]
+        );
+
+        for (const quiz of quizzes) {
+            // Si es obligatorio y no ha pasado, bloquear
+            if (quiz.is_required && !quiz.has_passed) {
+                // Verificar si ya quemó todos los intentos
+                if (quiz.attempts_made >= quiz.max_attempts) {
+                    return res.status(400).json({ message: `No puedes finalizar: Has reprobado todos los intentos de "${quiz.title}".` });
+                }
+                return res.status(400).json({ message: `No puedes finalizar: Debes completar y aprobar la evaluación "${quiz.title}".` });
+            }
+        }
+
         // 1. Calcular puntos totales de la lección
         // (Suma de puntos de cada contenido + puntos base desde settings)
         const [contentPoints] = await db.query(
@@ -221,15 +243,14 @@ router.post('/:id/complete', authMiddleware, async (req, res) => {
 
         const pointsAwarded = (parseInt(contentPoints?.total) || 0);
 
-        // 2. Actualizar progreso con puntos ganados
+        // 2. Actualizar progreso
         await db.query(
             `UPDATE user_progress 
              SET status = 'completed', 
                  progress_percentage = 100, 
-                 completed_at = NOW(),
-                 points_earned = ?
+                 completed_at = NOW()
              WHERE user_id = ? AND lesson_id = ?`,
-            [pointsAwarded, userId, lessonId]
+            [userId, lessonId]
         );
 
         // 3. Sumar puntos al balance total del usuario
