@@ -358,7 +358,7 @@ router.post('/:id/reset', authMiddleware, adminMiddleware, async (req, res) => {
         await clearCache(`cache:/api/users/profile*u${userId}*`);
         await clearCache(`cache:/api/gamification/leaderboard*`);
         await clearCache(`cache:/api/modules*u${userId}*`);
-        await clearCache(`cache:/api/lessons/*u${userId}*`);
+        await clearCache(`cache:/api/lessons*u${userId}*`);
 
         await connection.beginTransaction();
 
@@ -377,6 +377,9 @@ router.post('/:id/reset', authMiddleware, adminMiddleware, async (req, res) => {
             [userId]
         );
         await connection.query('DELETE FROM survey_responses WHERE user_id = ?', [userId]);
+
+        // 3.2 Eliminar envíos de tareas (Assignments)
+        await connection.query('DELETE FROM assignment_submissions WHERE user_id = ?', [userId]);
 
         // 4. Eliminar certificados
         await connection.query('DELETE FROM certificates WHERE user_id = ?', [userId]);

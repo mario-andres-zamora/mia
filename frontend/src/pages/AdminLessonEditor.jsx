@@ -22,7 +22,8 @@ import {
     Shield,
     Type,
     List,
-    Trash
+    Trash,
+    AlertTriangle
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import QuizEditorModal from '../components/QuizEditorModal';
@@ -41,6 +42,7 @@ export default function AdminLessonEditor() {
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingItem, setEditingItem] = useState(null);
+    const [itemToDelete, setItemToDelete] = useState(null);
 
     // Modal Form State
     const [viewingAssignment, setViewingAssignment] = useState(null);
@@ -248,16 +250,22 @@ export default function AdminLessonEditor() {
         }
     };
 
-    const handleDelete = async (id) => {
-        if (!window.confirm('¿Estás seguro de eliminar este contenido?')) return;
+    const handleDelete = (id) => {
+        setItemToDelete(id);
+    };
+
+    const confirmDelete = async () => {
+        if (!itemToDelete) return;
         try {
-            await axios.delete(`${API_URL}/content/${id}`, {
+            await axios.delete(`${API_URL}/content/${itemToDelete}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             toast.success('Contenido eliminado');
-            setContents(prev => prev.filter(c => c.id !== id));
+            setContents(prev => prev.filter(c => c.id !== itemToDelete));
         } catch (error) {
             toast.error('Error al eliminar');
+        } finally {
+            setItemToDelete(null);
         }
     };
 
@@ -923,6 +931,39 @@ export default function AdminLessonEditor() {
                 lessonId={lessonId}
                 title={activeSurveyItem?.title}
             />
+
+            {/* Delete Confirmation Modal */}
+            {itemToDelete && (
+                <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+                    <div className="card w-full max-w-md bg-[#1b2341] border-slate-700 p-0 overflow-hidden shadow-2xl animate-fade-in-up">
+                        <div className="p-6 border-b border-white/5 bg-slate-900/50 flex justify-between items-center">
+                            <h2 className="text-xl font-bold text-red-400 flex items-center gap-2">
+                                <AlertTriangle className="w-6 h-6" />
+                                Confirmar Eliminación
+                            </h2>
+                            <button onClick={() => setItemToDelete(null)} className="text-gray-400 hover:text-white">✕</button>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <p className="text-gray-300">¿Estás seguro que deseas eliminar este contenido? Esta acción no se puede deshacer y borrará permanentemente cualquier archivo, enlace o cuestionario asociado de la vista del estudiante.</p>
+                            <div className="flex justify-end gap-3 pt-4">
+                                <button
+                                    onClick={() => setItemToDelete(null)}
+                                    className="px-6 py-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-all font-bold"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={confirmDelete}
+                                    className="px-6 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white transition-all font-bold flex items-center gap-2"
+                                >
+                                    <Trash className="w-4 h-4" />
+                                    Eliminar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
