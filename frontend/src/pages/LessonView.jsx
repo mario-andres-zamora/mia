@@ -954,14 +954,7 @@ export default function LessonView() {
                                             <Award className="w-5 h-5 text-green-500" />
                                             <span className="text-green-400 text-xs font-black uppercase tracking-widest">
                                                 TOTAL GANADO EN LECCIÓN: +
-                                                <PointsCounter target={
-                                                    contents.reduce((acc, item) => {
-                                                        if (item.isCompleted) return acc + (item.points || 0);
-                                                        if (item.content_type === 'video' && watchedVideos.has(item.id)) return acc + (item.points || 0);
-                                                        if (item.content_type === 'link' && visitedLinks.has(item.id)) return acc + (item.points || 0);
-                                                        return acc;
-                                                    }, 0) + (progress?.points_earned || 0)
-                                                } />
+                                                <PointsCounter target={lesson.total_points || 0} />
                                                 {" "}PTS
                                             </span>
                                         </div>
