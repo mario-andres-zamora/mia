@@ -69,7 +69,7 @@ export default function LessonContentItem({
             const isWatched = watchedVideos.has(item.id);
 
             return (
-                <div className="space-y-4">
+                <div className={`space-y-4 p-4 rounded-3xl transition-all duration-700 ${isWatched ? 'bg-green-500/5 border border-green-500/20 shadow-lg shadow-green-500/10' : 'bg-slate-800/10 border border-white/5'}`}>
                     <div className="relative aspect-video rounded-2xl overflow-hidden bg-black shadow-2xl border border-white/5 ring-1 ring-white/10 group">
                         {isYT ? (
                             <YouTubePlayer
@@ -92,25 +92,60 @@ export default function LessonContentItem({
                                 <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">Video no disponible</p>
                             </div>
                         )}
+
+                        {/* Overlays for watched state */}
+                        {isWatched && (
+                            <div className="absolute top-4 right-4 z-10 animate-fade-in">
+                                <div className="bg-green-500 text-white p-2.5 rounded-2xl shadow-xl shadow-green-500/40 border-2 border-green-400 scale-110 drop-shadow-lg">
+                                    <CheckCircle className="w-6 h-6" />
+                                </div>
+                            </div>
+                        )}
                     </div>
+                    
                     <div className="flex justify-between items-center px-2">
-                        <div className="flex flex-col">
-                            <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                                <PlayCircle className={`w-5 h-5 ${isWatched ? 'text-green-500' : 'text-blue-400'}`} />
+                        <div className="flex flex-col gap-2">
+                            <h3 className={`text-lg font-bold flex items-center gap-3 transition-all duration-500 ${isWatched ? 'text-green-400' : 'text-white'}`}>
+                                <div className={`p-2.5 rounded-xl transition-all duration-500 ${isWatched ? 'bg-green-500 text-white shadow-lg shadow-green-500/30' : 'bg-blue-500/20 text-blue-400'}`}>
+                                    <PlayCircle className="w-5 h-5" />
+                                </div>
                                 {item.title}
                             </h3>
-                            {!!item.is_required && !isWatched && (
-                                <p className="text-[10px] text-orange-400 font-black uppercase tracking-widest mt-1">
-                                    Debes ver el video completo para finalizar
-                                </p>
-                            )}
-                            {isWatched && (
-                                <p className="text-[10px] text-green-500 font-black uppercase tracking-widest mt-1 flex items-center gap-1">
-                                    <CheckCircle className="w-3 h-3" /> Video visualizado
-                                </p>
-                            )}
+                            
+                            <div className="flex items-center gap-2">
+                                {!!item.is_required && !isWatched && (
+                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-orange-500/10 text-orange-400 text-[10px] font-black uppercase tracking-widest border border-orange-500/20">
+                                        <Clock className="w-3.5 h-3.5" /> Requerido
+                                    </span>
+                                )}
+                                
+                                {isWatched ? (
+                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-green-500/20 text-green-400 text-[10px] font-black uppercase tracking-widest border border-green-500/30 animate-fade-in">
+                                        <CheckCircle className="w-3.5 h-3.5" /> ¡Video Completado!
+                                    </span>
+                                ) : (
+                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white/5 text-gray-500 text-[10px] font-black uppercase tracking-widest border border-white/5">
+                                        <Eye className="w-3.5 h-3.5" /> Pendiente
+                                    </span>
+                                )}
+                            </div>
                         </div>
-                        {item.points > 0 && <span className="text-xs font-black text-yellow-400 bg-yellow-500/10 px-3 py-1 rounded-full border border-yellow-500/20">+{item.points} PTS</span>}
+
+                        {item.points > 0 && (
+                            <div className="flex flex-col items-end gap-1.5">
+                                <div className={`relative px-5 py-2.5 rounded-2xl font-black text-sm transition-all duration-500 transform ${isWatched ? 'bg-yellow-500 text-slate-950 scale-110 shadow-[0_0_20px_rgba(234,179,8,0.4)]' : 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20'}`}>
+                                    +{item.points} XP
+                                    {isWatched && (
+                                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-white rounded-full animate-ping"></div>
+                                    )}
+                                </div>
+                                {isWatched && (
+                                    <span className="text-[10px] text-yellow-500 font-black uppercase tracking-widest animate-pulse flex items-center gap-1">
+                                        <Award className="w-3 h-3" /> ¡Ganados!
+                                    </span>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
             );
@@ -163,24 +198,51 @@ export default function LessonContentItem({
                     className="block group"
                     onClick={() => markLinkAsVisited(item.id)}
                 >
-                    <div className={`flex items-center gap-4 p-5 rounded-2xl transition-all ${isVisited ? 'bg-green-500/10 border-green-500/30 shadow-inner' : 'bg-green-500/5 border-green-500/10'} hover:bg-green-500/10 hover:border-green-500/30`}>
-                        <div className={`p-3 rounded-lg transition-colors ${isVisited ? 'bg-green-500/30 text-green-400' : 'bg-green-500/20 text-green-400'}`}>
-                            <LinkIcon className="w-6 h-6" />
+                    <div className={`flex flex-col md:flex-row items-center gap-6 p-6 rounded-3xl transition-all duration-500 border ${isVisited ? 'bg-green-500/5 border-green-500/30 shadow-lg shadow-green-500/10' : 'bg-slate-800/20 border-white/5 hover:border-green-500/30'}`}>
+                        <div className={`w-16 h-16 rounded-2xl transition-all duration-500 flex items-center justify-center flex-shrink-0 ${isVisited ? 'bg-green-500 text-white shadow-lg shadow-green-500/30 rotate-0' : 'bg-green-500/10 text-green-400 group-hover:scale-110'}`}>
+                            <LinkIcon className="w-8 h-8" />
                         </div>
-                        <div className="flex-1 min-w-0">
-                            <h4 className="text-white font-bold flex items-center gap-2 truncate">
+                        
+                        <div className="flex-1 min-w-0 text-center md:text-left">
+                            <h4 className={`text-lg font-bold flex items-center justify-center md:justify-start gap-2 transition-colors ${isVisited ? 'text-green-400' : 'text-white'}`}>
                                 {item.title}
-                                {isVisited && <CheckCircle className="w-3.5 h-3.5 text-green-500" />}
+                                {isVisited && <CheckCircle className="w-4 h-4 text-green-400 animate-pulse" />}
                             </h4>
-                            <p className="text-sm text-green-400/70 truncate">{data.url}</p>
-                            {!!item.is_required && !isVisited && (
-                                <p className="text-[10px] text-orange-400 font-black uppercase tracking-widest mt-1">
-                                    Debes visitar este enlace para finalizar
-                                </p>
-                            )}
+                            <p className="text-sm text-gray-500 truncate mt-1">{data.url}</p>
+                            
+                            <div className="flex items-center justify-center md:justify-start gap-2 mt-3">
+                                {!!item.is_required && !isVisited && (
+                                    <span className="px-3 py-1 rounded-lg bg-orange-500/10 text-orange-400 text-[10px] font-black uppercase tracking-widest border border-orange-500/20">
+                                        <Clock className="w-3.5 h-3.5 mr-1 inline" /> Requerido
+                                    </span>
+                                )}
+                                {isVisited ? (
+                                    <span className="px-3 py-1 rounded-lg bg-green-500/20 text-green-400 text-[10px] font-black uppercase tracking-widest border border-green-500/30">
+                                        <CheckCircle className="w-3.5 h-3.5 mr-1 inline" /> Visitado
+                                    </span>
+                                ) : (
+                                    <span className="px-3 py-1 rounded-lg bg-white/5 text-gray-500 text-[10px] font-black uppercase tracking-widest border border-white/5">
+                                        <Eye className="w-3.5 h-3.5 mr-1 inline" /> Pendiente
+                                    </span>
+                                )}
+                            </div>
                         </div>
-                        <div className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isVisited ? 'bg-green-500 text-white shadow-lg shadow-green-500/20' : 'bg-green-500/20 text-green-400 group-hover:bg-green-500 group-hover:text-white'}`}>
-                            {isVisited ? 'Visitado' : 'Visitar'}
+
+                        {item.points > 0 && (
+                            <div className="flex flex-col items-center md:items-end gap-1.5">
+                                <div className={`relative px-5 py-2.5 rounded-2xl font-black text-sm transition-all duration-500 transform ${isVisited ? 'bg-yellow-500 text-slate-950 scale-110 shadow-[0_0_20px_rgba(234,179,8,0.4)]' : 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20'}`}>
+                                    +{item.points} XP
+                                </div>
+                                {isVisited && (
+                                    <span className="text-[10px] text-yellow-500 font-black uppercase tracking-widest animate-pulse flex items-center gap-1">
+                                        <Award className="w-3 h-3" /> ¡Ganados!
+                                    </span>
+                                )}
+                            </div>
+                        )}
+                        
+                        <div className={`w-12 h-12 rounded-full hidden md:flex items-center justify-center transition-all ${isVisited ? 'bg-green-500 text-white' : 'bg-white/5 text-gray-400 group-hover:bg-green-500 group-hover:text-white'}`}>
+                            {isVisited ? <CheckCircle className="w-6 h-6" /> : <Zap className="w-6 h-6 animate-pulse" />}
                         </div>
                     </div>
                 </a>
