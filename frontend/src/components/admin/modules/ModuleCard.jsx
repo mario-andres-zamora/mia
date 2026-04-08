@@ -16,6 +16,7 @@ export default function ModuleCard({
     onEditLesson,
     onDeleteLesson,
     onToggleLessonOptional,
+    onToggleLessonPublish,
     onOpenLessonEditor,
     onNewResource,
     onEditResource,
@@ -152,6 +153,7 @@ export default function ModuleCard({
                         onEditLesson={(lesson) => onEditLesson(module.id, lesson)}
                         onDeleteLesson={(lesson) => onDeleteLesson(lesson)}
                         onToggleOptional={onToggleLessonOptional}
+                        onTogglePublish={onToggleLessonPublish}
                         onOpenEditor={onOpenLessonEditor}
                         onReorderLessons={(orderedIds) => onReorderLessons(module.id, orderedIds)}
                         loading={contentLoading}

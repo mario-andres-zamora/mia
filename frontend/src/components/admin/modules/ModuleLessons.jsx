@@ -1,4 +1,4 @@
-import { Plus, CheckCircle2, Clock, Award, Target, Edit2, Trash2, ExternalLink, BookOpen, ChevronUp, ChevronDown } from 'lucide-react';
+import { Plus, CheckCircle2, Clock, Award, Target, Edit2, Trash2, Eye, EyeOff, ExternalLink, BookOpen, ChevronUp, ChevronDown } from 'lucide-react';
 
 export default function ModuleLessons({
     lessons,
@@ -6,6 +6,7 @@ export default function ModuleLessons({
     onEditLesson,
     onDeleteLesson,
     onToggleOptional,
+    onTogglePublish,
     onOpenEditor,
     onReorderLessons,
     loading
@@ -123,6 +124,13 @@ export default function ModuleLessons({
                                     </div>
 
                                     <div className="flex items-center gap-1 bg-slate-950 p-1.5 rounded-2xl border border-white/5">
+                                        <button
+                                            onClick={() => onTogglePublish(lesson)}
+                                            className={`p-2 rounded-xl transition-all ${lesson.is_published ? 'text-emerald-500 hover:bg-emerald-500/10' : 'text-gray-500 hover:text-white hover:bg-slate-800'}`}
+                                            title={lesson.is_published ? 'Desactivar' : 'Activar'}
+                                        >
+                                            {lesson.is_published ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                                        </button>
                                         <button
                                             onClick={() => onEditLesson(lesson)}
                                             className="p-2 text-gray-600 hover:text-white hover:bg-slate-800 rounded-xl transition-all group/btn"

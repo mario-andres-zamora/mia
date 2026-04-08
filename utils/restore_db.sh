@@ -22,13 +22,13 @@ if [ -n "$ENV_FILE" ]; then
     done < "$ENV_FILE"
 fi
 
-# Variables de la BD (deben estar en .env)
+# Variables de la BD (Usamos ROOT para restaurar con plenos permisos)
 DB_NAME=${DB_NAME}
-DB_USER=${DB_USER}
-DB_PASS=${DB_PASSWORD}
+DB_USER="root"
+DB_PASS=${MYSQL_ROOT_PASSWORD}
 
-if [ -z "$DB_NAME" ] || [ -z "$DB_USER" ] || [ -z "$DB_PASS" ]; then
-    echo "ERROR: Faltan variables de base de datos en el archivo .env (DB_NAME, DB_USER, DB_PASSWORD)"
+if [ -z "$DB_NAME" ] || [ -z "$DB_PASS" ]; then
+    echo "ERROR: Faltan variables de base de datos en el archivo .env (DB_NAME, MYSQL_ROOT_PASSWORD)"
     exit 1
 fi
 
@@ -48,6 +48,7 @@ echo "Archivo detectado: $LATEST_BACKUP"
 
 # 4. Restaurar el archivo SQL
 echo "Iniciando restauracion..."
+# No usamos -h para conectar por socket local
 docker exec -i $CONTAINER_NAME mariadb -u $DB_USER -p$DB_PASS $DB_NAME < "$LATEST_BACKUP"
 
 # 5. Verificar resultado

@@ -264,6 +264,23 @@ export function useAdminModules() {
         }
     };
 
+    const toggleLessonPublish = async (lesson) => {
+        try {
+            const response = await axios.put(`${API_URL}/lessons/${lesson.id}`, {
+                ...lesson,
+                is_published: !lesson.is_published
+            });
+            
+            if (response.data.success) {
+                setModuleLessons(prev => prev.map(l => l.id === lesson.id ? { ...l, is_published: !l.is_published } : l));
+                toast.success(lesson.is_published ? 'Lección movida a borradores' : 'Lección publicada correctamente');
+                fetchAdminModules();
+            }
+        } catch (error) {
+            toast.error('Error al actualizar el estado de publicación');
+        }
+    };
+
     // --- Resource Operations ---
     const handleOpenResourceModal = (moduleId, resource = null) => {
         if (resource) {
@@ -409,6 +426,7 @@ export function useAdminModules() {
         handleSaveLesson,
         confirmDeleteLesson,
         toggleLessonOptional,
+        toggleLessonPublish,
 
         // Resource UI
         isResourceModalOpen,

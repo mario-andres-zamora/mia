@@ -80,6 +80,25 @@ export default function LessonModal({
                         </div>
                     </div>
 
+                    {/* Toggles Group */}
+                    <div className="grid grid-cols-2 gap-4 pb-2">
+                        {[
+                            { id: 'is_published', label: 'Publicado', color: 'bg-emerald-500' },
+                            { id: 'is_optional', label: 'Opcional', color: 'bg-indigo-500' }
+                        ].map(toggle => (
+                            <div key={toggle.id} className="flex items-center justify-between p-3 bg-slate-950/30 rounded-xl border border-white/5">
+                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tight">{toggle.label}</span>
+                                <button
+                                    type="button"
+                                    onClick={() => setFormData({ ...formData, [toggle.id]: !formData[toggle.id] })}
+                                    className={`relative w-9 h-5 rounded-full transition-colors duration-200 outline-none ${formData[toggle.id] ? toggle.color : 'bg-slate-800'}`}
+                                >
+                                    <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all duration-200 shadow-sm ${formData[toggle.id] ? 'left-5' : 'left-1'}`}></div>
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+
                     {/* Actions */}
                     <div className="flex gap-4 pt-4 border-t border-white/5">
                         <button
