@@ -20,10 +20,10 @@ export default function ModuleLessons({
         [newLessons[index], newLessons[targetIndex]] = [newLessons[targetIndex], newLessons[index]];
         
         const orderedIds = newLessons.map(l => l.id);
-        const moduleId = lessons[0].module_id;
         
-        onReorderLessons(moduleId, orderedIds);
+        onReorderLessons(orderedIds);
     };
+
     return (
         <div className="animate-slide-up bg-slate-950/20 p-6 md:p-8 rounded-3xl border border-white/5">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">

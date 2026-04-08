@@ -153,7 +153,7 @@ export default function ModuleCard({
                         onDeleteLesson={(lesson) => onDeleteLesson(lesson)}
                         onToggleOptional={onToggleLessonOptional}
                         onOpenEditor={onOpenLessonEditor}
-                        onReorderLessons={onReorderLessons}
+                        onReorderLessons={(orderedIds) => onReorderLessons(module.id, orderedIds)}
                         loading={contentLoading}
                     />
 

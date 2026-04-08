@@ -64,6 +64,26 @@ class LessonController {
         }
     }
 
+    async reorderLessons(req, res) {
+        try {
+            const { moduleId, orderedIds } = req.body;
+            logger.info(`Reordenando lecciones para módulo ${moduleId}:`, orderedIds);
+            
+            if (!moduleId || !orderedIds) {
+                return res.status(400).json({ error: 'Faltan parámetros requeridos (moduleId, orderedIds)' });
+            }
+
+            await clearCache('cache:/api/modules*');
+            await clearCache('cache:/api/lessons*');
+
+            await lessonService.reorderLessons(moduleId, orderedIds);
+            res.json({ success: true, message: 'Lecciones reordenadas con éxito' });
+        } catch (error) {
+            logger.error('Error reordenando lecciones:', error);
+            res.status(500).json({ error: error.message || 'Error al reordenar lecciones' });
+        }
+    }
+
     async deleteLesson(req, res) {
         try {
             const lessonId = req.params.id;
