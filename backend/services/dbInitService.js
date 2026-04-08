@@ -1,5 +1,5 @@
-const db = require('./config/database');
-const logger = require('./config/logger');
+const db = require('../config/database');
+const logger = require('../config/logger');
 
 const initializeDatabase = async () => {
     try {
