@@ -14,6 +14,18 @@ class LessonContentController {
         }
     }
 
+    async trackProgress(req, res) {
+        try {
+            const { id } = req.params;
+            const userId = req.user.id;
+            await lessonContentService.trackContentProgress(id, userId);
+            res.json({ success: true, message: 'Progreso registrado' });
+        } catch (error) {
+            logger.error('Error registrando progreso de contenido:', error);
+            res.status(500).json({ error: 'Error al registrar progreso' });
+        }
+    }
+
     async submitAssignment(req, res) {
         try {
             if (!req.file) return res.status(400).json({ error: 'Se requiere un archivo' });

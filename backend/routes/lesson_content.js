@@ -45,6 +45,13 @@ router.get('/lesson/:lessonId', authMiddleware, lessonContentController.getLesso
 router.post('/assignment/:contentId/submit', authMiddleware, upload.single('file'), lessonContentController.submitAssignment);
 
 /**
+ * @route   POST /api/content/:id/trace
+ * @desc    Registrar progreso de un contenido (video/link)
+ * @access  Private
+ */
+router.post('/:id/trace', authMiddleware, lessonContentController.trackProgress);
+
+/**
  * @route   GET /api/content/assignments/all-submissions
  * @desc    Get all assignment submissions across all lessons
  * @access  Private/Admin

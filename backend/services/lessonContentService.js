@@ -14,9 +14,10 @@ class LessonContentService {
                 asub.submitted_at as asub_submitted_at
              FROM lesson_contents lc
              LEFT JOIN assignment_submissions asub ON asub.content_id = lc.id AND asub.user_id = ?
+             LEFT JOIN user_content_progress ucp ON ucp.content_id = lc.id AND ucp.user_id = ?
              WHERE lc.lesson_id = ?
              ORDER BY lc.order_index ASC`,
-            [userId, lessonId]
+            [userId, userId, lessonId]
         );
 
         const passedQuizzes = await db.query('SELECT DISTINCT quiz_id FROM quiz_attempts WHERE user_id = ? AND passed = TRUE', [userId]);
@@ -56,11 +57,13 @@ class LessonContentService {
                 isCompleted = passedQuizIds.includes(qId);
                 attemptsMade = attemptsMap[qId] || 0;
                 maxAttempts = maxAttemptsMap[qId] || 3;
-            } else if (item.content_type === 'survey' && itemData.survey_id) {
+            } else if (itemData.survey_id && item.content_type === 'survey') {
                 const sId = parseInt(itemData.survey_id);
                 isCompleted = completedSurveyIds.includes(sId);
             } else if (item.content_type === 'assignment') {
                 isCompleted = item.asub_status === 'approved';
+            } else if (item.content_type === 'video' || item.content_type === 'link') {
+                isCompleted = !!item.completed_at;
             }
 
             return {
@@ -78,6 +81,13 @@ class LessonContentService {
                 maxAttempts
             };
         });
+    }
+
+    async trackContentProgress(contentId, userId) {
+        return await db.query(
+            'INSERT IGNORE INTO user_content_progress (user_id, content_id) VALUES (?, ?)',
+            [userId, contentId]
+        );
     }
 
     async submitAssignment(contentId, userId, file) {

@@ -49,7 +49,20 @@ export function useLessonView() {
                 }
             }
             if (contentRes.data.success) {
-                setContents(contentRes.data.contents);
+                const fetchedContents = contentRes.data.contents;
+                setContents(fetchedContents);
+
+                // Sincronizar estados locales de visualización
+                const watched = new Set();
+                const visited = new Set();
+                fetchedContents.forEach(item => {
+                    if (item.isCompleted) {
+                        if (item.content_type === 'video') watched.add(item.id);
+                        if (item.content_type === 'link') visited.add(item.id);
+                    }
+                });
+                setWatchedVideos(watched);
+                setVisitedLinks(visited);
             }
         } catch (error) {
             const errorData = error.response?.data;
@@ -113,22 +126,42 @@ export function useLessonView() {
         }
     };
 
-    const markVideoAsWatched = (videoId) => {
-        setWatchedVideos(prev => {
-            const next = new Set(prev);
-            next.add(videoId);
-            return next;
-        });
-        playAlert();
-        toast.success("¡Video completado!");
+    const markVideoAsWatched = async (videoId) => {
+        if (watchedVideos.has(videoId)) return;
+        
+        try {
+            await axios.post(`${API_URL}/content/${videoId}/trace`, {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            
+            setWatchedVideos(prev => {
+                const next = new Set(prev);
+                next.add(videoId);
+                return next;
+            });
+            playAlert();
+            toast.success("¡Video completado!");
+        } catch (error) {
+            console.error('Error marking video as watched:', error);
+        }
     };
 
-    const markLinkAsVisited = (linkId) => {
-        setVisitedLinks(prev => {
-            const next = new Set(prev);
-            next.add(linkId);
-            return next;
-        });
+    const markLinkAsVisited = async (linkId) => {
+        if (visitedLinks.has(linkId)) return;
+
+        try {
+            await axios.post(`${API_URL}/content/${linkId}/trace`, {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            setVisitedLinks(prev => {
+                const next = new Set(prev);
+                next.add(linkId);
+                return next;
+            });
+        } catch (error) {
+            console.error('Error marking link as visited:', error);
+        }
     };
 
     const handleResourceDownload = async (resourceId, title) => {
