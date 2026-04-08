@@ -59,6 +59,9 @@ app.use((req, res, next) => {
 
 // Middlewares generales (CORS debe ir primero)
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || '').split(',').map(o => o.trim()).filter(Boolean);
+if (process.env.FRONTEND_URL) {
+    allowedOrigins.push(process.env.FRONTEND_URL.trim());
+}
 
 app.use(cors({
     origin: (origin, callback) => {
