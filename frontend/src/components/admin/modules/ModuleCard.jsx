@@ -16,6 +16,7 @@ export default function ModuleCard({
     onEditLesson,
     onDeleteLesson,
     onToggleLessonOptional,
+    onOpenLessonEditor,
     onNewResource,
     onEditResource,
     onDeleteResource,
