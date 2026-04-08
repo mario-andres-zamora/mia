@@ -34,7 +34,7 @@ Write-Host "------------------------------------------------------------"
 Write-Host "Iniciando proceso de restauracion..."
 
 # 3. Buscar el respaldo mas reciente (.sql)
-$LatestBackup = Get-ChildItem -Path $BackupPath -Filter "respaldo_${DbName}_*.sql" | 
+$LatestBackup = Get-ChildItem -Path $BackupPath -Filter "*_respaldo_${DbName}_*.sql" | 
 Sort-Object LastWriteTime -Descending | 
 Select-Object -First 1
 

@@ -34,8 +34,17 @@ if ([string]::IsNullOrWhiteSpace($DbName) -or [string]::IsNullOrWhiteSpace($DbPa
     exit
 }
 
+# 3. Calcular Correlativo
+$NextNumber = 1
+$ExistingBackups = Get-ChildItem -Path $BackupPath -Filter "*_respaldo_*.sql"
+if ($ExistingBackups) {
+    $LastNumber = $ExistingBackups | ForEach-Object { if ($_.Name -match "^(\d+)_") { [int]$matches[1] } } | Sort-Object -Descending | Select-Object -First 1
+    if ($LastNumber) { $NextNumber = $LastNumber + 1 }
+}
+$Prefix = $NextNumber.ToString("0000")
+
 $Timestamp = Get-Date -Format "yyyy-MM-dd_HH-mm-ss"
-$FileName = "respaldo_${DbName}_${Timestamp}.sql"
+$FileName = "${Prefix}_respaldo_${DbName}_${Timestamp}.sql"
 $FullBackupPath = Join-Path $BackupPath $FileName
 
 Write-Host "------------------------------------------------------------"
@@ -48,17 +57,42 @@ try {
     cmd /c $Command
     
     if (Test-Path $FullBackupPath) {
-        Write-Host "Respaldo completado exitosamente: $FullBackupPath"
+        Write-Host "Respaldo de BD completado exitosamente."
         
-        # 4. Limpieza de respaldos antiguos
+        # 4. Respaldar carpeta de uploads
+        $UploadsPath = ""
+        if (Test-Path "../uploads") { $UploadsPath = "../uploads" }
+        elseif (Test-Path "uploads") { $UploadsPath = "uploads" }
+
+        if ($UploadsPath) {
+            Write-Host "Respaldando carpeta de uploads..."
+            $UploadsFileName = "${Prefix}_respaldo_uploads_${Timestamp}.zip"
+            $FullUploadsZipPath = Join-Path $BackupPath $UploadsFileName
+            Compress-Archive -Path $UploadsPath -DestinationPath $FullUploadsZipPath -Force
+            Write-Host "Respaldo de uploads completado: $FullUploadsZipPath"
+        }
+
+        # 5. Limpieza de respaldos antiguos
         Write-Host "Limpiando respaldos antiguos (manteniendo ultimos $MaxBackups)..."
-        $OldBackups = Get-ChildItem -Path $BackupPath -Filter "respaldo_${DbName}_*.sql" | 
+        
+        # BD
+        $OldBackups = Get-ChildItem -Path $BackupPath -Filter "*_respaldo_${DbName}_*.sql" | 
         Sort-Object LastWriteTime -Descending | 
         Select-Object -Skip $MaxBackups
         
         if ($OldBackups) {
             $OldBackups | Remove-Item -Force
-            Write-Host "Se eliminaron $($OldBackups.Count) respaldos antiguos"
+            Write-Host "Se eliminaron $($OldBackups.Count) respaldos de BD antiguos"
+        }
+
+        # Uploads
+        $OldUploadBackups = Get-ChildItem -Path $BackupPath -Filter "*_respaldo_uploads_*.zip" | 
+        Sort-Object LastWriteTime -Descending | 
+        Select-Object -Skip $MaxBackups
+        
+        if ($OldUploadBackups) {
+            $OldUploadBackups | Remove-Item -Force
+            Write-Host "Se eliminaron $($OldUploadBackups.Count) respaldos de uploads antiguos"
         }
     }
 }

@@ -28,8 +28,17 @@ if [ -z "$DB_NAME" ] || [ -z "$DB_PASS" ]; then
     echo "ERROR: Faltan variables de base de datos en el archivo .env (DB_NAME, MYSQL_ROOT_PASSWORD)"
     exit 1
 fi
+# 3. Calcular Correlativo
+NEXT_NUMBER=1
+LAST_BACKUP=$(ls -1 $BACKUP_PATH 2>/dev/null | grep '^[0-9]\{4\}_respaldo_.*\.sql$' | sort -V | tail -n 1)
+if [ -n "$LAST_BACKUP" ]; then
+    LAST_NUMBER=$(echo $LAST_BACKUP | cut -d'_' -f1)
+    NEXT_NUMBER=$((10#$LAST_NUMBER + 1))
+fi
+PREFIX=$(printf "%04d" $NEXT_NUMBER)
+
 TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
-FILENAME="respaldo_${DB_NAME}_${TIMESTAMP}.sql"
+FILENAME="${PREFIX}_respaldo_${DB_NAME}_${TIMESTAMP}.sql"
 
 echo "------------------------------------------------------------"
 echo "Iniciando respaldo de base de datos: $DB_NAME"
@@ -45,9 +54,25 @@ else
     exit 1
 fi
 
-# 5. Limpieza (Mantiene solo los últimos $MAX_BACKUPS)
+# 5. Respaldar carpeta de uploads
+UPLOADS_PATH=""
+if [ -d "../uploads" ]; then
+    UPLOADS_PATH="../uploads"
+elif [ -d "uploads" ]; then
+    UPLOADS_PATH="uploads"
+fi
+
+if [ -n "$UPLOADS_PATH" ]; then
+    echo "Respaldando carpeta de uploads..."
+    UPLOADS_FILENAME="${PREFIX}_respaldo_uploads_${TIMESTAMP}.tar.gz"
+    tar -czf "$BACKUP_PATH/$UPLOADS_FILENAME" "$UPLOADS_PATH"
+    echo "Respaldo de uploads completado: $BACKUP_PATH/$UPLOADS_FILENAME"
+fi
+
+# 6. Limpieza (Mantiene solo los últimos $MAX_BACKUPS)
 echo "Limpiando respaldos antiguos (manteniendo los últimos $MAX_BACKUPS)..."
-ls -t $BACKUP_PATH/respaldo_${DB_NAME}_*.sql | tail -n +$((MAX_BACKUPS + 1)) | xargs -r rm
+ls -t $BACKUP_PATH/[0-9][0-9][0-9][0-9]_respaldo_${DB_NAME}_*.sql 2>/dev/null | tail -n +$((MAX_BACKUPS + 1)) | xargs -r rm
+ls -t $BACKUP_PATH/[0-9][0-9][0-9][0-9]_respaldo_uploads_*.tar.gz 2>/dev/null | tail -n +$((MAX_BACKUPS + 1)) | xargs -r rm
 
 echo "Proceso finalizado."
 echo "------------------------------------------------------------"

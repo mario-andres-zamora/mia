@@ -29,7 +29,7 @@ echo "------------------------------------------------------------"
 echo "Iniciando proceso de restauracion..."
 
 # 3. Buscar el respaldo mas reciente (.sql)
-LATEST_BACKUP=$(ls -t $BACKUP_PATH/respaldo_${DB_NAME}_*.sql 2>/dev/null | head -n 1)
+LATEST_BACKUP=$(ls -t $BACKUP_PATH/*_respaldo_${DB_NAME}_*.sql 2>/dev/null | head -n 1)
 
 if [ -z "$LATEST_BACKUP" ]; then
     echo "ERROR: No se encontro ningun archivo de respaldo .sql en $BACKUP_PATH"
