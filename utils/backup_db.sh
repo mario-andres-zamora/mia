@@ -15,6 +15,8 @@ mkdir -p $BACKUP_PATH
 # 2. Cargar variables desde el archivo .env si existe
 if [ -f .env ]; then
     export $(grep -v '^#' .env | xargs)
+elif [ -f ../.env ]; then
+    export $(grep -v '^#' ../.env | xargs)
 fi
 
 # Variables de la BD (deben estar en .env)

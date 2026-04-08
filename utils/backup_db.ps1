@@ -17,11 +17,15 @@ $DbName = "cgr_lms"
 $DbUser = "root"
 $DbPass = $null
 
-if (Test-Path ".env") {
-    Get-Content ".env" | Where-Object { $_ -match "^[^#].+=.+" } | ForEach-Object {
+$EnvPath = ""
+if (Test-Path ".env") { $EnvPath = ".env" }
+elseif (Test-Path "../.env") { $EnvPath = "../.env" }
+
+if ($EnvPath) {
+    Get-Content $EnvPath | Where-Object { $_ -match "^[^#].+=.+" } | ForEach-Object {
         $key, $value = $_.Split('=', 2)
-        if ($key -eq "DB_NAME") { $DbName = $value.Trim() }
-        if ($key -eq "MYSQL_ROOT_PASSWORD") { $DbPass = $value.Trim() }
+        if ($key.Trim() -eq "DB_NAME") { $DbName = $value.Trim() }
+        if ($key.Trim() -eq "MYSQL_ROOT_PASSWORD") { $DbPass = $value.Trim() }
     }
 }
 
