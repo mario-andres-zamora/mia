@@ -1,0 +1,67 @@
+import React from 'react';
+import { FileText, CheckCircle2, XCircle } from 'lucide-react';
+import CyberCat from '../CyberCat';
+
+export default function QuizReview({ results, questions, userAnswers }) {
+    if (!results.passed || !results.feedback || !Array.isArray(results.feedback)) return null;
+
+    return (
+        <div className="space-y-6">
+            <h2 className="text-xl font-black text-white uppercase tracking-tight flex items-center gap-3">
+                <FileText className="w-6 h-6 text-primary-400" /> Revisión de Respuestas
+            </h2>
+            {questions.map((q, idx) => {
+                const feedback = results.feedback.find(f => f.questionId === q.id);
+                if (!feedback) return null;
+                return (
+                    <div key={q.id} className={`card p-6 border-l-4 ${feedback.isCorrect ? 'border-green-500/50' : 'border-red-500/50'}`}>
+                        <div className="flex gap-4">
+                            <span className="text-lg font-black text-gray-700">{(idx + 1).toString().padStart(2, '0')}</span>
+                            <div className="space-y-4 flex-1">
+                                <p className="text-white font-bold leading-tight text-left">{q.question_text}</p>
+                                {q.image_url && (
+                                    <div className="w-full max-h-48 rounded-xl overflow-hidden border border-white/5 bg-slate-950/20">
+                                        <img src={q.image_url} alt="Imagen de pregunta" className="w-full h-full object-contain mx-auto" />
+                                    </div>
+                                )}
+
+                                <div className="grid gap-2">
+                                    {q.options.map(opt => {
+                                        const isUserAnswer = userAnswers[q.id] === opt.id;
+                                        const isCorrect = opt.id === feedback.correctOptionId;
+
+                                        let bgColor = 'bg-slate-900/30 text-gray-400 border-white/5';
+                                        if (isCorrect) bgColor = 'bg-green-500/10 text-green-400 border-green-500/30';
+                                        else if (isUserAnswer && !isCorrect) bgColor = 'bg-red-500/10 text-red-400 border-red-500/30';
+
+                                        return (
+                                            <div key={opt.id} className={`p-3 rounded-xl border text-xs font-medium flex items-center justify-between ${bgColor}`}>
+                                                {opt.option_text}
+                                                {isCorrect && <CheckCircle2 className="w-4 h-4" />}
+                                                {isUserAnswer && !isCorrect && <XCircle className="w-4 h-4" />}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+
+                                {!feedback.isCorrect && (
+                                    <div className="p-4 bg-slate-900/50 rounded-xl border border-white/5 flex gap-4 items-start group">
+                                        <CyberCat
+                                            className="w-10 h-10 shrink-0 animate-float-subtle"
+                                            variant="panic"
+                                            color="#ef4444"
+                                        />
+                                        <div className="space-y-1 text-left">
+                                            <p className="text-[10px] font-black text-primary-400 uppercase tracking-widest">Explicación de la respuesta</p>
+                                            <p className="text-xs text-gray-400 leading-relaxed font-medium">{feedback.explanation}</p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                );
+            })}
+        </div>
+    );
+}

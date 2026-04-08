@@ -2,6 +2,7 @@ const { OAuth2Client } = require('google-auth-library');
 const axios = require('axios');
 const db = require('../config/database');
 const logger = require('../config/logger');
+const AppError = require('../utils/appError');
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -96,6 +97,10 @@ class AuthService {
             // Recargar datos actualizados
             const updatedUserResults = await db.query('SELECT * FROM users WHERE id = ?', [user.id]);
             user = updatedUserResults[0];
+        }
+
+        if (!user.is_active) {
+            throw new AppError('Su cuenta ha sido desactivada. Contacte al administrador.', 403);
         }
 
         return user;

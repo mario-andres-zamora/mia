@@ -1,0 +1,104 @@
+const lessonContentService = require('../services/lessonContentService');
+const logger = require('../config/logger');
+
+class LessonContentController {
+    async getLessonContents(req, res) {
+        try {
+            const { lessonId } = req.params;
+            const userId = req.user.id;
+            const contents = await lessonContentService.getLessonContents(lessonId, userId);
+            res.json({ success: true, contents });
+        } catch (error) {
+            logger.error('Error obteniendo contenidos:', error);
+            res.status(500).json({ error: 'Error al cargar contenidos' });
+        }
+    }
+
+    async submitAssignment(req, res) {
+        try {
+            if (!req.file) return res.status(400).json({ error: 'Se requiere un archivo' });
+            const fileUrl = await lessonContentService.submitAssignment(req.params.contentId, req.user.id, req.file);
+            res.json({ success: true, message: 'Tarea enviada correctamente', file_url: fileUrl });
+        } catch (error) {
+            logger.error('Error enviando tarea:', error);
+            res.status(500).json({ error: 'Error al enviar tarea' });
+        }
+    }
+
+    async getAllSubmissions(req, res) {
+        try {
+            const submissions = await lessonContentService.getAllSubmissions();
+            res.json({ success: true, submissions });
+        } catch (error) {
+            logger.error('Error obteniendo todas las entregas:', error);
+            res.status(500).json({ error: 'Error al cargar las entregas' });
+        }
+    }
+
+    async getSubmissionsByContent(req, res) {
+        try {
+            const submissions = await lessonContentService.getSubmissionsByContent(req.params.contentId);
+            res.json({ success: true, submissions });
+        } catch (error) {
+            logger.error('Error obteniendo entregas por contenido:', error);
+            res.status(500).json({ error: 'Error al cargar entregas' });
+        }
+    }
+
+    async gradeSubmission(req, res) {
+        try {
+            await lessonContentService.gradeSubmission(req.params.submissionId, req.body);
+            res.json({ success: true, message: 'Entrega evaluada correctamente' });
+        } catch (error) {
+            logger.error('Error evaluando entrega:', error);
+            res.status(500).json({ error: 'Error al evaluar entrega' });
+        }
+    }
+
+    async createContent(req, res) {
+        try {
+            const result = await lessonContentService.createContent(req.body, req.file);
+            res.status(201).json({
+                success: true,
+                message: 'Contenido agregado correctamente',
+                contentId: result.id,
+                fileUrl: result.fileUrl
+            });
+        } catch (error) {
+            logger.error('Error creando contenido:', error);
+            res.status(500).json({ error: 'Error al crear contenido' });
+        }
+    }
+
+    async updateContent(req, res) {
+        try {
+            await lessonContentService.updateContent(req.params.id, req.body, req.file);
+            res.json({ success: true, message: 'Contenido actualizado correctamente' });
+        } catch (error) {
+            logger.error('Error actualizando contenido:', error);
+            res.status(500).json({ error: 'Error al actualizar contenido' });
+        }
+    }
+
+    async deleteContent(req, res) {
+        try {
+            await lessonContentService.deleteContent(req.params.id);
+            res.json({ success: true, message: 'Contenido eliminado correctamente' });
+        } catch (error) {
+            logger.error('Error eliminando contenido:', error);
+            res.status(500).json({ error: 'Error al eliminar contenido' });
+        }
+    }
+
+    async reorderContents(req, res) {
+        try {
+            await lessonContentService.reorderContents(req.body.items);
+            res.json({ success: true, message: 'Orden actualizado' });
+        } catch (error) {
+            logger.error('Error reordenando contenido:', error);
+            res.status(500).json({ error: 'Error al reordenar' });
+        }
+    }
+}
+
+module.exports = new LessonContentController();

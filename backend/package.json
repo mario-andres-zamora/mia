@@ -24,6 +24,7 @@
         "cors": "^2.8.5",
         "dotenv": "^16.3.1",
         "express": "^4.18.2",
+        "express-prometheus-middleware": "^1.2.0",
         "express-rate-limit": "^7.1.5",
         "express-session": "^1.17.3",
         "express-validator": "^7.0.1",
@@ -36,8 +37,11 @@
         "mysql2": "^3.6.5",
         "nodemailer": "^6.9.7",
         "pdfkit": "^0.14.0",
+        "prom-client": "^13.2.0",
         "redis": "^4.6.11",
-        "winston": "^3.11.0"
+        "uuid": "^9.0.1",
+        "winston": "^3.11.0",
+        "xss": "^1.0.15"
     },
     "devDependencies": {
         "jest": "^29.7.0",

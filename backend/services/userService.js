@@ -29,15 +29,36 @@ class UserService {
     }
 
     /**
-     * Actualiza un usuario (Admin)
+     * Actualiza un usuario (Admin) - Implementación con soporte de actualización parcial (Hardening)
      */
     async updateUser(userId, data) {
-        const { role, department, position, is_active } = data;
+        // En MySQL/MariaDB, COALESCE(?, column) mantendrá el valor actual si el primer parámetro es NULL
+        // El driver mysql2 mapea 'undefined' a NULL automáticamente.
         await db.query(
             `UPDATE users 
-             SET role = ?, department = ?, position = ?, is_active = ?
+             SET role = COALESCE(?, role), 
+                 department = COALESCE(?, department), 
+                 position = COALESCE(?, position), 
+                 is_active = COALESCE(?, is_active)
              WHERE id = ?`,
-            [role, department, position, is_active, userId]
+            [
+                data.role !== undefined ? data.role : null,
+                data.department !== undefined ? data.department : null,
+                data.position !== undefined ? data.position : null,
+                data.is_active !== undefined ? data.is_active : null,
+                userId
+            ]
+        );
+    }
+
+    /**
+     * Permite que el usuario actualice sus propios datos permitidos (Hardening)
+     */
+    async updateOwnProfile(userId, data) {
+        const { profile_picture } = data;
+        await db.query(
+            `UPDATE users SET profile_picture = COALESCE(?, profile_picture) WHERE id = ?`,
+            [profile_picture !== undefined ? profile_picture : null, userId]
         );
     }
 

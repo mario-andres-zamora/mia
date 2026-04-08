@@ -1,43 +1,45 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import {
     Trophy,
     Medal,
     Crown,
-    Users,
-    Building2,
-    Search,
-    ChevronRight,
-    Lock,
     ShieldCheck,
-    Star,
     Filter,
     Award
 } from 'lucide-react';
-import toast from 'react-hot-toast';
 import LeaderboardSkeleton from '../components/skeletons/LeaderboardSkeleton';
-import Skeleton from '../components/Skeleton';
-import primaryBanner from '../assets/primary-banner.svg';
+
+// Sub-components
+import LeaderboardHero from '../components/leaderboard/LeaderboardHeader';
+import LeaderboardControls from '../components/leaderboard/LeaderboardControls';
+import StrategicView from '../components/leaderboard/StrategicView';
+import ParticipantListView from '../components/leaderboard/ParticipantListView';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export default function Leaderboard() {
     const { user: loggedUser, viewAsStudent } = useAuthStore();
+    const navigate = useNavigate();
+
+    // State
     const [institutionalLeaderboard, setInstitutionalLeaderboard] = useState([]);
     const [departmentLeaderboard, setDepartmentLeaderboard] = useState([]);
     const [deptRanking, setDeptRanking] = useState([]);
     const [currentUser, setCurrentUser] = useState(null);
     const [loading, setLoading] = useState(true);
+
+    // UI State
     const isAdmin = loggedUser?.role === 'admin' && !viewAsStudent;
-    const [view, setView] = useState(isAdmin ? 'global' : 'area'); // 'global', 'area', or 'strategic'
+    const [view, setView] = useState(isAdmin ? 'global' : 'area');
     const [searchTerm, setSearchTerm] = useState('');
     const [filterLevel, setFilterLevel] = useState('all');
     const [isFilterOpen, setIsFilterOpen] = useState(false);
-    const [scope, setScope] = useState('department');
 
     const levels = [
-        { id: 'all', name: 'Todos los Niveles', icon: Filter },
+        { id: 'all', name: 'Todos los niveles', icon: Filter },
         { id: 'Novato', name: 'Novato', icon: Award },
         { id: 'Iniciado', name: 'Iniciado', icon: Award },
         { id: 'Defensor', name: 'Defensor', icon: ShieldCheck },
@@ -49,10 +51,6 @@ export default function Leaderboard() {
         { id: 'CISO Honorario', name: 'CISO Honorario', icon: Medal },
         { id: 'Leyenda Cyber', name: 'Leyenda Cyber', icon: Crown }
     ];
-
-    const currentLevel = levels.find(l => l.id === filterLevel) || levels[0];
-
-    // isAdmin already defined above with viewAsStudent check
 
     useEffect(() => {
         fetchLeaderboard();
@@ -67,7 +65,6 @@ export default function Leaderboard() {
                 setDepartmentLeaderboard(response.data.departmentLeaderboard);
                 setDeptRanking(response.data.departmentRanking);
                 setCurrentUser(response.data.currentUser);
-                setScope(response.data.scope);
             }
         } catch (error) {
             console.error('Error cargando leaderboard:', error);
@@ -77,11 +74,13 @@ export default function Leaderboard() {
         }
     };
 
-    const filteredParticipants = (view === 'global' ? institutionalLeaderboard : departmentLeaderboard)
-        .filter(user => {
-            const matchesSearch = `${user.first_name} ${user.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                user.department?.toLowerCase().includes(searchTerm.toLowerCase());
-            const matchesLevel = filterLevel === 'all' || user.level === filterLevel;
+    // Filter Logic
+    const currentList = view === 'global' ? institutionalLeaderboard : departmentLeaderboard;
+    const filteredParticipants = currentList
+        .filter(u => {
+            const matchesSearch = `${u.first_name} ${u.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                u.department?.toLowerCase().includes(searchTerm.toLowerCase());
+            const matchesLevel = filterLevel === 'all' || u.level === filterLevel;
             return matchesSearch && matchesLevel;
         })
         .sort((a, b) => (a.rank_position || 9999) - (b.rank_position || 9999));
@@ -91,265 +90,42 @@ export default function Leaderboard() {
         dept.top_performer?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    if (loading) {
-        return <LeaderboardSkeleton />;
-    }
+    if (loading) return <LeaderboardSkeleton />;
 
     return (
-        <div className="max-w-6xl mx-auto space-y-10 animate-fade-in pb-20">
-            {/* Header / Hero Section */}
-            <div className="relative rounded-[2rem] overflow-hidden bg-slate-800/20 border border-white/5 shadow-2xl">
-                {/* Background Image with Overlay */}
-                <div className="absolute inset-0 z-0">
-                    <img
-                        src={primaryBanner}
-                        alt="Hero Background"
-                        className="w-full h-full object-cover opacity-20"
+        <div className="max-w-[1400px] mx-auto space-y-4 animate-fade-in pb-20 px-4 md:px-8">
+            {/* 1. Identity & Rank Showcase */}
+            <LeaderboardHero currentUser={currentUser} />
+
+            {/* 2. Operational Control Center (Tabs, Filters, Search) */}
+            <LeaderboardControls
+                view={view}
+                setView={setView}
+                isAdmin={isAdmin}
+                levels={levels}
+                filterLevel={filterLevel}
+                setFilterLevel={setFilterLevel}
+                isFilterOpen={isFilterOpen}
+                setIsFilterOpen={setIsFilterOpen}
+                searchTerm={searchTerm}
+                setSearchTerm={setSearchTerm}
+            />
+
+            {/* 3. Dynamic Data Presentation Layer */}
+            <main className="min-h-[600px] relative">
+                {view === 'strategic' ? (
+                    <StrategicView filteredDepts={filteredDepts} />
+                ) : (
+                    <ParticipantListView
+                        view={view}
+                        participants={filteredParticipants}
+                        loggedUser={loggedUser}
+                        isAdmin={isAdmin}
+                        currentUser={currentUser}
+                        setView={setView}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-r from-[#0d1127] via-[#0d1127]/80 to-transparent"></div>
-                </div>
-
-                <div className="relative z-10 p-6 md:p-10 flex flex-col md:flex-row justify-between items-center gap-12">
-                    <div className="space-y-6 text-center md:text-left">
-                        <h1 className="text-4xl md:text-6xl font-black text-white tracking-tighter uppercase leading-[1.3]">
-                            <span className="inline-block bg-gradient-to-r from-primary-400 to-secondary-500 bg-clip-text text-transparent italic py-2 pr-4">Ranking</span>
-                        </h1>
-                    </div>
-
-                    <div className="flex gap-6">
-                        {/* Institutional Rank (Fixed info card) */}
-                        <div className="w-28 h-28 md:w-32 md:h-32 bg-slate-900/60 rounded-[2rem] border border-white/5 flex flex-col items-center justify-center shadow-xl relative group">
-                            <Trophy className="w-6 h-6 text-primary-400 absolute -top-3 opacity-50" />
-                            <span className="text-3xl md:text-4xl font-black text-white">#{currentUser?.globalRank || '--'}</span>
-                            <span className="text-[9px] font-bold text-gray-500 tracking-widest uppercase text-center px-4">Rango CGR</span>
-                        </div>
-
-                        {/* Dept Rank (Focus of the list) */}
-                        <div className="w-28 h-28 md:w-32 md:h-32 bg-slate-900 rounded-[2rem] border-4 border-secondary-500/30 flex flex-col items-center justify-center shadow-2xl relative">
-                            <Crown className="w-8 h-8 text-secondary-500 absolute -top-4 -rotate-12 drop-shadow-[0_0_10px_rgba(229,123,60,0.5)]" />
-                            <span className="text-3xl md:text-4xl font-black text-white">#{currentUser?.deptRank || '--'}</span>
-                            <span className="text-[9px] font-bold text-secondary-500 tracking-widest uppercase text-center px-4">Rango Área</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Tabs Control */}
-            <div className="flex flex-col md:flex-row gap-6 items-center justify-between">
-                <div className="flex w-full md:w-auto p-1 bg-slate-900/50 rounded-2xl border border-white/5 items-stretch">
-                    {isAdmin && (
-                        <button
-                            onClick={() => setView('global')}
-                            className={`flex-1 md:flex-none px-2 md:px-6 py-3 rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all ${view === 'global' ? 'bg-primary-500 text-white shadow-lg' : 'text-gray-500 hover:text-white'}`}
-                        >
-                            Institucional
-                        </button>
-                    )}
-                    <button
-                        onClick={() => setView('area')}
-                        className={`flex-1 md:flex-none px-2 md:px-6 py-3 rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all ${view === 'area' ? 'bg-primary-500 text-white shadow-lg' : 'text-gray-500 hover:text-white'}`}
-                    >
-                        Mi Área
-                    </button>
-                    <button
-                        onClick={() => setView('strategic')}
-                        className={`flex-1 md:flex-none px-2 md:px-6 py-3 rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all ${view === 'strategic' ? 'bg-secondary-500 text-white shadow-lg' : 'text-gray-500 hover:text-white'}`}
-                    >
-                        Por Áreas
-                    </button>
-                </div>
-
-                <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto relative">
-                    {/* Custom Premium Dropdown */}
-                    <div className="relative w-full md:w-64">
-                        <button
-                            onClick={() => setIsFilterOpen(!isFilterOpen)}
-                            className="w-full flex items-center justify-between px-6 py-4 bg-slate-800/40 border border-white/5 rounded-2xl text-white text-[10px] font-black uppercase tracking-widest hover:bg-slate-800/60 transition-all shadow-inner group"
-                        >
-                            <div className="flex items-center gap-3">
-                                <currentLevel.icon className="w-4 h-4 text-primary-400" />
-                                <span>{currentLevel.name}</span>
-                            </div>
-                            <ChevronRight className={`w-4 h-4 text-gray-500 transition-transform duration-300 ${isFilterOpen ? '-rotate-90' : 'rotate-90'}`} />
-                        </button>
-
-                        {isFilterOpen && (
-                            <>
-                                <div
-                                    className="fixed inset-0 z-40"
-                                    onClick={() => setIsFilterOpen(false)}
-                                ></div>
-                                <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] animate-in fade-in zoom-in-95 duration-200">
-                                    <div className="max-h-80 overflow-y-auto custom-scrollbar p-1">
-                                        {levels.map((level) => (
-                                            <button
-                                                key={level.id}
-                                                onClick={() => {
-                                                    setFilterLevel(level.id);
-                                                    setIsFilterOpen(false);
-                                                }}
-                                                className={`w-full flex items-center gap-3 px-5 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${filterLevel === level.id
-                                                    ? 'bg-primary-500 text-white'
-                                                    : 'text-gray-400 hover:bg-white/5 hover:text-white'
-                                                    }`}
-                                            >
-                                                <level.icon className={`w-4 h-4 ${filterLevel === level.id ? 'text-white' : 'text-gray-500'}`} />
-                                                {level.name}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            </>
-                        )}
-                    </div>
-
-                    <div className="relative w-full md:w-80 group">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 group-hover:text-primary-400 transition-colors" />
-                        <input
-                            type="text"
-                            placeholder={view === 'area' && isAdmin ? "Buscar" : "Buscar funcionario..."}
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-12 pr-6 py-4 bg-slate-800/20 border border-white/5 rounded-2xl text-white font-medium placeholder:text-gray-600 focus:outline-none focus:border-primary-500/50 transition-all shadow-inner"
-                        />
-                    </div>
-                </div>
-            </div>
-
-            {/* Main Content Area */}
-            {view === 'strategic' ? (
-                /* STRATEGIC VIEW: Comparison by Department */
-                <div className="space-y-6">
-                    <div className="space-y-3">
-                        <div className="grid grid-cols-12 px-8 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">
-                            <div className="col-span-1 text-center">Pos</div>
-                            <div className="col-span-4">Área / Unidad</div>
-                            <div className="col-span-4 italic">Mejor Funcionario (Líder)</div>
-                            <div className="col-span-3 text-right">Puntaje Total</div>
-                        </div>
-                        {filteredDepts.map((dept, index) => (
-                            <div key={index} className="grid grid-cols-12 items-center px-8 py-6 rounded-3xl border bg-slate-800/20 border-white/5 hover:border-primary-500/30 transition-all group cursor-default">
-                                <div className="col-span-1 text-center font-black text-lg text-gray-500">{index + 1}</div>
-                                <div className="col-span-4 flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-xl bg-secondary-500/10 flex items-center justify-center text-secondary-500 shadow-lg shadow-secondary-500/10">
-                                        <Building2 className="w-5 h-5" />
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-black text-white group-hover:text-secondary-500 transition-colors uppercase tracking-tight">{dept.department}</p>
-                                        <p className="text-[10px] text-gray-400 font-bold uppercase">{dept.staff_count} Funcionarios</p>
-                                    </div>
-                                </div>
-                                <div className="col-span-4 flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-lg bg-primary-500/10 flex items-center justify-center text-primary-400">
-                                        <Star className="w-4 h-4 fill-primary-400" />
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-bold text-gray-300 uppercase tracking-tight">{dept.top_performer}</p>
-                                        <p className="text-[9px] text-gray-500 font-bold uppercase italic">Líder: {dept.top_points} pts</p>
-                                    </div>
-                                </div>
-                                <div className="col-span-3 text-right">
-                                    <p className="text-xl font-black text-white">{dept.total_points.toLocaleString()} PTS</p>
-                                    <div className="progress-bar h-1 mt-2">
-                                        <div 
-                                            className="progress-fill" 
-                                            style={{ width: `${(dept.total_points / (filteredDepts[0]?.total_points || 1)) * 100}%` }}
-                                        ></div>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            ) : view === 'area' ? (
-                /* AREA VIEW: List of participants in the user's department */
-                <div className="space-y-6">
-                    <div className="space-y-3">
-                        <div className="grid grid-cols-12 px-8 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">
-                            <div className="col-span-1 text-center">Pos</div>
-                            <div className="col-span-6 md:col-span-5">Funcionario</div>
-                            <div className="hidden md:block col-span-3 text-center">Área / Unidad</div>
-                            <div className="col-span-5 md:col-span-3 text-right">Puntaje</div>
-                        </div>
-                        {filteredParticipants.map((p) => {
-                            const isMe = p.id === loggedUser?.id;
-                            const isGlobalView = view === 'global';
-                            return (
-                                <div key={p.id} className={`grid grid-cols-12 items-center px-8 py-5 rounded-3xl border transition-all ${isMe ? 'bg-primary-500/10 border-primary-500/30 ring-1 ring-primary-500/20 shadow-xl' : 'bg-slate-800/20 border-white/5 hover:border-white/10 hover:bg-slate-800/30'}`}>
-                                    <div className={`col-span-1 text-center font-black text-lg ${isMe ? 'text-primary-400' : 'text-gray-400'}`}>{p.rank_position}</div>
-                                    <div className="col-span-6 md:col-span-5 flex items-center gap-4">
-                                        <div className="w-10 h-10 rounded-xl overflow-hidden bg-slate-900 border border-white/5">
-                                            <img src={p.profile_picture || `https://ui-avatars.com/api/?name=${p.first_name}+${p.last_name}&background=384A99&color=fff`} className="w-full h-full object-cover" />
-                                        </div>
-                                        <div>
-                                            <p className={`font-black uppercase text-sm ${isMe ? 'text-primary-400' : 'text-white'}`}>
-                                                {p.first_name} {p.last_name}
-                                                {isMe && <span className="ml-2 text-[8px] bg-primary-500 text-white px-1.5 py-0.5 rounded">TÚ</span>}
-                                            </p>
-                                            <p className="text-[9px] text-gray-500 font-bold uppercase md:hidden">{p.department}</p>
-                                        </div>
-                                    </div>
-                                    <div className="hidden md:block col-span-3 text-center text-[11px] font-bold text-gray-400 uppercase italic">{p.department}</div>
-                                    <div className="col-span-5 md:col-span-3 text-right">
-                                        <p className="text-lg font-black text-primary-400">{p.points} PTS</p>
-                                        <p className="text-[8px] text-gray-500 font-black uppercase tracking-[0.2em]">{p.level}</p>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
-            ) : (
-                /* GLOBAL VIEW: Institutional Rank (Full list for admin, Lock message for users) */
-                <div className="space-y-6">
-                    {isAdmin ? (
-                        <div className="space-y-3">
-                            <div className="grid grid-cols-12 px-8 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">
-                                <div className="col-span-1 text-center">Pos</div>
-                                <div className="col-span-5">Funcionario</div>
-                                <div className="col-span-3 text-center">Área/Unidad</div>
-                                <div className="col-span-3 text-right">Puntaje</div>
-                            </div>
-                            {filteredParticipants.map((p) => (
-                                <div key={p.id} className="grid grid-cols-12 items-center px-8 py-5 rounded-3xl border bg-slate-800/20 border-white/5 hover:border-white/10 transition-all">
-                                    <div className="col-span-1 text-center font-black text-lg text-gray-400">{p.rank_position}</div>
-                                    <div className="col-span-5 flex items-center gap-4">
-                                        <div className="w-10 h-10 rounded-xl overflow-hidden bg-slate-900 border border-white/5">
-                                            <img src={p.profile_picture || `https://ui-avatars.com/api/?name=${p.first_name}+${p.last_name}&background=384A99&color=fff`} className="w-full h-full object-cover" />
-                                        </div>
-                                        <p className="font-black uppercase text-sm text-white">{p.first_name} {p.last_name}</p>
-                                    </div>
-                                    <div className="col-span-3 text-center text-xs font-bold text-gray-300 uppercase italic opacity-70">{p.department}</div>
-                                    <div className="col-span-3 text-right text-lg font-black text-primary-400">{p.points} PTS</div>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        /* User sees lock message */
-                        <div className="py-20 flex flex-col items-center text-center space-y-6 animate-pulse-slow">
-                            <div className="w-24 h-24 rounded-[2rem] bg-slate-900 border border-white/10 flex items-center justify-center text-gray-700 shadow-2xl relative">
-                                <Lock className="w-10 h-10 opacity-20" />
-                                <ShieldCheck className="w-6 h-6 text-primary-500 absolute -bottom-1 -right-1" />
-                            </div>
-                            <div className="max-w-md space-y-2">
-                                <h3 className="text-xl font-black text-white uppercase tracking-tight">Privacidad Institucional</h3>
-                                <p className="text-gray-500 text-sm font-medium leading-relaxed">
-                                    El detalle del ranking global solo es visible para administradores.
-                                    Puedes ver tu posición oficial #<span className="text-primary-400 font-bold">{currentUser?.globalRank}</span> en la cabecera.
-                                </p>
-                                <div className="pt-6">
-                                    <button
-                                        onClick={() => setView('area')}
-                                        className="px-8 py-3 bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest text-primary-400 hover:bg-white/10 rounded-xl transition-all"
-                                    >
-                                        Ver Ranking de mi Área
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            )}
+                )}
+            </main>
         </div>
     );
 }

@@ -10,6 +10,7 @@ const { cacheMiddleware } = require('../middleware/cache');
  * @access  Private
  */
 router.get('/profile', authMiddleware, cacheMiddleware(300, true), (req, res) => userController.getProfile(req, res));
+router.put('/profile', authMiddleware, (req, res) => userController.updateProfile(req, res));
 
 /**
  * @route   GET /api/users

@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
-import { Home, LogOut, ShieldAlert } from 'lucide-react';
+import { LogOut, ShieldAlert } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
+import CyberCatSVG from '../components/auth/CyberCatSVG';
 
 export default function DisabledAccount() {
     const navigate = useNavigate();
@@ -13,100 +14,69 @@ export default function DisabledAccount() {
 
     return (
         <div className="h-screen w-full bg-[#0d1127] flex items-center justify-center p-4 relative overflow-hidden font-sans select-none">
-            {/* Background elements */}
+            {/* Infrastructure Layer (Background) */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-red-500/5 rounded-full blur-[120px]"></div>
-                <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-primary-500/5 rounded-full blur-[120px]"></div>
-                <div className="absolute inset-0 opacity-[0.02]" style={{ backgroundImage: 'radial-gradient(#fff 1px, transparent 1px)', backgroundSize: '30px 30px' }}></div>
+                {/* Strategic Gloom */}
+                <div className="absolute top-[-10%] right-[-10%] w-[600px] h-[600px] bg-red-500/10 rounded-full blur-[150px] animate-pulse"></div>
+                <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-primary-500/5 rounded-full blur-[150px]"></div>
+                
+                {/* Sub-grid pattern */}
+                <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(#fff 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
             </div>
 
-            <div className="max-w-xl w-full text-center space-y-8 relative z-10">
-                {/* Cybersecurity White Cat (SVG) with Angry/Serious Look */}
+            <div className="max-w-2xl w-full text-center space-y-12 relative z-10 animate-fade-in px-8">
+                
+                {/* Visual Identity: The Cyber-Security Guardian (Offered in Alert Mode) */}
                 <div className="relative inline-block group">
-                    <div className="absolute inset-0 bg-red-500/20 blur-[60px] rounded-full scale-110 animate-pulse"></div>
-
-                    <svg viewBox="0 0 200 200" className="w-48 h-48 md:w-64 lg:w-80 md:h-64 lg:h-80 drop-shadow-[0_0_30px_rgba(239,68,68,0.3)] animate-float">
-                        {/* Ears */}
-                        <path d="M50 60 L30 10 L80 40 Z" fill="#ffffff" />
-                        <path d="M150 60 L170 10 L120 40 Z" fill="#ffffff" />
-                        <path d="M55 55 L40 25 L75 42 Z" fill="#ffccd5" />
-                        <path d="M145 55 L160 25 L125 42 Z" fill="#ffccd5" />
-
-                        {/* Face */}
-                        <circle cx="100" cy="100" r="70" fill="#ffffff" />
-
-                        {/* Cyber Goggles - RED VERSION */}
-                        <rect x="40" y="80" width="120" height="35" rx="10" fill="#1a2245" />
-                        <rect x="45" y="85" width="50" height="25" rx="5" fill="#ef4444" opacity="0.8">
-                            <animate attributeName="opacity" values="0.8;0.3;0.8" dur="1s" repeatCount="indefinite" />
-                        </rect>
-                        <rect x="105" y="85" width="50" height="25" rx="5" fill="#ef4444" opacity="0.8">
-                            <animate attributeName="opacity" values="0.8;0.3;0.8" dur="1s" repeatCount="indefinite" begin="0.5s" />
-                        </rect>
-
-                        {/* Angry Eyes on Goggles */}
-                        <path d="M50 90 L60 95" stroke="white" strokeWidth="2" />
-                        <path d="M140 90 L130 95" stroke="white" strokeWidth="2" />
-
-                        {/* Goggle strap */}
-                        <path d="M40 97.5 Q20 97.5 30 97.5" stroke="#1a2245" strokeWidth="10" />
-                        <path d="M160 97.5 Q180 97.5 170 97.5" stroke="#1a2245" strokeWidth="10" />
-
-                        {/* Nose and mouth (Sad/Serious) */}
-                        <path d="M90 130 Q100 120 110 130" stroke="#ffccd5" strokeWidth="3" fill="none" />
-                        <path d="M100 120 L100 115" stroke="#ffccd5" strokeWidth="2" />
-                        <circle cx="100" cy="118" r="4" fill="#ffccd5" />
-
-                        {/* Whiskers */}
-                        <line x1="30" y1="120" x2="60" y2="115" stroke="#f0f0f0" strokeWidth="1" />
-                        <line x1="30" y1="130" x2="60" y2="125" stroke="#f0f0f0" strokeWidth="1" />
-                        <line x1="170" y1="120" x2="140" y2="115" stroke="#f0f0f0" strokeWidth="1" />
-                        <line x1="170" y1="130" x2="140" y2="125" stroke="#f0f0f0" strokeWidth="1" />
-
-                        {/* Hoodie (Dark) */}
-                        <path d="M40 155 Q100 140 160 155 L160 200 L40 200 Z" fill="#1a2245" />
-                        <path d="M100 150 L80 180 L120 180 Z" fill="#ef4444" opacity="0.2" />
-                    </svg>
+                    <div className="absolute inset-0 bg-red-500/30 blur-[80px] rounded-full scale-125 animate-pulse duration-[3000ms]"></div>
+                    <CyberCatSVG 
+                        color="#ef4444" 
+                        className="w-56 h-56 md:w-80 md:h-80 lg:w-96 lg:h-96 relative z-10" 
+                    />
                 </div>
 
-                {/* Big ACCESS DENIED with Glitch Effect */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[60%] opacity-5 pointer-events-none">
-                    <span className="text-[8rem] md:text-[12rem] font-black text-white tracking-widest leading-none text-center">ACCESS<br />DENIED</span>
-                </div>
+                {/* Status Message Layer */}
+                <div className="space-y-6">
+                    <div className="inline-flex items-center gap-4 px-6 py-2 bg-red-500/10 border border-red-500/20 rounded-full mb-4">
+                        <div className="w-2 h-2 bg-red-500 rounded-full animate-ping"></div>
+                        <span className="text-[10px] text-red-500 font-black uppercase tracking-[0.4em] italic">Segregación de Cuenta v3.1</span>
+                    </div>
 
-                <div className="space-y-4">
-                    <h1 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter">
-                        ¡Miau! <span className="text-red-500 font-black">Acceso Denegado</span>
+                    <h1 className="text-4xl md:text-6xl font-black text-white italic uppercase tracking-tighter leading-none">
+                        ¡Miau! <span className="text-red-500 not-italic block md:inline mt-2 md:mt-0">Acceso Revocado</span>
                     </h1>
-                    <p className="text-gray-400 text-lg md:text-xl font-medium max-w-md mx-auto leading-tight">
-                        Parece que tu cuenta ha sido <span className="text-white">desconectada del firewall</span> por un administrador. La gata cibersegura dice que "no tienes los permisos necesarios" por ahora.
+                    
+                    <p className="text-gray-400 text-lg md:text-xl font-bold max-w-lg mx-auto leading-relaxed italic uppercase tracking-[0.05em] opacity-80">
+                        Tu credencial ha sido <span className="text-white brightness-125 underline decoration-red-500/40 underline-offset-8">interceptada por el firewall</span> administrativo. 
+                        Los protocolos de capacitación para este perfil están suspendidos temporalmente.
                     </p>
                 </div>
 
-                <div className="pt-6 flex flex-col items-center gap-4">
-                    <div className="bg-red-500/10 border border-red-500/20 px-6 py-4 rounded-2xl flex items-center gap-3 text-red-400 font-bold text-sm mb-4">
-                        <ShieldAlert className="w-5 h-5" />
-                        CUENTA DESHABILITADA TEMPORALMENTE
+                {/* Actions: Return to Base / Termination */}
+                <div className="flex flex-col items-center gap-8">
+                    <div className="flex items-center gap-4 text-xs font-black text-gray-500 uppercase tracking-[0.3em] border-t border-white/5 pt-8 w-full justify-center">
+                        <ShieldAlert className="w-5 h-5 text-red-500" />
+                        Consulte con la Dirección de TI para la reactivación
                     </div>
 
                     <button
                         onClick={handleLogout}
-                        className="group relative flex items-center justify-center gap-4 px-12 py-5 bg-slate-800 rounded-[2rem] text-sm font-black uppercase tracking-widest text-white shadow-xl hover:bg-slate-700 hover:-translate-y-1 active:scale-95 transition-all w-full md:w-auto"
+                        className="group relative flex items-center justify-center gap-5 px-16 py-5 bg-slate-900 border border-white/10 rounded-[2.5rem] text-[11px] font-black uppercase tracking-[0.4em] text-white shadow-2xl hover:bg-slate-800 hover:-translate-y-1.5 active:scale-95 transition-all w-full md:w-auto"
                     >
-                        <LogOut className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-                        Cerrar Sesión
+                        <LogOut className="w-5 h-5 group-hover:-translate-x-2 transition-transform text-red-500" />
+                        Finalizar Sesión Actual
                     </button>
                 </div>
             </div>
 
-            {/* Custom Styles for animations */}
+            {/* Custom Styles Injection */}
             <style>{`
                 @keyframes float {
-                    0%, 100% { transform: translateY(0); }
-                    50% { transform: translateY(-20px); }
+                    0%, 100% { transform: translateY(0) rotate(0); }
+                    50% { transform: translateY(-30px) rotate(2deg); }
                 }
                 .animate-float {
-                    animation: float 4s ease-in-out infinite;
+                    animation: float 6s ease-in-out infinite;
                 }
             `}</style>
         </div>

@@ -8,6 +8,7 @@ const RedisStore = require('connect-redis').default;
 const rateLimit = require('express-rate-limit');
 const { createClient } = require('redis');
 const path = require('path');
+const expressPrometheus = require('express-prometheus-middleware');
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
 const db = require('./config/database');
@@ -57,8 +58,19 @@ app.use((req, res, next) => {
 });
 
 // Middlewares generales (CORS debe ir primero)
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || '').split(',').map(o => o.trim()).filter(Boolean);
+
 app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: (origin, callback) => {
+        // En desarrollo permitimos peticiones sin origin (como herramientas locales/server-side)
+        // o si el origin especificado está en nuestra whitelist
+        if (!origin || allowedOrigins.includes(origin) || origin.includes('localhost') || origin.includes('lvh.me')) {
+            callback(null, true);
+        } else {
+            logger.warn(`CORS Reject: ${origin}`);
+            callback(new Error('Bloqueado por política de CORS de CGR Seguridad'));
+        }
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'x-view-as-student']
@@ -101,6 +113,13 @@ app.use(compression());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(morgan('combined', { stream: { write: message => logger.info(message.trim()) } }));
+
+// Prometheus Metrics Middleware
+app.use(expressPrometheus({
+    metricsPath: '/metrics',
+    collectDefaultMetrics: true,
+    requestDurationBuckets: [0.1, 0.5, 1, 1.5, 2, 3, 5, 10],
+}));
 
 // Archivos estáticos (uploads)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -217,8 +236,13 @@ app.use((req, res) => {
 
 // Manejo global de errores
 app.use((err, req, res, next) => {
+    err.statusCode = err.statusCode || 500;
+    err.status = err.status || 'error';
+
     logger.error('Error:', err);
-    res.status(err.status || 500).json({
+    
+    res.status(err.statusCode).json({
+        success: false,
         error: err.message || 'Error interno del servidor',
         ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
     });

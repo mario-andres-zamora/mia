@@ -63,76 +63,76 @@ export default function Layout() {
 
             {/* Navbar */}
             <nav className="bg-[#0d1127]/90 backdrop-blur-md border-b border-primary-500/10 sticky top-0 z-50">
-                <div className="w-full px-4 sm:px-6 lg:px-12">
+                <div className="w-full px-4 sm:px-6 xl:px-8">
                     <div className="flex justify-between items-center h-20">
                         {/* Logo */}
-                        <div className="flex items-center gap-3 cursor-pointer group" onClick={() => navigate('/dashboard')}>
-                            <div className="w-16 h-16 flex items-center justify-center transition-transform group-hover:scale-105">
+                        <div className="flex items-center gap-2 cursor-pointer group" onClick={() => navigate('/dashboard')}>
+                            <div className="w-12 h-12 md:w-16 md:h-16 flex items-center justify-center transition-transform group-hover:scale-105">
                                 <img
                                     src="/images/logo-cgr-blanco.webp"
                                     alt="CGR Logo"
                                     className="w-full h-full object-contain filter drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]"
                                 />
                             </div>
-                            <div className="hidden sm:block">
-                                <h1 className="text-[15px] font-black bg-gradient-to-r from-white via-white to-gray-400 bg-clip-text text-transparent tracking-tighter leading-none">
+                            <div className="hidden lg:block">
+                                <h1 className="text-[13px] xl:text-[15px] font-black bg-gradient-to-r from-white via-white to-gray-400 bg-clip-text text-transparent tracking-tighter leading-none">
                                     CGR <span className="text-secondary-500 font-black">SEGUR@</span>
                                 </h1>
                             </div>
                         </div>
 
                         {/* Desktop Navigation */}
-                        <div className="hidden md:flex items-center gap-1 bg-slate-900/40 p-1 rounded-xl border border-white/5">
+                        <div className="hidden md:flex items-center lg:gap-1 bg-slate-900/40 p-1 rounded-xl border border-white/5">
                             {NAV_ITEMS.map((item) => (
                                 <NavLink
                                     key={item.to}
                                     to={item.to}
                                     className={({ isActive }) =>
-                                        `flex items-center gap-2 px-3 py-2 rounded-lg transition-colors duration-200 group ${isActive
+                                        `flex items-center gap-1.5 xl:gap-2 px-2 xl:px-3 py-2 rounded-lg transition-colors duration-200 group ${isActive
                                             ? 'bg-primary-500/20 text-white border border-primary-500/20 shadow-[0_0_15px_rgba(56,74,153,0.1)]'
                                             : 'text-gray-400 hover:text-white hover:bg-white/5 border border-transparent'
                                         }`
                                     }
                                 >
                                     <item.icon className={`w-3.5 h-3.5 transition-transform duration-300 group-hover:scale-110`} />
-                                    <span className="text-[11px] font-black uppercase tracking-widest">{item.label}</span>
+                                    <span className="text-[10px] xl:text-[11px] font-black uppercase tracking-widest">{item.label}</span>
                                 </NavLink>
                             ))}
                             {isAdmin && (
                                 <NavLink
                                     to="/admin"
                                     className={({ isActive }) =>
-                                        `flex items-center gap-2 px-3 py-2 rounded-lg transition-colors duration-200 group ${isActive
+                                        `flex items-center gap-1.5 xl:gap-2 px-2 xl:px-3 py-2 rounded-lg transition-colors duration-200 group ${isActive
                                             ? 'bg-secondary-500/20 text-secondary-500 border border-secondary-500/20 shadow-[0_0_15px_rgba(229,123,60,0.1)]'
                                             : 'text-gray-400 hover:text-secondary-500 hover:bg-white/5 border border-transparent'
                                         }`
                                     }
                                 >
                                     <Shield className={`w-3.5 h-3.5 transition-transform duration-300 group-hover:scale-110`} />
-                                    <span className="text-[11px] font-black uppercase tracking-widest text-secondary-500">Admin</span>
+                                    <span className="text-[10px] xl:text-[11px] font-black uppercase tracking-widest text-secondary-500">Admin</span>
                                 </NavLink>
                             )}
                         </div>
 
                         {/* User Actions Section */}
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2 xl:gap-3">
                             {/* User Profile */}
-                            <div className="hidden sm:flex items-center gap-3 px-3 py-1 bg-transparent rounded-2xl border border-transparent hover:bg-white/5 transition-all duration-300 cursor-pointer" onClick={() => navigate('/profile')}>
-                                <div className="relative">
+                            <div className="hidden sm:flex items-center gap-2 xl:gap-3 px-2 xl:px-3 py-1 bg-transparent rounded-2xl border border-transparent hover:bg-white/5 transition-all duration-300 cursor-pointer" onClick={() => navigate('/profile')}>
+                                <div className="relative flex-shrink-0">
                                     <div className="p-0.5 bg-gradient-to-tr from-primary-500 to-secondary-500 rounded-full">
                                         <img
                                             src={user?.profilePicture || `https://ui-avatars.com/api/?name=${user?.firstName}+${user?.lastName}&background=384A99&color=fff`}
                                             alt={user?.firstName}
-                                            className="w-8 h-8 rounded-full border-2 border-[#0d1127] object-cover"
+                                            className="w-7 h-7 xl:w-8 xl:h-8 rounded-full border-2 border-[#0d1127] object-cover"
                                             referrerPolicy="no-referrer"
                                         />
                                     </div>
                                     {user?.role === 'admin' && (
-                                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-secondary-500 rounded-full border-2 border-[#0d1127] shadow-sm"></div>
+                                        <div className="absolute -top-1 -right-1 w-2.5 h-2.5 xl:w-3 xl:h-3 bg-secondary-500 rounded-full border-2 border-[#0d1127] shadow-sm"></div>
                                     )}
                                 </div>
-                                <div className="hidden lg:flex flex-col">
-                                    <p className="text-[10px] font-black text-white uppercase tracking-tight whitespace-nowrap">
+                                <div className="hidden lg:flex flex-col overflow-hidden min-w-0 flex-1 max-w-[15vw] xl:max-w-[20vw]">
+                                    <p className="text-[10px] font-black text-white uppercase tracking-tight truncate">
                                         {user?.firstName} {user?.lastName}
                                     </p>
                                     <div className="flex items-center gap-2">

@@ -35,6 +35,29 @@ class UserController {
     }
 
     /**
+     * @route   PUT /api/users/profile
+     * @desc    Actualizar perfil propio (Usuario actual)
+     */
+    async updateProfile(req, res) {
+        try {
+            // Solo se permite que el usuario actualice su propia información sensible NO-ADMIN
+            const profileData = {
+                profile_picture: req.body.profile_picture
+            };
+            
+            await userService.updateOwnProfile(req.user.id, profileData);
+            
+            // Limpiar caché del perfil
+            await clearCache(`cache:/api/users/profile*u${req.user.id}*`);
+            
+            res.json({ success: true, message: 'Perfil actualizado correctamente' });
+        } catch (error) {
+            logger.error('Error actualizando perfil propio:', error);
+            res.status(500).json({ error: 'Error al actualizar el perfil' });
+        }
+    }
+
+    /**
      * @route   GET /api/users/:id/full-profile
      * @desc    Obtener perfil completo de cualquier funcionario (Admin)
      */
@@ -71,7 +94,20 @@ class UserController {
      */
     async updateUser(req, res) {
         try {
-            await userService.updateUser(req.params.id, req.body);
+            const userId = req.params.id;
+            const requestingUserId = req.user.id;
+
+            // Seguridad: Prevenir que un admin se cambie su propio rol o se desactive a sí mismo
+            if (userId == requestingUserId) {
+                if (req.body.role && req.body.role !== req.user.role) {
+                    return res.status(400).json({ error: 'No puedes cambiar tu propio rol.' });
+                }
+                if (req.body.is_active === false || req.body.is_active === 0) {
+                    return res.status(400).json({ error: 'No puedes desactivar tu propia cuenta.' });
+                }
+            }
+
+            await userService.updateUser(userId, req.body);
             res.json({ success: true, message: 'Usuario actualizado correctamente' });
         } catch (error) {
             logger.error('Error actualizando usuario:', error);

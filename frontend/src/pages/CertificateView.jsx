@@ -1,12 +1,13 @@
 /* eslint-disable react/no-unescaped-entities */
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
-import { ArrowLeft, Printer, Award, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Printer } from 'lucide-react';
 import { CertificateSkeleton } from '../components/skeletons/CertificateSkeleton';
 import toast from 'react-hot-toast';
 import confetti from 'canvas-confetti';
+import CertificateCard from '../components/certificates/CertificateCard.jsx';
 
 export default function CertificateView() {
     const { moduleId } = useParams();
@@ -23,12 +24,13 @@ export default function CertificateView() {
                 });
                 if (response.data.success) {
                     setCertificate(response.data.certificate);
-                    // Launch confetti on load!
+                    
+                    // Launch celebratory confetti
                     confetti({
-                        particleCount: 150,
-                        spread: 100,
+                        particleCount: 200,
+                        spread: 120,
                         origin: { y: 0.6 },
-                        colors: ['#384A99', '#E57B3C', '#ffffff'],
+                        colors: ['#384A99', '#E57B3C', '#ffffff', '#22c55e'],
                         zIndex: 9999
                     });
                 }
@@ -48,140 +50,70 @@ export default function CertificateView() {
 
     const handlePrint = () => {
         const originalTitle = document.title;
-        document.title = 'certificado';
+        document.title = `Certificado_${certificate?.certificate_code || 'CGR'}`;
 
-        // Pequena espera para que el titulo se actualice en el sistema de impresion
+        // Wait for title update then trigger print
         setTimeout(() => {
             window.print();
             document.title = originalTitle;
-        }, 100);
+        }, 150);
     };
 
-    if (loading) {
-        return <CertificateSkeleton />;
-    }
-
+    if (loading) return <CertificateSkeleton />;
     if (!certificate) return null;
 
     return (
-        <div className="min-h-screen bg-[#0d1127] p-8 flex flex-col items-center overflow-auto">
-            {/* Header Actions - Hide on Print */}
-            <div className="w-full max-w-5xl flex justify-between items-center mb-8 print:hidden animate-fade-in-down">
+        <div className="min-h-screen bg-[#0d1127] p-4 md:p-12 flex flex-col items-center overflow-auto animate-fade-in relative">
+            
+            {/* Action Bar - Pure UI Layer */}
+            <div className="w-full max-w-6xl flex flex-col md:flex-row justify-between items-center mb-12 print:hidden gap-6 bg-slate-900/40 p-6 rounded-[2.5rem] border border-white/5 backdrop-blur-xl shadow-2xl">
                 <button
                     onClick={() => navigate('/profile')}
-                    className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+                    className="flex items-center gap-3 text-gray-500 hover:text-white transition-all group px-4 py-2 hover:bg-white/5 rounded-2xl border border-transparent hover:border-white/5"
                 >
-                    <ArrowLeft className="w-5 h-5" />
-                    <span className="font-bold text-sm uppercase tracking-widest">Volver al Perfil</span>
+                    <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1.5 transition-transform" />
+                    <span className="font-black text-[10px] uppercase tracking-[0.3em] leading-none">Cerrar Visor</span>
                 </button>
 
-                <div className="flex gap-4">
+                <div className="flex flex-col md:flex-row items-center gap-6">
+                    <div className="flex flex-col items-center md:items-end text-center md:text-right">
+                        <p className="text-[9px] font-black text-primary-500 uppercase tracking-[0.4em] mb-1 italic opacity-80 leading-none">Documento Validado</p>
+                        <p className="text-white font-black text-xs tracking-widest uppercase truncate max-w-[200px]">{certificate.certificate_code}</p>
+                    </div>
                     <button
                         onClick={handlePrint}
-                        className="flex items-center gap-2 px-6 py-3 bg-secondary-600 hover:bg-secondary-500 text-white rounded-xl font-black uppercase tracking-widest text-xs transition-all shadow-lg hover:shadow-secondary-500/20 active:scale-95"
+                        className="flex items-center gap-3 px-8 py-4 bg-secondary-600 hover:bg-secondary-500 text-white rounded-2xl font-black uppercase tracking-[0.3em] text-[10px] transition-all shadow-[0_0_30px_rgba(229,123,60,0.3)] hover:shadow-secondary-500/50 active:scale-95 group border border-secondary-500/20"
                     >
-                        <Printer className="w-4 h-4" />
-                        Imprimir / Guardar PDF
+                        <Printer className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                        Exportar Certificado
                     </button>
                 </div>
             </div>
 
-            {/* Certificate Container */}
-            <div id="certificate-print" className="relative w-full max-w-[1100px] aspect-[1.414/1] bg-white text-slate-900 shadow-2xl overflow-hidden print:shadow-none print:w-full print:h-full print:absolute print:top-0 print:left-0 print:m-0 animate-scale-in rounded-sm">
-
-                {/* Decorative Background Pattern */}
-                <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
-                    style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, #000 1px, transparent 0)', backgroundSize: '40px 40px' }}>
-                </div>
-
-                {/* Border Frame */}
-                <div className="absolute inset-8 border-[12px] border-double border-primary-900/10 pointer-events-none"></div>
-                <div className="absolute inset-6 border border-primary-900/20 pointer-events-none"></div>
-
-                {/* Corner Ornaments */}
-                <div className="absolute top-8 left-8 w-32 h-32 border-t-[3px] border-l-[3px] border-secondary-500/40"></div>
-                <div className="absolute top-8 right-8 w-32 h-32 border-t-[3px] border-r-[3px] border-secondary-500/40"></div>
-                <div className="absolute bottom-8 left-8 w-32 h-32 border-b-[3px] border-l-[3px] border-secondary-500/40"></div>
-                <div className="absolute bottom-8 right-8 w-32 h-32 border-b-[3px] border-r-[3px] border-secondary-500/40"></div>
-
-                {/* Content */}
-                <div className="relative z-10 h-full flex flex-col items-center justify-between py-12 px-16 text-center">
-
-                    {/* Header */}
-                    <div className="space-y-2">
-                        <div className="w-32 h-32 mx-auto mb-2">
-                            <img src="/images/logo-cgr.webp" alt="Logo CGR" className="w-full h-full object-contain" />
-                        </div>
-                        <h1 className="text-5xl font-serif text-primary-900 tracking-wider font-bold">CERTIFICADO</h1>
-                        <p className="text-xl font-medium text-secondary-600 uppercase tracking-[0.3em]">DE FINALIZACIÓN</p>
-                    </div>
-
-                    {/* Main Text */}
-                    <div className="space-y-4 max-w-4xl w-full">
-                        <p className="text-gray-500 font-serif italic text-xl">Se otorga el presente reconocimiento a:</p>
-
-                        <div className="relative inline-block w-full max-w-2xl mx-auto">
-                            <h2 className="text-4xl font-bold text-slate-900 font-serif border-b-2 border-slate-200 pb-4 px-12 block w-full uppercase tracking-tight">
-                                {certificate.first_name || user.first_name} {certificate.last_name || user.last_name}
-                            </h2>
-                            <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-white px-3">
-                                <Award className="w-8 h-8 text-secondary-500 fill-secondary-100" />
-                            </div>
-                        </div>
-
-                        <div className="pt-4 space-y-2">
-                            <p className="text-gray-600 font-serif text-lg leading-relaxed">
-                                Por haber completado satisfactoriamente el módulo de capacitación en seguridad de la información del curso "CGR Segura":
-                            </p>
-
-                            <h3 className="text-4xl font-bold text-primary-800 font-serif uppercase tracking-tight py-4 px-8 bg-slate-50 rounded-xl inline-block border border-slate-100 shadow-sm">
-                                "{certificate.module_title}"
-                            </h3>
-                        </div>
-
-                        <div className="flex justify-between items-center max-w-4xl mx-auto pt-4 border-t border-slate-100 mt-8">
-                            <div className="text-left flex gap-8">
-                                <div>
-                                    <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">FECHA DE EMISIÓN</p>
-                                    <p className="text-sm font-bold text-slate-800 uppercase">
-                                        {new Date(certificate.issued_at).toLocaleDateString()}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">CÓDIGO OFICIAL</p>
-                                    <p className="text-sm font-mono font-bold text-slate-800 uppercase tracking-tighter">
-                                        {certificate.certificate_code}
-                                    </p>
-                                </div>
-                            </div>
-
-                            {/* Signature Area Only */}
-                            <div className="text-right space-y-1 min-w-[220px] flex flex-col items-end">
-                                <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">Emitido por</p>
-                                <p className="text-xs font-bold text-slate-900 uppercase">Contraloría General de la República</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            {/* The Actual Document Layer */}
+            <div className="w-full flex justify-center pb-20">
+                <CertificateCard certificate={certificate} user={user} />
             </div>
 
+            {/* Print & Typography Injection */}
             <style>
                 {`
+                    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Great+Vibes&display=swap');
+                    
                     @page {
                         size: landscape;
                         margin: 0;
                     }
+
                     @media print {
                         body {
                             margin: 0 !important;
                             padding: 0 !important;
                             background: white !important;
                         }
-                        /* Hide everything */
                         body * {
                             visibility: hidden !important;
                         }
-                        /* Show only the certificate and its specific children */
                         #certificate-print, 
                         #certificate-print * {
                             visibility: visible !important;
@@ -198,9 +130,10 @@ export default function CertificateView() {
                             box-shadow: none !important;
                             display: flex !important;
                             z-index: 9999999 !important;
+                            border-radius: 0 !important;
                         }
                     }
-                    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Great+Vibes&display=swap');
+
                     .font-serif {
                         font-family: 'Playfair Display', serif;
                     }

@@ -1,341 +1,28 @@
 const express = require('express');
 const router = express.Router();
-
-const logger = require('../config/logger');
-const db = require('../config/database');
+const quizController = require('../controllers/quizController');
 const { authMiddleware, adminMiddleware } = require('../middleware/auth');
-const { syncUserLevel, getSystemSettings, checkAndRecordModuleCompletion } = require('../utils/gamification');
-const { checkAllBadges } = require('../utils/badges');
-const { clearCache } = require('../middleware/cache');
 
 /**
  * @route   GET /api/quizzes/:id
  * @desc    Obtener un quiz con sus preguntas y opciones
  * @access  Private
  */
+router.get('/:id', authMiddleware, quizController.getQuizById);
+
 /**
  * @route   GET /api/quizzes/:id/last-attempt
  * @desc    Obtener el último intento del usuario para un quiz
  * @access  Private
  */
-router.get('/:id/last-attempt', authMiddleware, async (req, res) => {
-    try {
-        const userId = req.user.id;
-        const quizId = req.params.id;
-
-        const [lastAttempt] = await db.query(
-            'SELECT answers, score, passed, attempt_number FROM quiz_attempts WHERE user_id = ? AND quiz_id = ? ORDER BY attempt_number DESC LIMIT 1',
-            [userId, quizId]
-        );
-
-        if (!lastAttempt) {
-            return res.json({ success: false, message: 'No hay intentos previos' });
-        }
-
-        // Obtener feedback detallado (necesitamos respuestas correctas y explicaciones)
-        const questions = await db.query(
-            `SELECT q.id, o.id as correct_option_id, q.explanation
-             FROM quiz_questions q
-             JOIN quiz_options o ON q.id = o.question_id
-             WHERE q.quiz_id = ? AND o.is_correct = TRUE`,
-            [quizId]
-        );
-
-        const answers = typeof lastAttempt.answers === 'string' ? JSON.parse(lastAttempt.answers) : (lastAttempt.answers || {});
-        let earnedPoints = 0;
-        let totalPoints = 0;
-
-        // Obtener puntos reales de las preguntas
-        const questionData = await db.query(
-            'SELECT id, points FROM quiz_questions WHERE quiz_id = ?',
-            [quizId]
-        );
-        const pointsMap = {};
-        questionData.forEach(p => {
-            pointsMap[p.id] = p.points;
-            totalPoints += p.points;
-        });
-
-        const feedback = [];
-        questions.forEach(q => {
-            const isCorrect = parseInt(answers[q.id]) === q.correct_option_id;
-            if (isCorrect) {
-                earnedPoints += pointsMap[q.id] || 0;
-            }
-            feedback.push({
-                questionId: q.id,
-                isCorrect,
-                correctOptionId: q.correct_option_id,
-                explanation: q.explanation
-            });
-        });
-
-        res.json({
-            success: true,
-            results: {
-                score: lastAttempt.score,
-                passed: lastAttempt.passed,
-                attemptNumber: lastAttempt.attempt_number,
-                earnedPoints,
-                totalPoints,
-                answers,
-                feedback
-            }
-        });
-    } catch (error) {
-        logger.error(error);
-        res.status(500).json({ error: 'Error al obtener último intento' });
-    }
-});
-
-router.get('/:id', authMiddleware, async (req, res) => {
-    try {
-        const quizId = req.params.id;
-        const userId = req.user.id;
-
-        // 1. Obtener datos del quiz
-        const [quiz] = await db.query(
-            'SELECT * FROM quizzes WHERE id = ? AND is_published = TRUE',
-            [quizId]
-        );
-
-        if (!quiz) {
-            return res.status(404).json({ error: 'Evaluación no encontrada' });
-        }
-
-        // 2. Verificar intentos previos
-        const [attempts] = await db.query(
-            'SELECT COUNT(*) as count FROM quiz_attempts WHERE user_id = ? AND quiz_id = ?',
-            [userId, quizId]
-        );
-
-        // Eliminamos el bloqueo aquí para permitir que el usuario vea los resultados 
-        // o las preguntas aun si agotó intentos. El bloqueo real se hará en el submit.
-
-        // 3. Obtener preguntas
-        const questions = await db.query(
-            'SELECT id, question_text, question_type, image_url, points, order_index FROM quiz_questions WHERE quiz_id = ? ORDER BY order_index ASC',
-            [quizId]
-        );
-
-        // 4. Obtener opciones para cada pregunta
-        for (let question of questions) {
-            const options = await db.query(
-                'SELECT id, option_text, order_index FROM quiz_options WHERE question_id = ? ORDER BY order_index ASC',
-                [question.id]
-            );
-            question.options = options;
-        }
-
-        res.json({
-            success: true,
-            quiz,
-            questions,
-            attemptsMade: attempts.count,
-            attemptsLeft: quiz.max_attempts - attempts.count
-        });
-    } catch (error) {
-        logger.error('Error al obtener quiz:', error);
-        res.status(500).json({ error: 'Error al cargar la evaluación' });
-    }
-});
+router.get('/:id/last-attempt', authMiddleware, quizController.getLastAttempt);
 
 /**
  * @route   POST /api/quizzes/:id/submit
  * @desc    Enviar respuestas de un quiz y calificar
  * @access  Private
  */
-router.post('/:id/submit', authMiddleware, async (req, res) => {
-    try {
-        const quizId = req.params.id;
-        const userId = req.user.id;
-
-        // Invalida el caché (incluyendo vista de estudiante)
-        await clearCache(`cache:/api/dashboard*u${userId}*`);
-        await clearCache(`cache:/api/gamification/leaderboard*`);
-        await clearCache(`cache:/api/modules*u${userId}*`);
-        await clearCache(`cache:/api/lessons/*u${userId}*`);
-        await clearCache(`cache:/api/quizzes/${quizId}*u${userId}*`);
-        const { answers, timeSpent } = req.body; // answers: { questionId: optionId }
-
-        // 1. Obtener el quiz para saber el passing_score
-        const [quiz] = await db.query('SELECT * FROM quizzes WHERE id = ?', [quizId]);
-        if (!quiz) return res.status(404).json({ error: 'Quiz no encontrado' });
-
-        // 2. Verificar intentos previos ANTES de calificar
-        const [attempts] = await db.query(
-            'SELECT COUNT(*) as count FROM quiz_attempts WHERE user_id = ? AND quiz_id = ?',
-            [userId, quizId]
-        );
-
-        // Si ya aprobó, no necesita enviar más intentos
-        const [lastAttempt] = await db.query(
-            'SELECT passed FROM quiz_attempts WHERE user_id = ? AND quiz_id = ? ORDER BY attempt_number DESC LIMIT 1',
-            [userId, quizId]
-        );
-
-        if (lastAttempt?.passed) {
-            return res.status(200).json({ 
-                success: true, 
-                message: 'Ya has aprobado esta evaluación anteriormente.',
-                passed: true 
-            });
-        }
-
-        if (attempts.count >= quiz.max_attempts) {
-            return res.status(403).json({
-                error: 'Has alcanzado el máximo de intentos permitidos para esta evaluación',
-                attemptsMade: attempts.count,
-                maxAttempts: quiz.max_attempts
-            });
-        }
-
-        // 2. Obtener respuestas correctas
-        const questions = await db.query(
-            `SELECT q.id, q.points, o.id as correct_option_id, q.explanation
-             FROM quiz_questions q
-             JOIN quiz_options o ON q.id = o.question_id
-             WHERE q.quiz_id = ? AND o.is_correct = TRUE`,
-            [quizId]
-        );
-
-        let totalPoints = 0;
-        let earnedPoints = 0;
-        const feedback = [];
-
-        questions.forEach(q => {
-            totalPoints += q.points;
-            const userAnswer = answers[q.id];
-            const isCorrect = userAnswer == q.correct_option_id;
-
-            if (isCorrect) {
-                earnedPoints += q.points;
-            }
-
-            feedback.push({
-                questionId: q.id,
-                isCorrect,
-                correctOptionId: q.correct_option_id,
-                explanation: q.explanation
-            });
-        });
-
-        const score = (earnedPoints / totalPoints) * 100;
-        const passed = score >= quiz.passing_score;
-
-        // 3. Registrar el intento
-        // (ya tenemos attempts.count arriba)
-
-        await db.query(
-            `INSERT INTO quiz_attempts (user_id, quiz_id, attempt_number, score, passed, time_spent_minutes, started_at, completed_at, answers) 
-             VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW(), ?)`,
-            [userId, quizId, attempts.count + 1, score, passed, timeSpent || 0, JSON.stringify(answers)]
-        );
-
-        // 4. Gamificación: Dar puntos si aprobó con la penalización correspondiente
-        let pointsAwarded = 0;
-        let penaltyApplied = 0;
-
-        // Buscamos los puntos base del quiz para calcular penalización o premio
-        const settings = await getSystemSettings();
-        const contentEntries = await db.query(
-            `SELECT points FROM lesson_contents 
-             WHERE content_type = 'quiz' 
-             AND JSON_UNQUOTE(JSON_EXTRACT(data, '$.quiz_id')) = ?`,
-            [quizId]
-        );
-
-        let basePoints = 0;
-        let isCustomPoints = false;
-
-        if (contentEntries && contentEntries.length > 0 && contentEntries[0].points > 0) {
-            basePoints = contentEntries[0].points;
-            isCustomPoints = true;
-        } else {
-            basePoints = settings.points_per_quiz;
-        }
-
-        if (passed) {
-            // Calcular puntos proporcionales: (nota / 100) * puntos_totales
-            pointsAwarded = Math.round((score / 100) * basePoints);
-
-            // Penalización por cada intento fallido previo (10% por cada uno)
-            const failedAttempts = attempts.count;
-            if (failedAttempts > 0) {
-                const penaltyFactor = Math.max(0, 1 - (failedAttempts * 0.1));
-                const originalPoints = pointsAwarded;
-                pointsAwarded = Math.round(pointsAwarded * penaltyFactor);
-                penaltyApplied = originalPoints - pointsAwarded;
-            }
-
-            // Bonus solo si usamos puntos globales y sacó 100 en el primer intento
-            if (!isCustomPoints && score === 100 && failedAttempts === 0) {
-                pointsAwarded += settings.bonus_perfect_score;
-            }
-
-            // Actualizar puntos del usuario
-            if (pointsAwarded > 0) {
-                await db.query(
-                    `INSERT INTO user_points (user_id, points) VALUES (?, ?) 
-                     ON DUPLICATE KEY UPDATE points = points + ?`,
-                    [userId, pointsAwarded, pointsAwarded]
-                );
-
-                // Registrar actividad
-                await db.query(
-                    `INSERT INTO gamification_activities (user_id, activity_type, points_earned, reference_id) 
-                     VALUES (?, 'quiz_passed', ?, ?)`,
-                    [userId, pointsAwarded, quizId]
-                );
-            }
-        }
-
-        // Sincronizar nivel
-        const levelSync = await syncUserLevel(userId);
-
-        // Verificar si completó el módulo (considerando si es admin para incluir no publicados)
-        const isAdmin = req.user.role === 'admin' && req.headers['x-view-as-student'] !== 'true';
-        const moduleSync = await checkAndRecordModuleCompletion(userId, quiz.module_id, isAdmin);
-
-        // Verificar insignias si aprobó
-        let badgeSync = null;
-        if (passed) {
-            badgeSync = await checkAllBadges(userId, {
-                moduleId: quiz.module_id,
-                isModuleCompletion: moduleSync?.completed && moduleSync?.newlyRecorded
-            });
-        }
-
-        // Obtener balance actualizado (siempre para asegurar que el navbar esté sincronizado)
-        const [updatedStats] = await db.query(
-            'SELECT points, level FROM user_points WHERE user_id = ?',
-            [userId]
-        );
-
-        res.json({
-            success: true,
-            score,
-            passed,
-            earnedPoints,
-            totalPoints,
-            pointsAwarded,
-            penaltyApplied,
-            feedback,
-            attemptNumber: attempts.count + 1,
-            newBalance: updatedStats?.points || 0,
-            newLevel: updatedStats?.level || 'Novato',
-            levelUp: levelSync?.leveledUp || false,
-            levelData: levelSync,
-            moduleCompleted: moduleSync?.completed && moduleSync?.newlyRecorded,
-            moduleData: moduleSync,
-            badgeAwarded: badgeSync?.awarded ? badgeSync.badge : null
-        });
-
-    } catch (error) {
-        logger.error('Error al calificar quiz:', error);
-        res.status(500).json({ error: 'Error al procesar los resultados' });
-    }
-});
+router.post('/:id/submit', authMiddleware, quizController.submitQuiz);
 
 // --- Admin Routes ---
 
@@ -344,175 +31,48 @@ router.post('/:id/submit', authMiddleware, async (req, res) => {
  * @desc    Crear un nuevo quiz vinculado a una lección
  * @access  Private/Admin
  */
-router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
-    try {
-        const { module_id, lesson_id, title, description, passing_score, time_limit_minutes, max_attempts, randomize_options } = req.body;
-
-        const result = await db.query(
-            `INSERT INTO quizzes (module_id, lesson_id, title, description, passing_score, time_limit_minutes, max_attempts, randomize_options, is_published)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, TRUE)`,
-            [module_id, lesson_id, title, description || '', passing_score || 80, time_limit_minutes || 30, max_attempts || 3, randomize_options ? 1 : 0]
-        );
-
-        res.status(201).json({
-            success: true,
-            message: 'Quiz creado',
-            quizId: result.insertId
-        });
-    } catch (error) {
-        logger.error('Error creando quiz:', error);
-        res.status(500).json({ error: 'Error al crear la evaluación' });
-    }
-});
+router.post('/', authMiddleware, adminMiddleware, quizController.createQuiz);
 
 /**
  * @route   GET /api/quizzes/:id/admin
- * @desc    Obtener quiz completo con respuestas correctas para edición
+ * @desc    Obtener quiz completo para edición
  * @access  Private/Admin
  */
-router.get('/:id/admin', authMiddleware, adminMiddleware, async (req, res) => {
-    try {
-        const quizId = req.params.id;
-
-        const [quiz] = await db.query('SELECT * FROM quizzes WHERE id = ?', [quizId]);
-        if (!quiz) return res.status(404).json({ error: 'Quiz no encontrado' });
-
-        const questions = await db.query(
-            'SELECT * FROM quiz_questions WHERE quiz_id = ? ORDER BY order_index ASC',
-            [quizId]
-        );
-
-        for (let question of questions) {
-            const options = await db.query(
-                'SELECT * FROM quiz_options WHERE question_id = ? ORDER BY order_index ASC',
-                [question.id]
-            );
-            question.options = options;
-        }
-
-        res.json({ success: true, quiz, questions });
-    } catch (error) {
-        res.status(500).json({ error: 'Error al cargar datos de edición' });
-    }
-});
+router.get('/:id/admin', authMiddleware, adminMiddleware, quizController.getQuizAdmin);
 
 /**
  * @route   PUT /api/quizzes/:id
  * @desc    Actualizar datos básicos del quiz
+ * @access  Private/Admin
  */
-router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
-    try {
-        const { title, description, passing_score, time_limit_minutes, max_attempts, randomize_options } = req.body;
-        await db.query(
-            `UPDATE quizzes SET title = ?, description = ?, passing_score = ?, time_limit_minutes = ?, max_attempts = ?, randomize_options = ?
-             WHERE id = ?`,
-            [title, description, passing_score, time_limit_minutes, max_attempts, randomize_options ? 1 : 0, req.params.id]
-        );
-        res.json({ success: true, message: 'Quiz actualizado' });
-    } catch (error) {
-        res.status(500).json({ error: 'Error al actualizar' });
-    }
-});
+router.put('/:id', authMiddleware, adminMiddleware, quizController.updateQuiz);
 
 /**
  * @route   POST /api/quizzes/:id/questions
  * @desc    Agregar una pregunta a un quiz
+ * @access  Private/Admin
  */
-router.post('/:id/questions', authMiddleware, adminMiddleware, async (req, res) => {
-    try {
-        const { question_text, question_type, image_url, points, order_index, explanation, options } = req.body;
-        const quizId = req.params.id;
-
-        // 1. Insertar pregunta
-        const result = await db.query(
-            `INSERT INTO quiz_questions (quiz_id, question_text, question_type, image_url, points, order_index, explanation)
-             VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [quizId, question_text, question_type || 'multiple_choice', image_url || null, points || 1, order_index || 0, explanation || '']
-        );
-        const questionId = result.insertId;
-
-        // 2. Insertar opciones si vienen
-        if (options && Array.isArray(options)) {
-            for (let opt of options) {
-                await db.query(
-                    `INSERT INTO quiz_options (question_id, option_text, is_correct, order_index)
-                     VALUES (?, ?, ?, ?)`,
-                    [questionId, opt.option_text, opt.is_correct ? 1 : 0, opt.order_index || 0]
-                );
-            }
-        }
-
-        res.status(201).json({ success: true, questionId });
-    } catch (error) {
-        logger.error(error);
-        res.status(500).json({ error: 'Error al agregar pregunta' });
-    }
-});
+router.post('/:id/questions', authMiddleware, adminMiddleware, quizController.addQuestion);
 
 /**
  * @route   PUT /api/quizzes/questions/:questionId
- * @desc    Actualizar pregunta y sus opciones (reemplazo completo de opciones por simplicidad en este caso)
+ * @desc    Actualizar pregunta y sus opciones
+ * @access  Private/Admin
  */
-router.put('/questions/:questionId', authMiddleware, adminMiddleware, async (req, res) => {
-    const connection = await db.pool.getConnection();
-    try {
-        const { question_text, question_type, image_url, points, order_index, explanation, options } = req.body;
-        const { questionId } = req.params;
-
-        await connection.beginTransaction();
-
-        // 1. Update question
-        await connection.query(
-            `UPDATE quiz_questions SET question_text = ?, question_type = ?, image_url = ?, points = ?, order_index = ?, explanation = ?
-             WHERE id = ?`,
-            [question_text, question_type, image_url, points, order_index, explanation, questionId]
-        );
-
-        // 2. Delete old options and insert new ones (simpler than selective update)
-        if (options && Array.isArray(options)) {
-            await connection.query('DELETE FROM quiz_options WHERE question_id = ?', [questionId]);
-            for (let opt of options) {
-                await connection.query(
-                    `INSERT INTO quiz_options (question_id, option_text, is_correct, order_index)
-                     VALUES (?, ?, ?, ?)`,
-                    [questionId, opt.option_text, opt.is_correct ? 1 : 0, opt.order_index || 0]
-                );
-            }
-        }
-
-        await connection.commit();
-        res.json({ success: true, message: 'Pregunta actualizada' });
-    } catch (error) {
-        await connection.rollback();
-        logger.error(error);
-        res.status(500).json({ error: 'Error al actualizar pregunta' });
-    } finally {
-        connection.release();
-    }
-});
+router.put('/questions/:questionId', authMiddleware, adminMiddleware, quizController.updateQuestion);
 
 /**
  * @route   DELETE /api/quizzes/questions/:questionId
+ * @desc    Eliminar pregunta
+ * @access  Private/Admin
  */
-router.delete('/questions/:questionId', authMiddleware, adminMiddleware, async (req, res) => {
-    try {
-        await db.query('DELETE FROM quiz_questions WHERE id = ?', [req.params.questionId]);
-        res.json({ success: true, message: 'Pregunta eliminada' });
-    } catch (error) {
-        res.status(500).json({ error: 'Error al eliminar' });
-    }
-});
+router.delete('/questions/:questionId', authMiddleware, adminMiddleware, quizController.deleteQuestion);
 
 /**
  * @route   DELETE /api/quizzes/:id
+ * @desc    Eliminar quiz
+ * @access  Private/Admin
  */
-router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
-    try {
-        await db.query('DELETE FROM quizzes WHERE id = ?', [req.params.id]);
-        res.json({ success: true, message: 'Quiz eliminado' });
-    } catch (error) {
-        res.status(500).json({ error: 'Error al eliminar' });
-    }
-});
+router.delete('/:id', authMiddleware, adminMiddleware, quizController.deleteQuiz);
 
 module.exports = router;

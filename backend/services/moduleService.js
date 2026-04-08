@@ -185,13 +185,25 @@ class ModuleService {
         const result = await db.query(
             `INSERT INTO modules (module_number, title, description, month, duration_minutes, is_published, generates_certificate, requires_previous, release_date, order_index, image_url)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [module_number, title, description, month, duration_minutes, is_published, generates_certificate, requires_previous, formattedDate, order_index, image_url]
+            [
+                module_number || 1,
+                title || 'Nuevo Módulo',
+                description || '',
+                month || 'Enero',
+                duration_minutes || 0,
+                is_published || false,
+                generates_certificate || false,
+                requires_previous || false,
+                formattedDate,
+                order_index || 0,
+                image_url || null
+            ]
         );
         return result.insertId;
     }
 
     /**
-     * Actualiza un módulo
+     * Actualiza un módulo usando el patrón COALESCE para permitir actualizaciones parciales seguras
      */
     async updateModule(moduleId, data) {
         const {
@@ -202,9 +214,25 @@ class ModuleService {
         const formattedDate = release_date ? new Date(release_date).toISOString().slice(0, 19).replace('T', ' ') : null;
 
         await db.query(
-            `UPDATE modules SET module_number = ?, title = ?, description = ?, month = ?, duration_minutes = ?, is_published = ?, generates_certificate = ?, requires_previous = ?, release_date = ?, order_index = ?, image_url = ?
+            `UPDATE modules SET 
+                module_number = COALESCE(?, module_number),
+                title = COALESCE(?, title),
+                description = COALESCE(?, description),
+                month = COALESCE(?, month),
+                duration_minutes = COALESCE(?, duration_minutes),
+                is_published = COALESCE(?, is_published),
+                generates_certificate = COALESCE(?, generates_certificate),
+                requires_previous = COALESCE(?, requires_previous),
+                release_date = COALESCE(?, release_date),
+                order_index = COALESCE(?, order_index),
+                image_url = COALESCE(?, image_url)
              WHERE id = ?`,
-            [module_number, title, description, month, duration_minutes, is_published, generates_certificate, requires_previous, formattedDate, order_index, image_url, moduleId]
+            [
+                module_number, title, description, month, duration_minutes, 
+                is_published, generates_certificate, requires_previous, 
+                formattedDate, order_index, image_url, 
+                moduleId
+            ]
         );
     }
 
@@ -212,7 +240,7 @@ class ModuleService {
      * Elimina un módulo
      */
     async deleteModule(moduleId) {
-        await db.query('DELETE FROM modules WHERE id = ?', [moduleId]);
+        return await db.query('DELETE FROM modules WHERE id = ?', [moduleId]);
     }
 }
 

@@ -71,8 +71,9 @@ const refreshLeaderboardCache = async () => {
             await redisClient.zAdd('leaderboard:points', zSetData);
         }
 
-        await redisClient.setEx('leaderboard:institutional', 3600, JSON.stringify(institutionalLeaderboard));
-        await redisClient.setEx('leaderboard:departments', 3600, JSON.stringify(departmentRanking));
+        // Cache during 30 minutes (1800 seconds)
+        await redisClient.setEx('leaderboard:institutional', 1800, JSON.stringify(institutionalLeaderboard));
+        await redisClient.setEx('leaderboard:departments', 1800, JSON.stringify(departmentRanking));
         logger.info('✅ Leaderboard cache refreshed in Redis (including real-time ZSET)');
     } catch (err) {
         logger.error('❌ Error refreshing leaderboard cache:', err);
@@ -81,7 +82,7 @@ const refreshLeaderboardCache = async () => {
 
 // Iniciar tarea en segundo plano al arrancar la app
 setTimeout(refreshLeaderboardCache, 5000);
-setInterval(refreshLeaderboardCache, 60 * 60 * 1000);
+setInterval(refreshLeaderboardCache, 30 * 60 * 1000);
 
 /**
  * @route   GET /api/gamification/leaderboard

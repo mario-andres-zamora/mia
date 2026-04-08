@@ -1,474 +1,99 @@
-import { useState, useEffect } from 'react';
-import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
-import {
-    Users,
-    Search,
-    Edit2,
-    Trash2,
-    CheckCircle,
-    XCircle,
-    ArrowLeft,
-    User,
-    Building2,
-    Briefcase,
-    Download,
-    Clock,
-    Calendar,
-    RefreshCcw,
-    History
-} from 'lucide-react';
-import toast from 'react-hot-toast';
+import { useUsers } from '../hooks/useUsers';
 import { useNavigate } from 'react-router-dom';
 import ConfirmModal from '../components/ConfirmModal';
 import { TableSkeleton } from '../components/skeletons/TableSkeleton';
-import Skeleton from '../components/Skeleton';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+// Modular Components
+import UserHeader from '../components/admin/users/UserHeader';
+import UserTable from '../components/admin/users/UserTable';
+import UserEditModal from '../components/admin/users/UserEditModal';
 
 export default function AdminUsers() {
-    const { token, user: currentUser, updateUser } = useAuthStore();
+    const { user: currentUser, updateUser } = useAuthStore();
     const navigate = useNavigate();
-    const [users, setUsers] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [editingUser, setEditingUser] = useState(null);
-    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [departments, setDepartments] = useState([]);
-
-    // Confirm Modal State
-    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-    const [userToDelete, setUserToDelete] = useState(null);
-
-    const [resetModalOpen, setResetModalOpen] = useState(false);
-    const [userToReset, setUserToReset] = useState(null);
-
-    useEffect(() => {
-        fetchUsers();
-        fetchDepartments();
-    }, []);
-
-    const fetchDepartments = async () => {
-        try {
-            const response = await axios.get(`${API_URL}/departments`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            if (response.data.success) {
-                setDepartments(response.data.departments);
-            }
-        } catch (error) {
-            console.error('Error fetching departments:', error);
-        }
-    };
-
-    const fetchUsers = async () => {
-        try {
-            setLoading(true);
-            const response = await axios.get(`${API_URL}/users`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            if (response.data.success) {
-                setUsers(response.data.users);
-            }
-        } catch (error) {
-            toast.error('Error al cargar la lista de usuarios');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleEditUser = (user) => {
-        setEditingUser({ ...user });
-        setIsEditModalOpen(true);
-    };
-
-    const handleUpdateUser = async () => {
-        try {
-            const response = await axios.put(`${API_URL}/users/${editingUser.id}`, editingUser, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            if (response.data.success) {
-                toast.success('Usuario actualizado correctamente');
-                setIsEditModalOpen(false);
-                fetchUsers();
-            }
-        } catch (error) {
-            toast.error('Error al actualizar el usuario');
-        }
-    };
-
-    const handleDeleteClick = (user) => {
-        setUserToDelete(user);
-        setDeleteModalOpen(true);
-    };
-
-    const handleConfirmDelete = async () => {
-        if (!userToDelete) return;
-
-        try {
-            const response = await axios.delete(`${API_URL}/users/${userToDelete.id}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            if (response.data.success) {
-                toast.success('Usuario eliminado permanentemente');
-                fetchUsers();
-            }
-        } catch (error) {
-            const msg = error.response?.data?.error || 'Error al eliminar el usuario';
-            toast.error(msg);
-        }
-    };
-
-    const handleResetClick = (user) => {
-        setUserToReset(user);
-        setResetModalOpen(true);
-    };
-
-    const handleConfirmReset = async () => {
-        if (!userToReset) return;
-
-        try {
-            const response = await axios.post(`${API_URL}/users/${userToReset.id}/reset`, {}, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            if (response.data.success) {
-                toast.success('El progreso del funcionario ha sido reiniciado');
-                fetchUsers();
-                
-                // Si el admin se reinicia a sí mismo, refrescar sus puntos en el header
-                if (userToReset.id === currentUser?.id) {
-                    updateUser({ 
-                        points: response.data.newPoints, 
-                        level: response.data.newLevel 
-                    });
-                }
-            }
-        } catch (error) {
-            const msg = error.response?.data?.error || 'Error al reiniciar el usuario';
-            toast.error(msg);
-        }
-    };
-
-    const syncFromDirectory = async () => {
-        if (!editingUser?.email) return;
-
-        try {
-            const response = await axios.get(`${API_URL}/directory`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            if (response.data.success) {
-                const directoryEntry = response.data.directory.find(d => d.email.toLowerCase() === editingUser.email.toLowerCase());
-                if (directoryEntry) {
-                    setEditingUser({
-                        ...editingUser,
-                        department: directoryEntry.department,
-                        position: directoryEntry.position || editingUser.position // Update position too if available
-                    });
-                    toast.success('Datos sincronizados del directorio maestro');
-                } else {
-                    toast.error('No se encontró al funcionario en el directorio maestro');
-                }
-            }
-        } catch (error) {
-            toast.error('Error al consultar el directorio maestro');
-        }
-    };
-
-    const formatRelativeTime = (dateString) => {
-        if (!dateString) return 'Nunca';
-        const date = new Date(dateString);
-        const now = new Date();
-        const diffInSeconds = Math.floor((now - date) / 1000);
-
-        if (diffInSeconds < 60) return 'Ahora mismo';
-        if (diffInSeconds < 3600) return `Hace ${Math.floor(diffInSeconds / 60)} min`;
-        if (diffInSeconds < 86400) return `Hace ${Math.floor(diffInSeconds / 3600)} h`;
-        if (diffInSeconds < 604800) return `Hace ${Math.floor(diffInSeconds / 86400)} d`;
-
-        return date.toLocaleDateString();
-    };
-
-    const filteredUsers = users.filter(user =>
-        `${user.first_name} ${user.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (user.department && user.department.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
+    const { filteredUsers, loading, searchTerm, setSearchTerm, departments, actions } = useUsers();
 
     if (loading) {
         return (
             <div className="max-w-7xl mx-auto space-y-10 animate-fade-in pb-20">
-                <div className="flex justify-between items-center">
-                    <div className="space-y-4">
-                        <Skeleton className="h-4 w-32" />
-                        <Skeleton className="h-10 w-64" />
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 bg-slate-900/40 p-10 rounded-[3rem] border border-white/5">
+                    <div className="space-y-4 w-full max-w-md">
+                        <div className="h-4 w-32 bg-white/5 rounded-full animate-pulse"></div>
+                        <div className="h-12 w-full bg-white/5 rounded-2xl animate-pulse"></div>
                     </div>
-                    <Skeleton className="h-14 w-96 rounded-2xl" />
+                    <div className="h-16 w-full md:w-96 bg-white/5 rounded-3xl animate-pulse"></div>
                 </div>
-                <TableSkeleton rows={8} cols={7} />
+                <div className="bg-slate-900/20 rounded-[3rem] p-10 border border-white/5">
+                    <TableSkeleton rows={8} cols={7} />
+                </div>
             </div>
         );
     }
 
     return (
         <div className="max-w-7xl mx-auto space-y-10 animate-fade-in pb-20">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                <div className="space-y-1">
-                    <button
-                        onClick={() => navigate('/admin')}
-                        className="flex items-center gap-2 text-gray-500 hover:text-white transition-colors text-[10px] font-black uppercase tracking-widest mb-2"
-                    >
-                        <ArrowLeft className="w-4 h-4" /> Volver al Panel Admin
-                    </button>
-                    <h1 className="text-3xl font-black text-white uppercase tracking-tight">Gestión de Usuarios</h1>
-                    <p className="text-gray-400 text-sm font-medium">Control de acceso y roles de funcionarios de la CGR.</p>
-                </div>
+            {/* Action Bar Header */}
+            <UserHeader 
+                filteredCount={filteredUsers.length}
+                activeCount={filteredUsers.filter(u => u.is_active).length}
+                searchTerm={searchTerm}
+                onSearchChange={setSearchTerm}
+                onBack={() => navigate('/admin')}
+            />
 
-                <div className="relative w-full md:w-96">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-                    <input
-                        type="text"
-                        placeholder="Buscar por nombre, email o unidad..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-12 pr-6 py-4 bg-slate-800/20 border border-white/5 rounded-2xl text-white font-medium focus:outline-none focus:border-primary-500/50"
-                    />
-                </div>
-            </div>
-
-            {/* Users Table */}
-            <div className="card overflow-hidden !p-0 border-white/5">
-                <table className="w-full text-left">
-                    <thead className="bg-white/5 border-b border-white/5">
-                        <tr>
-                            <th className="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Funcionario</th>
-                            <th className="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Unidad / Cargo</th>
-                            <th className="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Rol</th>
-                            <th className="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Acceso</th>
-                            <th className="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Nivel / XP</th>
-                            <th className="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Estado</th>
-                            <th className="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-right">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/5">
-                        {filteredUsers.map((u) => (
-                            <tr key={u.id} className="hover:bg-white/[0.02] transition-colors">
-                                <td className="px-6 py-5">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 rounded-xl bg-slate-800 border border-white/5 flex items-center justify-center text-gray-500">
-                                            <User className="w-5 h-5" />
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-bold text-white">{u.first_name} {u.last_name}</p>
-                                            <p className="text-[10px] text-gray-500 font-medium">{u.email}</p>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td className="px-6 py-5">
-                                    <p className="text-xs font-bold text-gray-300">{u.department || 'Sin asignar'}</p>
-                                    <p className="text-[10px] text-gray-600 font-medium uppercase tracking-tighter">{u.position || 'Sin cargo'}</p>
-                                </td>
-                                <td className="px-6 py-5 text-center">
-                                    <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-tighter ${u.role === 'admin' ? 'bg-secondary-500/10 text-secondary-500' : 'bg-primary-500/10 text-primary-400'
-                                        }`}>
-                                        {u.role}
-                                    </span>
-                                </td>
-                                <td className="px-6 py-5">
-                                    <div className="flex flex-col gap-1.5">
-                                        <div className="flex items-center gap-2 text-[10px] font-bold text-gray-500">
-                                            <Calendar className="w-3.5 h-3.5 text-gray-600" />
-                                            <span className="uppercase tracking-tight">Registro:</span>
-                                            <span className="text-gray-400">{new Date(u.created_at).toLocaleDateString()}</span>
-                                        </div>
-                                        <div className={`flex items-center gap-2 text-[10px] font-bold ${u.last_login ? 'text-primary-400' : 'text-gray-600'}`}>
-                                            <Clock className={`w-3.5 h-3.5 ${u.last_login ? 'text-primary-500' : 'text-gray-700'}`} />
-                                            <span className="uppercase tracking-tight">Última vez:</span>
-                                            <span className={u.last_login ? 'text-white' : 'text-gray-600 italic'}>
-                                                {formatRelativeTime(u.last_login)}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td className="px-6 py-5 text-center">
-                                    <p className="text-xs font-black text-white">{u.points || 0} PTS</p>
-                                    <p className="text-[9px] text-gray-600 font-black uppercase tracking-widest">{u.level || 'Novato'}</p>
-                                </td>
-                                <td className="px-6 py-5 text-center">
-                                    {u.is_active ? (
-                                        <span className="flex items-center justify-center gap-1 text-green-500 text-[10px] font-black uppercase">
-                                            <CheckCircle className="w-3 h-3" /> Activo
-                                        </span>
-                                    ) : (
-                                        <span className="flex items-center justify-center gap-1 text-red-500 text-[10px] font-black uppercase">
-                                            <XCircle className="w-3 h-3" /> Inactivo
-                                        </span>
-                                    )}
-                                </td>
-                                <td className="px-6 py-5 text-right">
-                                    <div className="grid grid-cols-2 gap-2 w-fit ml-auto">
-                                        <button
-                                            onClick={() => navigate(`/admin/users/${u.id}/profile`)}
-                                            className="p-2 text-indigo-400 bg-indigo-500/5 hover:bg-indigo-500/10 rounded-lg transition-all"
-                                            title="Ver Historial"
-                                        >
-                                            <History className="w-4 h-4" />
-                                        </button>
-                                        <button
-                                            onClick={() => handleEditUser(u)}
-                                            className="p-2 text-primary-400 bg-primary-500/5 hover:bg-primary-500/10 rounded-lg transition-all"
-                                            title="Editar"
-                                        >
-                                            <Edit2 className="w-4 h-4" />
-                                        </button>
-                                        <button
-                                            onClick={() => handleResetClick(u)}
-                                            className="p-2 text-orange-500 bg-orange-500/5 hover:bg-orange-500/10 rounded-lg transition-all"
-                                            title="Reiniciar"
-                                        >
-                                            <RefreshCcw className="w-4 h-4" />
-                                        </button>
-                                        <button
-                                            onClick={() => handleDeleteClick(u)}
-                                            className="p-2 text-red-500 bg-red-500/5 hover:bg-red-500/10 rounded-lg transition-all"
-                                            title="Eliminar"
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
+            {/* Main Table Content */}
+            <UserTable 
+                users={filteredUsers}
+                currentUserId={currentUser?.id}
+                onEdit={(u) => {
+                    actions.edit.setUser({ ...u });
+                    actions.edit.setOpen(true);
+                }}
+                onReset={(u) => {
+                    actions.reset.setUser(u);
+                    actions.reset.setOpen(true);
+                }}
+                onDelete={(u) => {
+                    actions.delete.setUser(u);
+                    actions.delete.setOpen(true);
+                }}
+                viewProfile={(id) => navigate(`/admin/users/${id}/profile`)}
+            />
 
             {/* Edit User Modal */}
-            {isEditModalOpen && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
-                    <div className="card w-full max-w-lg p-0 overflow-hidden shadow-[0_30px_60px_rgba(0,0,0,0.5)] border-white/10">
-                        <div className="p-8 border-b border-white/5 bg-white/5 flex justify-between items-center">
-                            <div>
-                                <h2 className="text-xl font-black text-white uppercase tracking-tight">Editar Funcionario</h2>
-                                <p className="text-gray-500 text-xs font-medium mt-1">{editingUser.first_name} {editingUser.last_name}</p>
-                            </div>
-                            <button
-                                onClick={syncFromDirectory}
-                                className="flex items-center gap-2 px-4 py-2 bg-primary-500/20 text-primary-400 border border-primary-500/30 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary-500/30 transition-all group"
-                                title="Sincronizar datos oficiales"
-                            >
-                                <Download className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                                Sincronizar Directorio
-                            </button>
-                        </div>
+            <UserEditModal 
+                user={actions.edit.user}
+                departments={departments}
+                isOpen={actions.edit.isOpen}
+                onClose={() => actions.edit.setOpen(false)}
+                onUpdate={actions.edit.setUser}
+                onSave={actions.edit.save}
+                onSync={actions.edit.sync}
+            />
 
-                        <div className="p-8 space-y-6">
-                            <div className="grid grid-cols-2 gap-6">
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-1">Rol en Sistema</label>
-                                    <select
-                                        name="role"
-                                        id="role"
-                                        value={editingUser.role}
-                                        onChange={(e) => setEditingUser({ ...editingUser, role: e.target.value })}
-                                        className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-primary-500"
-                                    >
-                                        <option value="student">Usuario (Funcionario)</option>
-                                        <option value="admin">Administrador (TI/Seguridad)</option>
-                                    </select>
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-1">Estado</label>
-                                    <select
-                                        name="is_active"
-                                        id="is_active"
-                                        value={editingUser.is_active}
-                                        onChange={(e) => setEditingUser({ ...editingUser, is_active: e.target.value === 'true' || e.target.value === '1' })}
-                                        className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-primary-500"
-                                    >
-                                        <option value="true">Activo</option>
-                                        <option value="false">Inactivo</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-1">Unidad Administrativa / Área</label>
-                                <div className="relative">
-                                    <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600" />
-                                    <select
-                                        name="department"
-                                        id="department"
-                                        autoComplete="off"
-                                        value={editingUser.department || ''}
-                                        onChange={(e) => setEditingUser({ ...editingUser, department: e.target.value })}
-                                        className="w-full bg-slate-900 border border-white/10 rounded-xl pl-12 pr-4 py-3 text-sm text-white focus:outline-none focus:border-primary-500 appearance-none"
-                                    >
-                                        <option value="">Seleccionar área...</option>
-                                        {departments.map(dept => (
-                                            <option key={dept.id} value={dept.name}>{dept.name}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-1">Cargo Institucional</label>
-                                <div className="relative">
-                                    <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600" />
-                                    <input
-                                        type="text"
-                                        name="position"
-                                        id="position"
-                                        autoComplete="off"
-                                        data-lpignore="true"
-                                        value={editingUser.position || ''}
-                                        onChange={(e) => setEditingUser({ ...editingUser, position: e.target.value })}
-                                        className="w-full bg-slate-900 border border-white/10 rounded-xl pl-12 pr-4 py-3 text-sm text-white focus:outline-none focus:border-primary-500"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="p-8 bg-white/5 border-t border-white/5 flex gap-4">
-                            <button
-                                onClick={() => setIsEditModalOpen(false)}
-                                className="flex-1 py-4 rounded-2xl text-xs font-black uppercase tracking-widest text-gray-500 hover:text-white transition-colors"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                onClick={handleUpdateUser}
-                                className="flex-1 py-4 bg-primary-500 rounded-2xl text-xs font-black uppercase tracking-widest text-white shadow-lg hover:bg-primary-400 transition-all"
-                            >
-                                Guardar Cambios
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Confirm Reset Modal */}
+            {/* Confirm Actions */}
             <ConfirmModal
-                isOpen={resetModalOpen}
-                onClose={() => setResetModalOpen(false)}
-                onConfirm={handleConfirmReset}
-                title="Reiniciar Progreso"
-                message={`¿Estás seguro de que deseas reiniciar todo el progreso de ${userToReset?.first_name} ${userToReset?.last_name}? Esto pondrá sus puntos en 0, borrará sus certificados, insignias obtenidas, lecciones completadas e historial de actividad.`}
-                confirmText="Reiniciar Todo"
-                cancelText="Cancelar"
+                isOpen={actions.reset.isOpen}
+                onClose={() => actions.reset.setOpen(false)}
+                onConfirm={() => actions.reset.confirm((points, level) => {
+                    if (actions.reset.user?.id === currentUser?.id) {
+                        updateUser({ points, level });
+                    }
+                })}
+                title="Reiniciar Progreso Maestro"
+                message={`¿Estás seguro de que deseas reiniciar todo el progreso de ${actions.reset.user?.first_name} ${actions.reset.user?.last_name}? Esta acción purgará sus puntos, certificados, insignias e historial de lecciones. Esta acción es monitoreada por auditoría institucional.`}
+                confirmText="PURGAR PROGRESO"
                 isDestructive={true}
             />
 
-            {/* Confirm Delete Modal */}
             <ConfirmModal
-                isOpen={deleteModalOpen}
-                onClose={() => setDeleteModalOpen(false)}
-                onConfirm={handleConfirmDelete}
-                title="Eliminar Usuario"
-                message={`¿Estás seguro de que deseas eliminar permanentemente a ${userToDelete?.first_name} ${userToDelete?.last_name}? Esta acción no se puede deshacer y borrará todo su progreso en la plataforma.`}
-                confirmText="Eliminar Definitivamente"
-                cancelText="Cancelar"
+                isOpen={actions.delete.isOpen}
+                onClose={() => actions.delete.setOpen(false)}
+                onConfirm={actions.delete.confirm}
+                title="Eliminar Registro de Funcionario"
+                message={`¿Estás seguro de que deseas eliminar permanentemente a ${actions.delete.user?.first_name} ${actions.delete.user?.last_name}? Esta acción es IRREVERSIBLE y eliminará todas las trazas del usuario en la plataforma de capacitación.`}
+                confirmText="ELIMINAR DEFINITIVAMENTE"
                 isDestructive={true}
             />
         </div>
