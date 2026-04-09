@@ -11,7 +11,8 @@ class LessonContentService {
                 asub.status as asub_status,
                 asub.grade as asub_grade,
                 asub.feedback as asub_feedback,
-                asub.submitted_at as asub_submitted_at
+                asub.submitted_at as asub_submitted_at,
+                ucp.completed_at as completed_at
              FROM lesson_contents lc
              LEFT JOIN assignment_submissions asub ON asub.content_id = lc.id AND asub.user_id = ?
              LEFT JOIN user_content_progress ucp ON ucp.content_id = lc.id AND ucp.user_id = ?

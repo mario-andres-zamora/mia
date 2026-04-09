@@ -66,7 +66,7 @@ class ModuleService {
             module.lock_reason = null;
             if (module.requires_previous && !lastModuleCompleted && !isAdmin) {
                 module.is_locked = true;
-                module.lock_reason = `Completa el módulo "${previousModuleTitle}"`;
+                module.lock_reason = `Complete el módulo "${previousModuleTitle}"`;
             }
 
             lastModuleCompleted = module.completionPercentage === 100;
@@ -239,17 +239,17 @@ class ModuleService {
                 image_url = COALESCE(?, image_url)
              WHERE id = ?`,
             [
-                module_number ?? null, 
-                title ?? null, 
-                description ?? null, 
-                month ?? null, 
-                duration_minutes ?? null, 
-                is_published ?? null, 
-                generates_certificate ?? null, 
-                requires_previous ?? null, 
-                formattedDate, 
-                order_index ?? null, 
-                image_url ?? null, 
+                module_number ?? null,
+                title ?? null,
+                description ?? null,
+                month ?? null,
+                duration_minutes ?? null,
+                is_published ?? null,
+                generates_certificate ?? null,
+                requires_previous ?? null,
+                formattedDate,
+                order_index ?? null,
+                image_url ?? null,
                 moduleId
             ]
         );

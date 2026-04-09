@@ -74,7 +74,7 @@ router.get('/', authMiddleware, cacheMiddleware(300, true), async (req, res) => 
             let lockReason = null;
             if (m.requires_previous && !lastModuleCompleted && !isAdmin) {
                 isLocked = true;
-                lockReason = `Completa el módulo "${previousModuleTitle}"`;
+                lockReason = `Complete el módulo "${previousModuleTitle}"`;
             }
 
             // Determinar siguiente lección
@@ -125,7 +125,7 @@ router.get('/', authMiddleware, cacheMiddleware(300, true), async (req, res) => 
             try {
                 // 1. User Global Rank (Real-time ZSET)
                 const zRank = await redisClient.zRevRank('leaderboard:points', userId.toString());
-                
+
                 // 2. Institutional cache for total count and dept ranking
                 const cachedInst = await redisClient.get('leaderboard:institutional');
                 if (cachedInst) {
