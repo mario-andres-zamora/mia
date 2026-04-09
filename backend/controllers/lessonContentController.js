@@ -1,3 +1,4 @@
+const { clearCache } = require('../middleware/cache');
 const lessonContentService = require('../services/lessonContentService');
 const logger = require('../config/logger');
 
@@ -70,6 +71,11 @@ class LessonContentController {
 
     async createContent(req, res) {
         try {
+            const { lesson_id } = req.body;
+            await clearCache(`cache:/api/lessons/${lesson_id}*`);
+            await clearCache('cache:/api/modules*');
+            await clearCache('cache:/api/dashboard*');
+
             const result = await lessonContentService.createContent(req.body, req.file);
             res.status(201).json({
                 success: true,
@@ -85,7 +91,14 @@ class LessonContentController {
 
     async updateContent(req, res) {
         try {
-            await lessonContentService.updateContent(req.params.id, req.body, req.file);
+            const { id } = req.params;
+            // Clear all lesson-related caches as we don't have lessonId easily here without a query
+            // but we can at least clear the general patterns
+            await clearCache('cache:/api/lessons*');
+            await clearCache('cache:/api/modules*');
+            await clearCache('cache:/api/dashboard*');
+
+            await lessonContentService.updateContent(id, req.body, req.file);
             res.json({ success: true, message: 'Contenido actualizado correctamente' });
         } catch (error) {
             logger.error('Error actualizando contenido:', error);
@@ -95,6 +108,10 @@ class LessonContentController {
 
     async deleteContent(req, res) {
         try {
+            await clearCache('cache:/api/lessons*');
+            await clearCache('cache:/api/modules*');
+            await clearCache('cache:/api/dashboard*');
+
             await lessonContentService.deleteContent(req.params.id);
             res.json({ success: true, message: 'Contenido eliminado correctamente' });
         } catch (error) {
@@ -105,6 +122,7 @@ class LessonContentController {
 
     async reorderContents(req, res) {
         try {
+            await clearCache('cache:/api/lessons*');
             await lessonContentService.reorderContents(req.body.items);
             res.json({ success: true, message: 'Orden actualizado' });
         } catch (error) {
