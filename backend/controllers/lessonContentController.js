@@ -18,7 +18,8 @@ class LessonContentController {
         try {
             const { id } = req.params;
             const userId = req.user.id;
-            await lessonContentService.trackContentProgress(id, userId);
+            const responseData = req.body;
+            await lessonContentService.trackContentProgress(id, userId, responseData);
             res.json({ success: true, message: 'Progreso registrado' });
         } catch (error) {
             logger.error('Error registrando progreso de contenido:', error);

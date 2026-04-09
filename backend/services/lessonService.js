@@ -164,18 +164,21 @@ class LessonService {
             }
         }
 
-        // Verify required videos and links
+        // Verify required videos, links and confirmations
         const contents = await db.query(
             `SELECT lc.id, lc.title, lc.content_type, ucp.completed_at 
              FROM lesson_contents lc 
              LEFT JOIN user_content_progress ucp ON ucp.content_id = lc.id AND ucp.user_id = ? 
-             WHERE lc.lesson_id = ? AND lc.is_required = TRUE AND lc.content_type IN ('video', 'link')`,
+             WHERE lc.lesson_id = ? AND lc.is_required = TRUE AND lc.content_type IN ('video', 'link', 'confirmation')`,
             [userId, lessonId]
         );
 
         for (const item of contents) {
             if (!item.completed_at) {
-                const action = item.content_type === 'video' ? 'ver el video' : 'visitar el enlace';
+                let action = 'visitar el enlace';
+                if (item.content_type === 'video') action = 'ver el video';
+                if (item.content_type === 'confirmation') action = 'confirmar la pregunta';
+                
                 throw new Error(`No puedes finalizar: Te falta ${action} "${item.title}".`);
             }
         }

@@ -84,10 +84,13 @@ class LessonContentService {
         });
     }
 
-    async trackContentProgress(contentId, userId) {
+    async trackContentProgress(contentId, userId, responseData = null) {
+        const data = responseData && Object.keys(responseData).length > 0 ? JSON.stringify(responseData) : null;
         return await db.query(
-            'INSERT IGNORE INTO user_content_progress (user_id, content_id) VALUES (?, ?)',
-            [userId, contentId]
+            `INSERT INTO user_content_progress (user_id, content_id, response_data) 
+             VALUES (?, ?, ?) 
+             ON DUPLICATE KEY UPDATE response_data = VALUES(response_data), completed_at = NOW()`,
+            [userId, contentId, data]
         );
     }
 

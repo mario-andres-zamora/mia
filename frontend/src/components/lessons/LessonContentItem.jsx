@@ -397,7 +397,7 @@ export default function LessonContentItem({
                 
                 if (optNum === data.correctOption) {
                     setRevealing(true);
-                    markLinkAsVisited(item.id);
+                    markLinkAsVisited(item.id, { selectedOption: optNum, answeredAt: new Date().toISOString() });
                     setTimeout(() => setRevealing(false), 1000);
                 } else {
                     setIsIncorrect(optNum);

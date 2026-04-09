@@ -149,11 +149,11 @@ export function useLessonView() {
         }
     };
 
-    const markLinkAsVisited = async (linkId) => {
-        if (visitedLinks.has(linkId)) return;
+    const markLinkAsVisited = async (linkId, data = {}) => {
+        if (visitedLinks.has(linkId) && Object.keys(data).length === 0) return;
 
         try {
-            await axios.post(`${API_URL}/content/${linkId}/trace`, {}, {
+            await axios.post(`${API_URL}/content/${linkId}/trace`, data, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
