@@ -4,8 +4,8 @@ export default function CertificateCard({ certificate, user }) {
     if (!certificate) return null;
 
     return (
-        <div 
-            id="certificate-print" 
+        <div
+            id="certificate-print"
             className="relative w-full max-w-[1100px] aspect-[1.414/1] bg-white text-slate-900 shadow-2xl overflow-hidden print:shadow-none print:w-full print:h-full print:absolute print:top-0 print:left-0 print:m-0 animate-scale-in rounded-sm"
         >
             {/* Decorative Background Pattern */}
@@ -25,7 +25,7 @@ export default function CertificateCard({ certificate, user }) {
 
             {/* Content */}
             <div className="relative z-10 h-full flex flex-col items-center justify-between py-12 px-16 text-center">
-                
+
                 {/* Header */}
                 <div className="space-y-2">
                     <div className="w-32 h-32 mx-auto mb-2">
@@ -50,7 +50,7 @@ export default function CertificateCard({ certificate, user }) {
 
                     <div className="pt-6 space-y-4">
                         <p className="text-gray-600 font-serif text-lg leading-relaxed">
-                            Por haber completado satisfactoriamente el módulo de capacitación en seguridad de la información del curso <span className="font-bold text-primary-900 uppercase">"CGR Segura"</span> del mes de <strong>{certificate.module_month || 'Marzo'}</strong>:
+                            Por haber completado satisfactoriamente el módulo de capacitación en seguridad de la información del curso <span className="font-bold text-primary-900 uppercase">"CGR Segura"</span> el día <strong>{new Date(certificate.issued_at).toLocaleDateString('es-CR', { day: 'numeric', month: 'long', year: 'numeric' })}</strong>:
                         </p>
 
                         <div className="py-6 px-10 bg-slate-50 rounded-2xl border border-slate-100 shadow-inner inline-block">

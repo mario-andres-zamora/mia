@@ -17,7 +17,7 @@ router.get('/:moduleId', authMiddleware, async (req, res) => {
         const moduleId = req.params.moduleId;
 
         const [certificate] = await db.query(
-            `SELECT c.*, m.title as module_title, u.first_name, u.last_name, u.department 
+            `SELECT c.*, m.title as module_title, m.month as module_month, u.first_name, u.last_name, u.department 
              FROM certificates c
              JOIN modules m ON c.module_id = m.id
              JOIN users u ON c.user_id = u.id
