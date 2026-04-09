@@ -17,7 +17,7 @@ class ModuleService {
                  FROM lesson_contents lc 
                  JOIN lessons l2 ON lc.lesson_id = l2.id 
                  WHERE l2.module_id = m.id AND l2.is_optional = FALSE 
-                 ${isAdmin ? '' : 'AND l2.is_published = TRUE'}) as points_to_earn
+                 ${isAdmin ? '' : 'AND l2.is_published = TRUE'}) as calculated_points
             FROM modules m
             LEFT JOIN lessons l ON m.id = l.module_id 
                 AND l.is_optional = FALSE
@@ -32,6 +32,7 @@ class ModuleService {
 
         for (let i = 0; i < modules.length; i++) {
             const module = modules[i];
+            module.points_to_earn = module.calculated_points; // Sobrescribir con el cálculo dinámico
 
             const [lessonProgress] = await db.query(
                 `SELECT COUNT(*) as completed_count FROM user_progress WHERE user_id = ? AND module_id = ? AND status = 'completed'`,
@@ -85,16 +86,25 @@ class ModuleService {
      * Obtiene todos los módulos para administración
      */
     async getAllModulesAdmin() {
-        return await db.query(
+        const modules = await db.query(
             `SELECT 
                 m.*,
                 COUNT(DISTINCT l.id) as total_lessons,
-                SUM(l.duration_minutes) as total_duration
+                SUM(l.duration_minutes) as total_duration,
+                (SELECT IFNULL(SUM(lc.points), 0) 
+                 FROM lesson_contents lc 
+                 JOIN lessons l2 ON lc.lesson_id = l2.id 
+                 WHERE l2.module_id = m.id AND l2.is_optional = FALSE) as calculated_points
             FROM modules m
             LEFT JOIN lessons l ON m.id = l.module_id AND l.is_optional = FALSE
             GROUP BY m.id
             ORDER BY m.order_index ASC`
         );
+
+        return modules.map(m => ({
+            ...m,
+            points_to_earn: m.calculated_points
+        }));
     }
 
     /**
@@ -103,12 +113,13 @@ class ModuleService {
     async getModuleDetail(moduleId, userId, isAdmin) {
         const [module] = await db.query(
             `SELECT m.*,
-                (SELECT IFNULL(SUM(lc.points), 0) FROM lesson_contents lc JOIN lessons l2 ON lc.lesson_id = l2.id WHERE l2.module_id = m.id AND l2.is_optional = FALSE ${isAdmin ? '' : 'AND l2.is_published = TRUE'}) as points_to_earn
+                (SELECT IFNULL(SUM(lc.points), 0) FROM lesson_contents lc JOIN lessons l2 ON lc.lesson_id = l2.id WHERE l2.module_id = m.id AND l2.is_optional = FALSE ${isAdmin ? '' : 'AND l2.is_published = TRUE'}) as calculated_points
              FROM modules m WHERE m.id = ? ${isAdmin ? '' : 'AND m.is_published = 1'}`,
             [moduleId]
         );
 
         if (!module) return null;
+        module.points_to_earn = module.calculated_points;
 
         // Lockdown logic
         if (module.requires_previous && !isAdmin) {

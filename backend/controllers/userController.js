@@ -141,14 +141,24 @@ class UserController {
         try {
             const userId = req.params.id;
 
-            // Limpieza de caché
+            // Limpieza extensiva de caché para asegurar que el cambio se vea reflejado inmediatamente
             await clearCache(`cache:/api/dashboard*u${userId}*`);
             await clearCache(`cache:/api/users/profile*u${userId}*`);
+            await clearCache(`cache:/api/users/${userId}/full-profile*`);
             await clearCache(`cache:/api/gamification/leaderboard*`);
+            await clearCache(`cache:/api/gamification/ranking*`);
             await clearCache(`cache:/api/modules*u${userId}*`);
             await clearCache(`cache:/api/lessons*u${userId}*`);
+            
+            // Forzar actualización del ranking global e institucional
+            await clearCache(`leaderboard:institutional`);
+            await clearCache(`cache:/api/users*`); // Lista de usuarios de admin
 
             const result = await userService.resetUserProgress(userId);
+
+            // Sincronizar el ranking (Sorted Set) en Redis inmediatamente a 0
+            const { updateUserScore } = require('../utils/gamification');
+            await updateUserScore(userId, 0);
 
             res.json({ 
                 success: true, 

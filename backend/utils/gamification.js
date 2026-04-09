@@ -85,6 +85,94 @@ const calculateLevel = async (points) => {
 };
 
 /**
+ * Calcula un bonus dinámico al completar un módulo basado en:
+ * 1. Rango en el departamento (10-1 pts)
+ * 2. Desempeño en cuestionarios (10-0 pts)
+ * 3. Eficiencia de tiempo (10-0 pts, premia la precisión)
+ * 4. Encuestas (+3 pts adicionales)
+ */
+const calculateDynamicModuleBonus = async (userId, moduleId) => {
+    try {
+        // 1. Obtener información del usuario (Departamento)
+        const [user] = await db.query('SELECT department FROM users WHERE id = ?', [userId]);
+        const dept = user?.department || 'General';
+
+        // 2. Bono de Rango (Máx 10) - Los primeros de su área ganan más
+        const [completions] = await db.query(
+            `SELECT COUNT(*) as count FROM gamification_activities ga
+             JOIN users u ON ga.user_id = u.id
+             WHERE ga.activity_type = 'module_completed' AND ga.reference_id = ? AND u.department = ?`,
+            [moduleId, dept]
+        );
+        const rankPoints = Math.max(1, 10 - (completions.count || 0));
+
+        // 3. Bono de Desempeño (Máx 10) - Basado en intentos y nota 100%
+        const quizzes = await db.query('SELECT id FROM quizzes WHERE module_id = ? AND is_published = 1', [moduleId]);
+        let performancePoints = 0; // REFINADO: 0 si no hay cuestionarios
+        
+        if (quizzes.length > 0) {
+            let totalWeightedScore = 0;
+            for (const q of quizzes) {
+                // Obtener el primer intento aprobado
+                const [attempt] = await db.query(
+                    'SELECT score, attempt_number FROM quiz_attempts WHERE user_id = ? AND quiz_id = ? AND passed = 1 ORDER BY created_at ASC LIMIT 1',
+                    [userId, q.id]
+                );
+                
+                if (attempt) {
+                    let attemptWeight = 0;
+                    if (attempt.attempt_number === 1) attemptWeight = 1.0;      // 100% del bono
+                    else if (attempt.attempt_number === 2) attemptWeight = 0.6; // 60% del bono
+                    else if (attempt.attempt_number === 3) attemptWeight = 0.3; // 30% del bono
+                    
+                    totalWeightedScore += (attempt.score / 100) * attemptWeight;
+                }
+            }
+            performancePoints = Math.round((totalWeightedScore / quizzes.length) * 10);
+        }
+
+        // 4. Bono de Tiempo (Máx 10) - PREMIA LA PRECISIÓN (90% - 110%)
+        const [mod] = await db.query('SELECT duration_minutes FROM modules WHERE id = ?', [moduleId]);
+        let estimated = mod?.duration_minutes || 0;
+        
+        // Fallback si la duración del módulo es 0: sumar lecciones
+        if (estimated === 0) {
+            const [lessonSum] = await db.query('SELECT SUM(duration_minutes) as sum FROM lessons WHERE module_id = ? AND is_optional = 0', [moduleId]);
+            estimated = lessonSum.sum || 30; // Fallback 30 min
+        }
+
+        const [spentLessons] = await db.query('SELECT SUM(time_spent_minutes) as sum FROM user_progress WHERE user_id = ? AND module_id = ?', [userId, moduleId]);
+        const [spentQuizzes] = await db.query(
+            'SELECT SUM(qa.time_spent_minutes) as sum FROM quiz_attempts qa JOIN quizzes q ON qa.quiz_id = q.id WHERE qa.user_id = ? AND q.module_id = ?',
+            [userId, moduleId]
+        );
+        
+        const actual = (spentLessons.sum || 0) + (spentQuizzes.sum || 0);
+        const ratio = actual / estimated;
+        
+        let timePoints = 0;
+        if (ratio >= 0.9 && ratio <= 1.1) timePoints = 10;      // Perfecta precisión
+        else if ((ratio >= 0.7 && ratio < 0.9) || (ratio > 1.1 && ratio <= 1.3)) timePoints = 7; // Buena
+        else if ((ratio >= 0.5 && ratio < 0.7) || (ratio > 1.3 && ratio <= 1.6)) timePoints = 3; // Regular
+        else timePoints = 0;
+
+        // 5. Bono de Encuesta (+3 puntos adicionales)
+        const [survey] = await db.query(
+            `SELECT COUNT(*) as count FROM survey_responses sr 
+             JOIN surveys s ON sr.survey_id = s.id 
+             WHERE s.module_id = ? AND sr.user_id = ?`,
+            [moduleId, userId]
+        );
+        const surveyBonus = survey.count > 0 ? 3 : 0;
+
+        return rankPoints + performancePoints + timePoints + surveyBonus;
+    } catch (error) {
+        console.error('Error calculating dynamic bonus:', error);
+        return 0; // Fallback seguro
+    }
+};
+
+/**
  * Sincroniza el nivel del usuario en la base de datos
  */
 const syncUserLevel = async (userId) => {
@@ -185,8 +273,8 @@ const checkAndRecordModuleCompletion = async (userId, moduleId, isAdmin = false)
         // 5. Registrar actividad y dar puntos (solo si es nuevo)
         let bonusPoints = 0;
         if (!existingActivity) {
-            const settings = await getSystemSettings();
-            bonusPoints = 50; // Bonus fijo por ahora
+            // Calcular bonus dinámico
+            bonusPoints = await calculateDynamicModuleBonus(userId, moduleId);
 
             await db.query(
                 `INSERT INTO gamification_activities (user_id, activity_type, points_earned, reference_id) 
@@ -195,16 +283,22 @@ const checkAndRecordModuleCompletion = async (userId, moduleId, isAdmin = false)
             );
 
             // Sumar puntos al balance
-            const [newPoints] = await db.query(
+            // Actualizar puntos
+            await db.query(
                 `INSERT INTO user_points (user_id, points) VALUES (?, ?) 
-                 ON DUPLICATE KEY UPDATE points = points + ?;
-                 SELECT points FROM user_points WHERE user_id = ?`,
-                [userId, bonusPoints, bonusPoints, userId]
+                 ON DUPLICATE KEY UPDATE points = points + ?`,
+                [userId, bonusPoints, bonusPoints]
+            );
+
+            // Obtener nuevo balance
+            const [newPoints] = await db.query(
+                `SELECT points FROM user_points WHERE user_id = ?`,
+                [userId]
             );
             
             // Sincronizar con Redis para ranking en tiempo real
-            if (newPoints && newPoints[1] && newPoints[1][0]) {
-                await updateUserScore(userId, newPoints[1][0].points);
+            if (newPoints && newPoints.points !== undefined) {
+                await updateUserScore(userId, newPoints.points);
             }
         }
 

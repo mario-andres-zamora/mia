@@ -1,6 +1,8 @@
-import { BookOpen, AlertCircle, TrendingUp } from 'lucide-react';
+import { BookOpen, AlertCircle, TrendingUp, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
+import CyberCat from '../CyberCat';
 
 export default function ModuleGrid({ modules, filterCompleted, onToggleFilter }) {
     const navigate = useNavigate();
@@ -74,28 +76,49 @@ function ModuleCard({ module, navigate }) {
             </div>
 
             <div className="mt-auto space-y-4 relative z-10">
-                <div className="space-y-2">
-                    <div className="flex justify-between items-end text-[9px] font-bold uppercase text-gray-500 tracking-widest">
-                        <span>PROGRESO</span>
-                        <span className="text-white font-black">{module.progress || 0}%</span>
-                    </div>
-                    <div className="h-1.5 bg-[#1F2937] rounded-full overflow-hidden">
-                        <div
-                            className="h-full bg-[#1F2937]"
-                            style={{ width: `${module.progress || 0}%` }}
-                        ></div>
-                    </div>
-                </div>
+                {isLocked ? (
+                    <motion.div
+                        initial={{ opacity: 0.8 }}
+                        animate={{ opacity: [0.8, 1, 0.8] }}
+                        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                        className="w-full py-4 flex flex-col items-center justify-center gap-2 bg-orange-500/10 rounded-2xl border border-orange-500/30 text-orange-200 px-4 shadow-[0_0_20px_rgba(249,115,22,0.1)]"
+                    >
+                        <div className="flex items-center gap-2.5 text-[10px] font-black uppercase tracking-[0.2em] text-orange-400">
+                            <Lock className="w-3 h-3" />
+                            Módulo Bloqueado
+                        </div>
+                        {module.lock_reason && (
+                            <p className="text-[10px] text-orange-100/90 font-bold leading-tight text-center">
+                                {module.lock_reason}
+                            </p>
+                        )}
+                    </motion.div>
+                ) : (
+                    <>
+                        <div className="space-y-2">
+                            <div className="flex justify-between items-end text-[9px] font-bold uppercase text-gray-500 tracking-widest">
+                                <span>PROGRESO</span>
+                                <span className="text-white font-black">{module.progress || 0}%</span>
+                            </div>
+                            <div className="h-1.5 bg-[#1F2937] rounded-full overflow-hidden">
+                                <div
+                                    className="h-full bg-gradient-to-r from-[#EF8843] to-[#E56B24]"
+                                    style={{ width: `${module.progress || 0}%` }}
+                                ></div>
+                            </div>
+                        </div>
 
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        handleNavigation();
-                    }}
-                    className="w-full py-2.5 rounded-xl bg-gradient-to-r from-[#EF8843] to-[#E56B24] text-white text-[9px] font-bold uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 group/btn shadow-[0_0_15px_rgba(239,136,67,0.15)]"
-                >
-                    EMPEZAR <TrendingUp className="w-3.5 h-3.5 group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-transform" />
-                </button>
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleNavigation();
+                            }}
+                            className="w-full py-2.5 rounded-xl bg-gradient-to-r from-[#EF8843] to-[#E56B24] text-white text-[9px] font-bold uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 group/btn shadow-[0_0_15px_rgba(239,136,67,0.15)]"
+                        >
+                            EMPEZAR <TrendingUp className="w-3.5 h-3.5 group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-transform" />
+                        </button>
+                    </>
+                )}
             </div>
         </div>
     );
