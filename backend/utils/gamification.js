@@ -1,4 +1,6 @@
 const db = require('../config/database');
+const logger = require('../config/logger');
+const redisClient = require('../config/redis');
 
 /**
  * Caché de niveles y settings para evitar consultas constantes a la BD
@@ -299,6 +301,18 @@ const checkAndRecordModuleCompletion = async (userId, moduleId, isAdmin = false)
             // Sincronizar con Redis para ranking en tiempo real
             if (newPoints && newPoints.points !== undefined) {
                 await updateUserScore(userId, newPoints.points);
+                
+                // --- FORZAR ACTUALIZACIÓN DEL RANKING ---
+                // Refrescar los resúmenes institucionales y por área
+                try {
+                    await refreshLeaderboardCache();
+                    
+                    // Limpiar el caché de la ruta de ranking para este usuario y patrones globales
+                    const { clearCache } = require('../middleware/cache');
+                    await clearCache('cache:/api/gamification/leaderboard*');
+                } catch (rankErr) {
+                    logger.error('Error forzando actualización de ranking tras módulo:', rankErr);
+                }
             }
         }
 
@@ -337,11 +351,85 @@ const updateUserScore = async (userId, points) => {
     return false;
 };
 
+/**
+ * Función para recalcular y cachear el Leaderboard global
+ * Se ejecuta periódicamente y también se puede forzar tras eventos importantes.
+ */
+const refreshLeaderboardCache = async () => {
+    try {
+        if (!redisClient || !redisClient.isOpen) return;
+
+        const instRanking = await db.query(
+            `SELECT 
+                sd.full_name, u.first_name, u.last_name, u.profile_picture, sd.department, LOWER(sd.email) as email,
+                COALESCE(up.points, 0) as points, 
+                COALESCE(up.level, 'Novato') as level,
+                RANK() OVER (ORDER BY COALESCE(up.points, -1) DESC, sd.full_name ASC) as rank_position
+             FROM staff_directory sd
+             LEFT JOIN users u ON sd.email = u.email
+             LEFT JOIN user_points up ON u.id = up.user_id
+             ORDER BY points DESC, sd.full_name ASC`
+        );
+
+        const institutionalLeaderboard = instRanking.map(r => ({
+            ...r,
+            id: r.email,
+            first_name: r.first_name || r.full_name.split(' ')[0],
+            last_name: r.last_name || r.full_name.split(' ').slice(1).join(' '),
+            rank_position: r.rank_position
+        }));
+
+        const departmentRanking = await db.query(
+            `SELECT 
+                sd.department, 
+                SUM(COALESCE(up.points, 0)) as total_points, ROUND(SUM(COALESCE(up.points, 0)) / COUNT(sd.email), 1) as average_points, 
+                COUNT(sd.email) as staff_count,
+                (SELECT sd2.full_name 
+                 FROM staff_directory sd2
+                 LEFT JOIN users u2 ON sd2.email = u2.email
+                 LEFT JOIN user_points up2 ON u2.id = up2.user_id
+                 WHERE sd2.department = sd.department 
+                 ORDER BY COALESCE(up2.points, -1) DESC, sd2.full_name ASC LIMIT 1) as top_performer,
+                (SELECT COALESCE(up3.points, 0) 
+                 FROM staff_directory sd3
+                 LEFT JOIN users u3 ON sd3.email = u3.email
+                 LEFT JOIN user_points up3 ON u3.id = up3.user_id
+                 WHERE sd3.department = sd.department 
+                 ORDER BY COALESCE(up3.points, -1) DESC LIMIT 1) as top_points
+             FROM staff_directory sd
+             LEFT JOIN users u ON sd.email = u.email
+             LEFT JOIN user_points up ON u.id = up.user_id
+             WHERE sd.department IS NOT NULL
+             GROUP BY sd.department
+             ORDER BY average_points DESC, total_points DESC`
+        );
+
+        // --- SINCRONIZACIÓN ZSET PARA RANKING REAL-TIME ---
+        const allPoints = await db.query('SELECT user_id, points FROM user_points WHERE points > 0');
+        if (allPoints.length > 0) {
+            const zSetData = allPoints.map(p => ({
+                score: p.points,
+                value: p.user_id.toString()
+            }));
+            await redisClient.del('leaderboard:points');
+            await redisClient.zAdd('leaderboard:points', zSetData);
+        }
+
+        // Cache 30 min
+        await redisClient.setEx('leaderboard:institutional', 1800, JSON.stringify(institutionalLeaderboard));
+        await redisClient.setEx('leaderboard:departments', 1800, JSON.stringify(departmentRanking));
+        logger.info('✅ Leaderboard cache refreshed in Redis');
+    } catch (err) {
+        logger.error('❌ Error refreshing leaderboard cache:', err);
+    }
+};
+
 module.exports = {
     getLevels,
     calculateLevel,
     syncUserLevel,
     getSystemSettings,
     checkAndRecordModuleCompletion,
-    updateUserScore
+    updateUserScore,
+    refreshLeaderboardCache
 };
