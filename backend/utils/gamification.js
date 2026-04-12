@@ -111,7 +111,7 @@ const calculateDynamicModuleBonus = async (userId, moduleId) => {
         // 3. Bono de Desempeño (Máx 10) - Basado en intentos y nota 100%
         const quizzes = await db.query('SELECT id FROM quizzes WHERE module_id = ? AND is_published = 1', [moduleId]);
         let performancePoints = 0; // REFINADO: 0 si no hay cuestionarios
-        
+
         if (quizzes.length > 0) {
             let totalWeightedScore = 0;
             for (const q of quizzes) {
@@ -120,13 +120,13 @@ const calculateDynamicModuleBonus = async (userId, moduleId) => {
                     'SELECT score, attempt_number FROM quiz_attempts WHERE user_id = ? AND quiz_id = ? AND passed = 1 ORDER BY created_at ASC LIMIT 1',
                     [userId, q.id]
                 );
-                
+
                 if (attempt) {
                     let attemptWeight = 0;
                     if (attempt.attempt_number === 1) attemptWeight = 1.0;      // 100% del bono
                     else if (attempt.attempt_number === 2) attemptWeight = 0.6; // 60% del bono
                     else if (attempt.attempt_number === 3) attemptWeight = 0.3; // 30% del bono
-                    
+
                     totalWeightedScore += (attempt.score / 100) * attemptWeight;
                 }
             }
@@ -136,7 +136,7 @@ const calculateDynamicModuleBonus = async (userId, moduleId) => {
         // 4. Bono de Tiempo (Máx 10) - PREMIA LA PRECISIÓN (90% - 110%)
         const [mod] = await db.query('SELECT duration_minutes FROM modules WHERE id = ?', [moduleId]);
         let estimated = mod?.duration_minutes || 0;
-        
+
         // Fallback si la duración del módulo es 0: sumar lecciones
         if (estimated === 0) {
             const [lessonSum] = await db.query('SELECT SUM(duration_minutes) as sum FROM lessons WHERE module_id = ? AND is_optional = 0', [moduleId]);
@@ -148,10 +148,10 @@ const calculateDynamicModuleBonus = async (userId, moduleId) => {
             'SELECT SUM(qa.time_spent_minutes) as sum FROM quiz_attempts qa JOIN quizzes q ON qa.quiz_id = q.id WHERE qa.user_id = ? AND q.module_id = ?',
             [userId, moduleId]
         );
-        
+
         const actual = (spentLessons.sum || 0) + (spentQuizzes.sum || 0);
         const ratio = actual / estimated;
-        
+
         let timePoints = 0;
         if (ratio >= 0.9 && ratio <= 1.1) timePoints = 10;      // Perfecta precisión
         else if ((ratio >= 0.7 && ratio < 0.9) || (ratio > 1.1 && ratio <= 1.3)) timePoints = 7; // Buena
@@ -297,16 +297,16 @@ const checkAndRecordModuleCompletion = async (userId, moduleId, isAdmin = false)
                 `SELECT points FROM user_points WHERE user_id = ?`,
                 [userId]
             );
-            
+
             // Sincronizar con Redis para ranking en tiempo real
             if (newPoints && newPoints.points !== undefined) {
                 await updateUserScore(userId, newPoints.points);
-                
+
                 // --- FORZAR ACTUALIZACIÓN DEL RANKING ---
                 // Refrescar los resúmenes institucionales y por área
                 try {
                     await refreshLeaderboardCache();
-                    
+
                     // Limpiar el caché de la ruta de ranking para este usuario y patrones globales
                     const { clearCache } = require('../middleware/cache');
                     await clearCache('cache:/api/gamification/leaderboard*');
@@ -330,7 +330,7 @@ const checkAndRecordModuleCompletion = async (userId, moduleId, isAdmin = false)
     }
 };
 
-const redisClient = require('../config/redis');
+
 
 /**
  * Actualiza el puntaje del usuario en Redis para el ranking en tiempo real
