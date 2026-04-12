@@ -4,20 +4,20 @@ import { useAuthStore } from '../store/authStore';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL;
 
 export function useAdminModules() {
-    const { 
-        modules, 
-        loading: modulesLoading, 
-        fetchAdminModules, 
-        createModule, 
-        updateModule, 
-        deleteModule 
+    const {
+        modules,
+        loading: modulesLoading,
+        fetchAdminModules,
+        createModule,
+        updateModule,
+        deleteModule
     } = useModuleStore();
 
     const [searchTerm, setSearchTerm] = useState('');
-    
+
     // Module Modal State
     const [isModuleModalOpen, setIsModuleModalOpen] = useState(false);
     const [editingModule, setEditingModule] = useState(null);
@@ -253,7 +253,7 @@ export function useAdminModules() {
                 ...lesson,
                 is_optional: !lesson.is_optional
             });
-            
+
             if (response.data.success) {
                 setModuleLessons(prev => prev.map(l => l.id === lesson.id ? { ...l, is_optional: !l.is_optional } : l));
                 toast.success('Estado de lección actualizado');
@@ -270,7 +270,7 @@ export function useAdminModules() {
                 ...lesson,
                 is_published: !lesson.is_published
             });
-            
+
             if (response.data.success) {
                 setModuleLessons(prev => prev.map(l => l.id === lesson.id ? { ...l, is_published: !l.is_published } : l));
                 toast.success(lesson.is_published ? 'Lección movida a borradores' : 'Lección publicada correctamente');
@@ -366,7 +366,7 @@ export function useAdminModules() {
                 moduleId,
                 orderedIds
             });
-            
+
             if (response.data.success) {
                 toast.success('Orden de lecciones actualizado');
                 fetchModuleDetails(moduleId);
@@ -391,7 +391,7 @@ export function useAdminModules() {
         loading: modulesLoading,
         searchTerm,
         setSearchTerm,
-        
+
         // Module UI
         isModuleModalOpen,
         setIsModuleModalOpen,

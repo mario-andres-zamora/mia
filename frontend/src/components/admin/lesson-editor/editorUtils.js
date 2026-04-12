@@ -10,7 +10,9 @@ import {
     Type, 
     List,
     File,
-    CheckCircle2
+    CheckCircle2,
+    Lock,
+    CheckSquare
 } from 'lucide-react';
 
 export const CONTENT_TYPES_CONFIG = [
@@ -27,6 +29,8 @@ export const CONTENT_TYPES_CONFIG = [
     { type: 'bullets', label: 'Viñetas', icon: List, color: 'text-sky-400' },
     { type: 'confirmation', label: 'Confirmación', icon: CheckCircle2, color: 'text-emerald-400' },
     { type: 'interactive_input', label: 'Input Interactivo', icon: Type, color: 'text-indigo-400' },
+    { type: 'password_tester', label: 'Test Password', icon: Lock, color: 'text-pink-400' },
+    { type: 'multiple_choice', label: 'Opción Múltiple', icon: CheckSquare, color: 'text-orange-400' },
 ];
 
 export const getIconForType = (type) => {
@@ -53,7 +57,9 @@ export const getTypeLabel = (type) => {
         heading: 'Título de Sección',
         bullets: 'Viñetas',
         confirmation: 'Confirmación Interactiva',
-        interactive_input: 'Input Interactivo (Validación/Reflexión)'
+        interactive_input: 'Input Interactivo (Validación/Reflexión)',
+        password_tester: 'Medidor de Contraseña',
+        multiple_choice: 'Opciones Múltiples'
     };
     return labels[type] || type;
 };

@@ -8,6 +8,8 @@ import TaskEditor from './editors/TaskEditor.jsx';
 import BulletsEditor from './editors/BulletsEditor.jsx';
 import ConfirmationEditor from './editors/ConfirmationEditor.jsx';
 import InteractiveInputEditor from './editors/InteractiveInputEditor.jsx';
+import PasswordTesterEditor from './editors/PasswordTesterEditor.jsx';
+import MultipleChoiceEditor from './editors/MultipleChoiceEditor.jsx';
 
 export default function ContentEditorModal({
     isOpen,
@@ -92,6 +94,20 @@ export default function ContentEditorModal({
                         onChangeCorrectAnswer={(val) => setFormData({ ...formData, correct_answer: val })}
                         regexPattern={formData.regex_pattern}
                         onChangeRegexPattern={(val) => setFormData({ ...formData, regex_pattern: val })}
+                    />
+                );
+            case 'password_tester':
+                return (
+                    <PasswordTesterEditor
+                        formData={formData}
+                        setFormData={setFormData}
+                    />
+                );
+            case 'multiple_choice':
+                return (
+                    <MultipleChoiceEditor
+                        formData={formData}
+                        setFormData={setFormData}
                     />
                 );
             default:

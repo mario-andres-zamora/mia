@@ -13,7 +13,7 @@ export function useAdminPanel() {
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+                const API_URL = import.meta.env.VITE_API_URL;
                 const response = await axios.get(`${API_URL}/dashboard/admin-stats`);
                 if (response.data.success) {
                     setStats(response.data.stats);

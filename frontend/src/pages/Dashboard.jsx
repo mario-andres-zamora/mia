@@ -9,7 +9,7 @@ import ModuleGrid from '../components/dashboard/ModuleGrid';
 import DashboardSidebar from '../components/dashboard/DashboardSidebar';
 import DashboardLoading from '../components/dashboard/DashboardLoading';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL;
 
 export default function Dashboard() {
     const { user, updateUser } = useAuthStore();
@@ -50,16 +50,16 @@ export default function Dashboard() {
     return (
         <div className="space-y-4 lg:space-y-5 animate-fade-in pb-12">
             {/* Top Identity Layer (Banners & Quick Stats) */}
-            <DashboardBanner 
-                user={user} 
-                stats={stats} 
+            <DashboardBanner
+                user={user}
+                stats={stats}
             />
 
             {/* Core Workspace Grid (Main Content & Analytics Sidebar) */}
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 md:gap-8">
                 {/* Primary Content: Learning Route / Learning Matrix */}
                 <div className="lg:col-span-3">
-                    <ModuleGrid 
+                    <ModuleGrid
                         modules={modules}
                         filterCompleted={filterCompleted}
                         onToggleFilter={() => setFilterCompleted(!filterCompleted)}
@@ -68,9 +68,9 @@ export default function Dashboard() {
 
                 {/* Secondary Content: Functional Status & Quick Actions */}
                 <aside className="lg:col-span-1">
-                    <DashboardSidebar 
-                        user={user} 
-                        stats={stats} 
+                    <DashboardSidebar
+                        user={user}
+                        stats={stats}
                     />
                 </aside>
             </div>

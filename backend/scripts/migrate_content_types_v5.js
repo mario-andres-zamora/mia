@@ -2,8 +2,8 @@ const mysql = require('mysql2/promise');
 require('dotenv').config({ path: '.env' });
 
 async function migrate() {
-    console.log('🔄 Iniciando actualización de tipos de contenido a V3...');
-
+    console.log('🔄 Iniciando actualización de tipos de contenido a V5...');
+    
     const connection = await mysql.createConnection({
         host: process.env.DB_HOST || 'mariadb',
         port: process.env.DB_PORT || 3306,
@@ -13,30 +13,20 @@ async function migrate() {
     });
 
     try {
-        console.log('⏳ Alterando tabla lesson_contents para añadir "interactive_input"...');
-
+        console.log('⏳ Alterando tabla lesson_contents para añadir "multiple_choice"...');
+        
         await connection.execute(`
             ALTER TABLE lesson_contents 
             MODIFY COLUMN content_type ENUM(
-                'text', 
-                'video', 
-                'image', 
-                'file', 
-                'link', 
-                'quiz', 
-                'survey', 
-                'assignment', 
-                'note', 
-                'heading',
-                'bullets',
-                'confirmation',
-                'interactive_input'
+                'text', 'video', 'image', 'file', 'link', 'quiz', 'survey', 
+                'assignment', 'note', 'heading', 'bullets', 'confirmation', 
+                'interactive_input', 'password_tester', 'multiple_choice'
             ) NOT NULL;
         `);
-
+        
         console.log('✅ Tabla lesson_contents actualizada exitosamente.');
-        console.log('✨ Tipo "interactive_input" ahora es válido.');
-
+        console.log('✨ Tipo "multiple_choice" ahora es válido.');
+        
     } catch (error) {
         console.error('❌ Error en la migración:', error);
         process.exit(1);

@@ -10,7 +10,9 @@ import {
     Type, 
     List,
     File,
-    CheckCircle2
+    CheckCircle2,
+    Lock,
+    CheckSquare
 } from 'lucide-react';
 
 export const CONTENT_TYPES = [
@@ -27,11 +29,13 @@ export const CONTENT_TYPES = [
     { type: 'bullets', label: 'Viñetas', icon: List, color: 'text-sky-400' },
     { type: 'confirmation', label: 'Confirmación', icon: CheckCircle2, color: 'text-emerald-400' },
     { type: 'interactive_input', label: 'Input', icon: Type, color: 'text-indigo-400' },
+    { type: 'password_tester', label: 'Password', icon: Lock, color: 'text-pink-400' },
+    { type: 'multiple_choice', label: 'Opciones', icon: CheckSquare, color: 'text-orange-400' },
 ];
 
 export default function ContentTypeSelector({ onSelect }) {
     return (
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-11 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 xl:grid-cols-12 gap-3">
             {CONTENT_TYPES.map((action) => (
                 <button
                     key={action.type}

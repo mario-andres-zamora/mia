@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL;
 
 export function useBadges() {
     const [badges, setBadges] = useState([]);
@@ -53,7 +53,7 @@ export function useBadges() {
                 await axios.post(`${API_URL}/badges`, formData);
                 toast.success('Insignia creada');
             }
-            
+
             setIsModalOpen(false);
             setEditingBadge(null);
             setFormData({ name: '', description: '', icon_name: 'Award', criteria_type: 'manual', criteria_value: '' });
@@ -67,7 +67,7 @@ export function useBadges() {
 
     const handleDelete = async () => {
         if (!badgeToDelete) return;
-        
+
         try {
             await axios.delete(`${API_URL}/badges/${badgeToDelete.id}`);
             toast.success('Insignia eliminada');

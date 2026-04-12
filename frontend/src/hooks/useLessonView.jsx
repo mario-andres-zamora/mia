@@ -6,7 +6,7 @@ import { useAuthStore } from '../store/authStore';
 import { useNotificationStore } from '../store/notificationStore';
 import { useSoundStore } from '../store/soundStore';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL;
 
 export function useLessonView() {
     const { id } = useParams();
@@ -58,7 +58,7 @@ export function useLessonView() {
                 fetchedContents.forEach(item => {
                     if (item.isCompleted) {
                         if (item.content_type === 'video') watched.add(item.id);
-                        if (['link', 'confirmation', 'interactive_input'].includes(item.content_type)) visited.add(item.id);
+                        if (['link', 'confirmation', 'interactive_input', 'password_tester', 'multiple_choice'].includes(item.content_type)) visited.add(item.id);
                     }
                 });
                 setWatchedVideos(watched);
@@ -131,12 +131,12 @@ export function useLessonView() {
 
     const markVideoAsWatched = async (videoId) => {
         if (watchedVideos.has(videoId)) return;
-        
+
         try {
             await axios.post(`${API_URL}/content/${videoId}/trace`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            
+
             setWatchedVideos(prev => {
                 const next = new Set(prev);
                 next.add(videoId);

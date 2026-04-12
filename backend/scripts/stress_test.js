@@ -7,7 +7,7 @@ require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
  * Simula el acceso simultáneo de N funcionarios realizando acciones comunes.
  */
 
-const API_URL = process.env.BACKEND_URL || 'http://localhost:5000/api';
+const API_URL = process.env.BACKEND_URL;
 const CONCURRENT_USERS = 700;
 const TEST_DURATION_MS = 30000; // 30 segundos
 const ENDPOINTS = [
@@ -30,25 +30,25 @@ const stats = {
 async function simulateUser(id) {
     const startTime = Date.now();
     const endTime = startTime + TEST_DURATION_MS;
-    
+
     // En una prueba real, cada usuario debería tener su propia cookie de sesión.
     // Aquí simularemos el tráfico a los endpoints.
     // NOTA: Para que esto funcione con authMiddleware, necesitarías tokens reales o deshabilitarlo temporalmente.
-    
+
     while (Date.now() < endTime) {
         const endpoint = ENDPOINTS[Math.floor(Math.random() * ENDPOINTS.length)];
         const reqStart = Date.now();
-        
+
         try {
             const config = { timeout: 10000 };
-            
+
             // Si hay una cookie de sesión configurada en .env o por argumento
             if (process.env.TEST_SESSION_COOKIE) {
                 config.headers = { 'Cookie': `connect.sid=${process.env.TEST_SESSION_COOKIE}` };
             }
 
             await axios.get(`${API_URL}${endpoint}`, config);
-            
+
             stats.successfulRequests++;
             stats.rtt.push(Date.now() - reqStart);
         } catch (err) {
@@ -61,9 +61,9 @@ async function simulateUser(id) {
                 console.log('   (Omitiendo el resto para mayor claridad...)\n');
             }
         }
-        
+
         stats.totalRequests++;
-        
+
         // Pequeña espera aleatoria (think time) entre 500ms y 2s
         await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1500));
     }

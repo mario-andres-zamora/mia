@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL;
 
 export function useDirectory() {
     const [directory, setDirectory] = useState([]);
@@ -10,7 +10,7 @@ export function useDirectory() {
     const [searchTerm, setSearchTerm] = useState('');
     const [uploading, setUploading] = useState(false);
     const [departments, setDepartments] = useState([]);
-    
+
     const [editingRecord, setEditingRecord] = useState(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);

@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL;
 
 export function useDepartments() {
     const [departments, setDepartments] = useState([]);
@@ -12,7 +12,7 @@ export function useDepartments() {
     const [isSyncing, setIsSyncing] = useState(false);
     const [editingDept, setEditingDept] = useState(null);
     const [newDeptName, setNewDeptName] = useState('');
-    
+
     // Modal states
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [deptToDelete, setDeptToDelete] = useState(null);

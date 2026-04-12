@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useAuthStore } from './authStore';
 import { useSoundStore } from './soundStore';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL;
 
 export const useNotificationStore = create((set, get) => ({
     notifications: [],

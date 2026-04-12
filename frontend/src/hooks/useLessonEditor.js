@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL;
 
 export function useLessonEditor(lessonId) {
     const [lesson, setLesson] = useState(null);
@@ -79,10 +79,10 @@ export function useLessonEditor(lessonId) {
 
     const handleGradeSubmission = async (submissionId, status, grade, feedback) => {
         try {
-            const res = await axios.put(`${API_URL}/content/assignment/submission/${submissionId}`, { 
-                status, 
-                grade, 
-                feedback 
+            const res = await axios.put(`${API_URL}/content/assignment/submission/${submissionId}`, {
+                status,
+                grade,
+                feedback
             });
             if (res.data.success) {
                 toast.success('Evaluación guardada');
@@ -118,7 +118,8 @@ export function useLessonEditor(lessonId) {
                 validation_type: item.content_type === 'interactive_input' ? (item.data?.validation_type || 'free') : 'free',
                 correct_answer: item.content_type === 'interactive_input' ? (item.data?.correct_answer || '') : '',
                 regex_pattern: item.content_type === 'interactive_input' ? (item.data?.regex_pattern || '') : '',
-                placeholder: item.content_type === 'interactive_input' ? (item.data?.placeholder || 'Escribe tu respuesta aquí...') : 'Escribe tu respuesta aquí...'
+                placeholder: item.content_type === 'interactive_input' ? (item.data?.placeholder || 'Escribe tu respuesta aquí...') : 'Escribe tu respuesta aquí...',
+                options: item.content_type === 'multiple_choice' ? (item.data?.options || []) : []
             });
         } else {
             setEditingItem(null);
@@ -129,7 +130,7 @@ export function useLessonEditor(lessonId) {
                 bulletItems: [{ title: '', text: '' }],
                 file: null,
                 video_source: 'file',
-                is_required: ['video', 'link', 'quiz', 'survey', 'assignment', 'confirmation'].includes(type),
+                is_required: ['video', 'link', 'quiz', 'survey', 'assignment', 'confirmation', 'interactive_input', 'multiple_choice'].includes(type),
                 points: 0,
                 option1: '',
                 option2: '',
@@ -137,7 +138,8 @@ export function useLessonEditor(lessonId) {
                 validation_type: 'free',
                 correct_answer: '',
                 regex_pattern: '',
-                placeholder: 'Escribe tu respuesta aquí...'
+                placeholder: 'Escribe tu respuesta aquí...',
+                options: []
             });
         }
         setIsModalOpen(true);
@@ -168,7 +170,7 @@ export function useLessonEditor(lessonId) {
             } else if (formData.content_type === 'bullets') {
                 finalData = { items: formData.bulletItems.filter(b => b.title || b.text) };
             } else if (formData.content_type === 'confirmation') {
-                finalData = { 
+                finalData = {
                     description: formData.data,
                     option1: formData.option1,
                     option2: formData.option2,
@@ -182,7 +184,12 @@ export function useLessonEditor(lessonId) {
                     regex_pattern: formData.regex_pattern,
                     placeholder: formData.placeholder
                 };
-            } else if (['note', 'heading'].includes(formData.content_type)) {
+            } else if (formData.content_type === 'multiple_choice') {
+                finalData = {
+                    description: formData.data,
+                    options: formData.options || []
+                };
+            } else if (['note', 'heading', 'password_tester'].includes(formData.content_type)) {
                 finalData = { text: formData.data };
             } else {
                 const currentData = typeof editingItem?.data === 'string' ? JSON.parse(editingItem.data) : (editingItem?.data || {});

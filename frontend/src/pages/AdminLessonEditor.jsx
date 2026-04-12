@@ -12,7 +12,7 @@ import ContentItem from '../components/admin/lesson-editor/ContentItem';
 import ContentEditorModal from '../components/admin/lesson-editor/ContentEditorModal';
 import AssignmentReviewModal from '../components/admin/lesson-editor/AssignmentReviewModal';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL;
 
 export default function AdminLessonEditor() {
     const { id: lessonId } = useParams();

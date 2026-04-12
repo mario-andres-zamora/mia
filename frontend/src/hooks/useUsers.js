@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL;
 
 export function useUsers() {
     const [users, setUsers] = useState([]);
@@ -13,7 +13,7 @@ export function useUsers() {
     // Modals & Action states
     const [editingUser, setEditingUser] = useState(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    
+
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [userToDelete, setUserToDelete] = useState(null);
 
@@ -93,7 +93,7 @@ export function useUsers() {
                 toast.success('El progreso del funcionario ha sido reiniciado');
                 fetchUsers();
                 setResetModalOpen(false);
-                
+
                 if (onSelfReset) {
                     onSelfReset(response.data.newPoints, response.data.newLevel);
                 }
