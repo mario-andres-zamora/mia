@@ -1,16 +1,22 @@
 import React from 'react';
-import { Edit2, Plus, Info, Award, Shield, Star, Trophy, Crown, Target, Zap, Lock, ShieldCheck, Key, Bell } from 'lucide-react';
+import { Edit2, Plus, Info } from 'lucide-react';
 
-const icons = {
-    Award, Shield, Star, Trophy, Crown, Target, Zap, Lock, ShieldCheck, Key, Bell
-};
-
-const criteriaOptions = [
-    { value: 'manual', label: 'Asignación Manual', description: 'El administrador la otorga discrecionalmente.' },
-    { value: 'module_completion', label: 'Completar Módulo', description: 'Se otorga al terminar un módulo específico.' },
-    { value: 'quiz_score', label: 'Puntaje en Quiz', description: 'Se otorga al obtener una nota mínima.' },
-    { value: 'total_points', label: 'Acumulación de Puntos', description: 'Se otorga al llegar a una meta de experiencia.' },
-    { value: 'phishing_report', label: 'Reporte de Phishing', description: 'Se otorga por reportar simulacros.' }
+const badgeImages = [
+    'bienvenida-seguridad.svg',
+    'ciber-prestigio.png',
+    'ciber-prestigio.svg',
+    'club-velocidad.svg',
+    'desafio-aceptado.svg',
+    'enfrentamiento-seguridad.svg',
+    'era-ciberseguridad.svg',
+    'gran-poder-seguridad.svg',
+    'inicio-seguridad.svg',
+    'mas-seguridad.svg',
+    'mejor-sabana.svg',
+    'racha-encendida.svg',
+    'seguridad-contra-peor.svg',
+    'seguridad-legendaria.svg',
+    'seguridad-sin-igual.svg'
 ];
 
 export default function BadgeEditModal({ isOpen, onClose, editingBadge, formData, setFormData, onSave }) {
@@ -24,10 +30,19 @@ export default function BadgeEditModal({ isOpen, onClose, editingBadge, formData
                         {editingBadge ? <Edit2 className="w-6 h-6 text-primary-400" /> : <Plus className="w-6 h-6 text-primary-400" />}
                         {editingBadge ? 'Editar Insignia' : 'Nueva Insignia'}
                     </h2>
-                    <p className="text-gray-400 text-sm mt-2 text-left">Define cómo los funcionarios ganarán este reconocimiento.</p>
+                    <p className="text-gray-400 text-sm mt-2 text-left">Define la identidad visual de este reconocimiento.</p>
                 </div>
 
                 <div className="p-10 space-y-8 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                    {/* Visual Preview */}
+                    <div className="flex justify-center py-6 bg-slate-900/50 rounded-3xl border border-white/5">
+                        <img
+                            src={`/images/badges/${formData.image_url || 'inicio-seguridad.svg'}`}
+                            alt="Vista previa"
+                            className="w-32 h-32 object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]"
+                        />
+                    </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
                         <div className="space-y-3">
                             <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1 block text-left">Nombre</label>
@@ -40,13 +55,15 @@ export default function BadgeEditModal({ isOpen, onClose, editingBadge, formData
                             />
                         </div>
                         <div className="space-y-3">
-                            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1 block text-left">Icono</label>
+                            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1 block text-left">Imagen de Insignia</label>
                             <select
-                                value={formData.icon_name}
-                                onChange={(e) => setFormData({ ...formData, icon_name: e.target.value })}
-                                className="w-full px-5 py-4 bg-slate-900 border border-white/10 rounded-2xl text-white font-medium focus:outline-none focus:border-primary-500 appearance-none cursor-pointer uppercase text-[10px] tracking-widest font-black"
+                                value={formData.image_url}
+                                onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                                className="w-full px-5 py-4 bg-slate-900 border border-white/10 rounded-2xl text-white font-black uppercase text-[10px] tracking-widest focus:outline-none focus:border-primary-500 appearance-none cursor-pointer"
                             >
-                                {Object.keys(icons).map(icon => <option key={icon} value={icon}>{icon}</option>)}
+                                {badgeImages.map(img => (
+                                    <option key={img} value={img}>{img.split('.')[0].replace(/-/g, ' ')}</option>
+                                ))}
                             </select>
                         </div>
                     </div>
@@ -58,37 +75,8 @@ export default function BadgeEditModal({ isOpen, onClose, editingBadge, formData
                             value={formData.description}
                             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                             className="w-full px-5 py-4 bg-slate-900 border border-white/10 rounded-2xl text-white font-medium focus:outline-none focus:border-primary-500 transition-all resize-none font-bold placeholder:text-gray-800"
-                            placeholder="Explica cómo se obtiene..."
+                            placeholder="Explica qué representa esta insignia..."
                         />
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4 text-left">
-                        <div className="space-y-3">
-                            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1 block text-left">Criterio</label>
-                            <select
-                                value={formData.criteria_type}
-                                onChange={(e) => setFormData({ ...formData, criteria_type: e.target.value })}
-                                className="w-full px-5 py-4 bg-slate-900 border border-white/10 rounded-2xl text-white font-black uppercase text-[10px] tracking-widest focus:outline-none focus:border-primary-500 appearance-none cursor-pointer"
-                            >
-                                {criteriaOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                            </select>
-                            <p className="text-[9px] text-gray-600 font-bold uppercase italic px-1 text-left">
-                                {criteriaOptions.find(o => o.value === formData.criteria_type)?.description}
-                            </p>
-                        </div>
-                        <div className="space-y-3">
-                            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1 block text-left">Valor Meta</label>
-                            <input
-                                type="text"
-                                value={formData.criteria_value}
-                                onChange={(e) => setFormData({ ...formData, criteria_value: e.target.value })}
-                                className="w-full px-5 py-4 bg-slate-900 border border-white/10 rounded-2xl text-white font-bold focus:outline-none focus:border-primary-500 transition-all placeholder:text-gray-800"
-                                placeholder="Ej: 85 o ID del módulo"
-                            />
-                            <p className="text-[9px] text-gray-600 font-bold uppercase italic px-1 flex items-center gap-1 text-left">
-                                <Info className="w-3 h-3" /> Meta de puntos, ID o nota mínima.
-                            </p>
-                        </div>
                     </div>
                 </div>
 

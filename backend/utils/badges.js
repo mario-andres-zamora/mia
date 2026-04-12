@@ -42,6 +42,16 @@ async function awardBadge(userId, badgeId) {
                 logger.error('Error sincronizando puntos tras insignia:', syncError);
             }
 
+            // --- INVALIDAR CACHÉ ---
+            // Invalidad caché del perfil y leaderboard para que se refleje de inmediato
+            try {
+                const { clearCache } = require('../middleware/cache');
+                await clearCache(`cache:/api/users/profile:u${userId}*`);
+                await clearCache(`cache:/api/gamification/leaderboard*`);
+            } catch (cacheError) {
+                logger.error('Error invalidando caché tras insignia:', cacheError);
+            }
+
             return { awarded: true, badge };
         }
 

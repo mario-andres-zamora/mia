@@ -12,18 +12,18 @@ class BadgeService {
     }
 
     async createBadge(badgeData) {
-        const { name, description, icon_name, criteria_type, criteria_value } = badgeData;
+        const { name, description, icon_name, image_url, criteria_type, criteria_value } = badgeData;
         
         const result = await db.query(
-            'INSERT INTO badges (name, description, icon_name, criteria_type, criteria_value) VALUES (?, ?, ?, ?, ?)',
-            [name, description, icon_name || 'Award', criteria_type || 'manual', criteria_value || null]
+            'INSERT INTO badges (name, description, icon_name, image_url, criteria_type, criteria_value) VALUES (?, ?, ?, ?, ?, ?)',
+            [name, description, icon_name || 'Award', image_url || null, criteria_type || 'manual', criteria_value || null]
         );
         
         return result.insertId;
     }
 
     async updateBadge(id, badgeData) {
-        const { name, description, icon_name, criteria_type, criteria_value } = badgeData;
+        const { name, description, icon_name, image_url, criteria_type, criteria_value } = badgeData;
         
         // Use COALESCE to keep existing values if new ones are null/undefined
         return await db.query(
@@ -31,10 +31,11 @@ class BadgeService {
                 name = COALESCE(?, name), 
                 description = COALESCE(?, description), 
                 icon_name = COALESCE(?, icon_name), 
+                image_url = COALESCE(?, image_url),
                 criteria_type = COALESCE(?, criteria_type), 
                 criteria_value = COALESCE(?, criteria_value) 
             WHERE id = ?`,
-            [name ?? null, description ?? null, icon_name ?? null, criteria_type ?? null, criteria_value ?? null, id]
+            [name ?? null, description ?? null, icon_name ?? null, image_url ?? null, criteria_type ?? null, criteria_value ?? null, id]
         );
     }
 

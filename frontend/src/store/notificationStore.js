@@ -22,10 +22,21 @@ export const useNotificationStore = create((set, get) => ({
     setPendingBadge: (badge) => {
         if (!badge) return;
         const badges = Array.isArray(badge) ? badge : [badge];
-        set(state => ({ 
-            badgeQueue: [...state.badgeQueue, ...badges],
-            pendingBadge: state.pendingBadge || badges[0]
-        }));
+        
+        set(state => {
+            // Filtrar duplicados: no agregar si ya está en la cola o es la que se muestra
+            const newBadges = badges.filter(b => 
+                !state.badgeQueue.some(qb => qb.id === b.id) && 
+                (!state.pendingBadge || state.pendingBadge.id !== b.id)
+            );
+
+            if (newBadges.length === 0) return state;
+
+            return { 
+                badgeQueue: [...state.badgeQueue, ...newBadges],
+                pendingBadge: state.pendingBadge || newBadges[0]
+            };
+        });
     },
     clearBadge: () => {
         set(state => {

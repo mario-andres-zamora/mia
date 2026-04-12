@@ -13,9 +13,10 @@ export function useBadges() {
     const [formData, setFormData] = useState({
         name: '',
         description: '',
-        icon_name: 'Award',
+        image_url: 'inicio-seguridad.svg',
+        icon_name: 'Award', // kept for safety, but UI will use image_url
         criteria_type: 'manual',
-        criteria_value: ''
+        criteria_value: null
     });
 
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -56,7 +57,14 @@ export function useBadges() {
 
             setIsModalOpen(false);
             setEditingBadge(null);
-            setFormData({ name: '', description: '', icon_name: 'Award', criteria_type: 'manual', criteria_value: '' });
+            setFormData({ 
+                name: '', 
+                description: '', 
+                image_url: 'inicio-seguridad.svg', 
+                icon_name: 'Award', 
+                criteria_type: 'manual', 
+                criteria_value: null 
+            });
             fetchBadges();
             return true;
         } catch (error) {
@@ -90,7 +98,14 @@ export function useBadges() {
 
     const openCreateModal = () => {
         setEditingBadge(null);
-        setFormData({ name: '', description: '', icon_name: 'Award', criteria_type: 'manual', criteria_value: '' });
+        setFormData({ 
+            name: '', 
+            description: '', 
+            image_url: 'inicio-seguridad.svg', 
+            icon_name: 'Award', 
+            criteria_type: 'manual', 
+            criteria_value: null 
+        });
         setIsModalOpen(true);
     };
 

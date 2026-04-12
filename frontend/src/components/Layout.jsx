@@ -275,6 +275,7 @@ export default function Layout() {
                 data={pendingModuleCompletion}
             />
             <BadgeAwardModal
+                key={pendingBadge?.id || 'no-badge'}
                 isOpen={!!pendingBadge}
                 onClose={clearBadge}
                 badge={pendingBadge}

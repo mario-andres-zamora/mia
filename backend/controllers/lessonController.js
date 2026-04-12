@@ -13,6 +13,12 @@ class LessonController {
             if (!result) return res.status(404).json({ error: 'Lección no encontrada' });
             if (result.locked) return res.status(403).json(result);
 
+            // Si se otorgó una insignia, no queremos cachear esta respuesta específica
+            // porque el modal de insignia ganada es un evento único.
+            if (result.badgeAwarded) {
+                res._doNotCache = true;
+            }
+
             res.json({ success: true, ...result });
         } catch (error) {
             logger.error('Error en lección:', error);

@@ -33,8 +33,8 @@ const cacheMiddleware = (duration = 300, userSpecific = false) => {
             // Sobrescribir res.json para guardar en caché antes de enviar
             const originalJson = res.json;
             res.json = (body) => {
-                // Solo cachear si la respuesta es exitosa (success: true o status < 400)
-                if (res.statusCode < 400 && (body.success || body.success === undefined)) {
+                // Solo cachear si la respuesta es exitosa y no tiene el flag de "no cachear"
+                if (res.statusCode < 400 && (body.success || body.success === undefined) && !res._doNotCache) {
                     redisClient.setEx(key, duration, JSON.stringify(body)).catch(err => {
                         logger.error('Error saving to Redis cache:', err);
                     });
