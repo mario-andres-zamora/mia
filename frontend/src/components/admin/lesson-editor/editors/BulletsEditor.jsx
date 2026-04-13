@@ -26,7 +26,7 @@ export default function BulletsEditor({ bulletItems, onChange }) {
                         <input
                             type="text"
                             placeholder="Tópico o Título"
-                            className="w-full bg-transparent border-0 border-b border-white/5 focus:border-primary-500/50 p-0 pb-2 text-white font-bold uppercase tracking-wider outline-none text-[11px] transition-colors"
+                            className="w-full bg-transparent border-0 border-b border-white/5 focus:border-primary-500/50 p-0 pb-2 text-white font-bold tracking-wider outline-none text-[11px] transition-colors"
                             value={bullet.title}
                             onChange={e => handleUpdate(idx, 'title', e.target.value)}
                         />
