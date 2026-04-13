@@ -67,9 +67,9 @@ router.get('/leaderboard', authMiddleware, cacheMiddleware(60, true), async (req
         let departmentLeaderboard = [];
         let myDeptRankPos = null;
         if (department) {
-            departmentLeaderboard = institutionalLeaderboard.filter(r => r.department === department);
-            // Recalcular posiciones solo dentro de este departamento
-            departmentLeaderboard.forEach((r, i) => { r.rank_position = i + 1; });
+            departmentLeaderboard = institutionalLeaderboard
+                .filter(r => r.department === department)
+                .map((r, i) => ({ ...r, rank_position: i + 1 })); // Clone to avoid mutating original objects
             const myEntry = departmentLeaderboard.find(r => r.email === userEmailLower);
             myDeptRankPos = myEntry ? myEntry.rank_position : null;
         }
