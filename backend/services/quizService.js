@@ -18,11 +18,23 @@ class QuizService {
         );
 
         const questions = await db.query(
-            'SELECT id, question_text, question_type, image_url, points, order_index, data FROM quiz_questions WHERE quiz_id = ? ORDER BY order_index ASC',
+            'SELECT id, question_text, question_type, image_url, points, order_index, data, explanation FROM quiz_questions WHERE quiz_id = ? ORDER BY order_index ASC',
             [quizId]
         );
 
         for (let question of questions) {
+            // Parse data field if it's a string
+            if (question.data && typeof question.data === 'string') {
+                try {
+                    question.data = JSON.parse(question.data);
+                } catch (e) {
+                    logger.error(`Error parsing question data for question ${question.id}:`, e);
+                    question.data = {};
+                }
+            } else if (!question.data) {
+                question.data = {};
+            }
+
             const options = await db.query(
                 'SELECT id, option_text, order_index FROM quiz_options WHERE question_id = ? ORDER BY order_index ASC',
                 [question.id]
@@ -123,7 +135,7 @@ class QuizService {
         }
 
         const questions = await db.query(
-            `SELECT q.id, q.question_type, q.points, o.id as correct_option_id, q.explanation
+            `SELECT q.id, q.question_type, q.points, q.data, o.id as correct_option_id, q.explanation
              FROM quiz_questions q
              LEFT JOIN quiz_options o ON q.id = o.question_id AND o.is_correct = TRUE
              WHERE q.quiz_id = ?`,
@@ -139,13 +151,33 @@ class QuizService {
             const userAnswer = answers[q.id];
             
             let isCorrect = false;
-            if (q.question_type === 'mfa_defender') {
-                isCorrect = userAnswer === true || userAnswer === 'true';
+            let currentQPoints = q.points;
+
+            if (q.question_type === 'mfa_defender' || q.question_type === 'hack_neighbor') {
+                if (typeof userAnswer === 'object' && userAnswer !== null) {
+                    isCorrect = userAnswer.success === true || userAnswer.success === 'true';
+                    
+                    // Apply penalty for hints
+                    if (isCorrect && q.question_type === 'hack_neighbor') {
+                        let qData = {};
+                        try {
+                            qData = typeof q.data === 'string' ? JSON.parse(q.data) : (q.data || {});
+                        } catch (e) {
+                            // Silent catch for unexpected data format
+                        }
+                        
+                        const hintsUsed = parseInt(userAnswer.hintsUsed) || 0;
+                        const penaltyPerHint = parseInt(qData.hint_penalty) || 0;
+                        currentQPoints = Math.max(0, q.points - (hintsUsed * penaltyPerHint));
+                    }
+                } else {
+                    isCorrect = userAnswer === true || userAnswer === 'true';
+                }
             } else {
                 isCorrect = userAnswer == q.correct_option_id;
             }
 
-            if (isCorrect) earnedPoints += q.points;
+            if (isCorrect) earnedPoints += currentQPoints;
 
             feedback.push({
                 questionId: q.id,

@@ -42,6 +42,22 @@ export default function QuizReview({ results, questions, userAnswers }) {
                                                 </div>
                                             </div>
                                         </div>
+                                    ) : q.question_type === 'hack_neighbor' ? (
+                                        <div className={`p-4 rounded-xl text-left border ${feedback.isCorrect ? 'bg-indigo-900/10 border-indigo-500/30' : 'bg-red-900/10 border-red-500/30'}`}>
+                                            <div className={`flex items-center gap-2 font-bold mb-2 ${feedback.isCorrect ? 'text-indigo-400' : 'text-red-400'}`}>
+                                                {feedback.isCorrect ? <CheckCircle2 className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
+                                                {feedback.isCorrect ? '¡Felicidades: Has entendido el riesgo!' : 'No lograste completar el desafío de hackeo'}
+                                            </div>
+                                            <div className="text-xs text-slate-300 font-medium leading-relaxed mb-3">
+                                                En este ejercicio aprendiste que usar datos personales como el nombre de tu mascota, fechas de cumpleaños o equipos favoritos hace que tu contraseña sea extremadamente predecible ante un ataque de ingeniería social.
+                                            </div>
+                                            <div className="bg-slate-950 p-3 rounded-lg border border-white/5">
+                                                <div className="text-indigo-400 font-bold text-[11px] mb-1">¿Cómo protegerte mejor?</div>
+                                                <div className="text-[10px] text-slate-400">
+                                                    Evita usar información que alguien pueda encontrar en tus redes sociales. Una frase aleatoria como "MiElefanteAzulComePizza22!" es mucho más segura y fácil de recordar.
+                                                </div>
+                                            </div>
+                                        </div>
                                     ) : (
                                         q.options.map(opt => {
                                             const isUserAnswer = userAnswers[q.id] === opt.id;

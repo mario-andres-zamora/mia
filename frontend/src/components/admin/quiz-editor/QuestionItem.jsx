@@ -1,5 +1,6 @@
 import React from 'react';
 import { Target, ImageIcon, MessageSquare, Trash2, CheckCircle2, XCircle } from 'lucide-react';
+import PremiumSelect from '../../PremiumSelect';
 
 export default function QuestionItem({ 
     question, 
@@ -10,6 +11,14 @@ export default function QuestionItem({
     onAddOption, 
     onRemoveOption 
 }) {
+    const questionTypes = [
+        { value: 'multiple_choice', label: 'Selección Múltiple' },
+        { value: 'true_false', label: 'Falso / Verdadero' },
+        { value: 'multiple_select', label: 'Selección Múltiple (Varias)' },
+        { value: 'mfa_defender', label: 'Simulador MFA' },
+        { value: 'hack_neighbor', label: 'Hackea al Vecino (Juego)' }
+    ];
+
     return (
         <div className="card p-8 bg-slate-900/40 border-white/5 relative group hover:border-primary-500/20 transition-all text-left">
             <div className="absolute -left-3 top-8 w-8 h-8 bg-slate-900 rounded-lg border border-white/10 flex items-center justify-center font-black text-xs text-primary-400 shadow-xl">
@@ -59,18 +68,13 @@ export default function QuestionItem({
                             onChange={e => onUpdateQuestion(question.id, 'points', parseInt(e.target.value))}
                         />
                     </div>
-                    <div className="w-48 space-y-2">
-                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest text-left">Tipo</label>
-                        <select
-                            className="input-field bg-slate-950/50 border-white/10 text-[10px]"
+                    <div className="w-64">
+                        <PremiumSelect
+                            label="Tipo"
+                            options={questionTypes}
                             value={question.question_type || 'multiple_choice'}
-                            onChange={e => onUpdateQuestion(question.id, 'question_type', e.target.value)}
-                        >
-                            <option value="multiple_choice">Selección Múltiple</option>
-                            <option value="true_false">Falso / Verdadero</option>
-                            <option value="multiple_select">Selección Múltiple (Varias)</option>
-                            <option value="mfa_defender">Simulador MFA</option>
-                        </select>
+                            onChange={value => onUpdateQuestion(question.id, 'question_type', value)}
+                        />
                     </div>
                     <button
                         onClick={() => onRemoveQuestion(question.id)}
@@ -80,7 +84,7 @@ export default function QuestionItem({
                     </button>
                 </div>
 
-                {question.question_type !== 'mfa_defender' ? (
+                {!['mfa_defender', 'hack_neighbor'].includes(question.question_type) ? (
                     <>
                         {/* Options Grid */}
                         <div className="space-y-4 pt-4 border-t border-white/5 text-left">
@@ -136,26 +140,45 @@ export default function QuestionItem({
                     </>
                 ) : (
                     <div className="pt-4 border-t border-white/5 space-y-4 text-left">
-                        <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Configuración de Defensa MFA</label>
+                        <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">
+                            Configuración de {question.question_type === 'mfa_defender' ? 'Defensa MFA' : 'Hackea al Vecino'}
+                        </label>
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-bold text-gray-400">T. de Hackeo (Milisegundos/Segundos recomendados: 20)</label>
-                                <input
-                                    type="number"
-                                    className="input-field bg-slate-950/50 border-white/10 text-sm"
-                                    value={question.data?.hack_time || 20}
-                                    onChange={e => onUpdateQuestion(question.id, 'data', { ...(question.data || {}), hack_time: parseInt(e.target.value) })}
-                                />
-                            </div>
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-bold text-gray-400">Cambio de Código (Milisegundos/Segundos recomendados: 5)</label>
-                                <input
-                                    type="number"
-                                    className="input-field bg-slate-950/50 border-white/10 text-sm"
-                                    value={question.data?.rotate_time || 5}
-                                    onChange={e => onUpdateQuestion(question.id, 'data', { ...(question.data || {}), rotate_time: parseInt(e.target.value) })}
-                                />
-                            </div>
+                            {question.question_type === 'mfa_defender' ? (
+                                <>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-bold text-gray-400">T. de Hackeo (Segundos: 20)</label>
+                                        <input
+                                            type="number"
+                                            className="input-field bg-slate-950/50 border-white/10 text-sm"
+                                            value={question.data?.hack_time || 20}
+                                            onChange={e => onUpdateQuestion(question.id, 'data', { ...(question.data || {}), hack_time: parseInt(e.target.value) })}
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-bold text-gray-400">Cambio de Código (Segundos: 5)</label>
+                                        <input
+                                            type="number"
+                                            className="input-field bg-slate-950/50 border-white/10 text-sm"
+                                            value={question.data?.rotate_time || 5}
+                                            onChange={e => onUpdateQuestion(question.id, 'data', { ...(question.data || {}), rotate_time: parseInt(e.target.value) })}
+                                        />
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="space-y-1.5 col-span-2">
+                                    <label className="text-[10px] font-bold text-gray-400">Penalización por Pista Revelada (Puntos)</label>
+                                    <div className="flex gap-4 items-center">
+                                        <input
+                                            type="number"
+                                            className="input-field bg-slate-950/50 border-white/10 text-sm w-32"
+                                            value={question.data?.hint_penalty || 0}
+                                            onChange={e => onUpdateQuestion(question.id, 'data', { ...(question.data || {}), hint_penalty: parseInt(e.target.value) })}
+                                        />
+                                        <p className="text-[11px] text-gray-500 italic">Cada vez que el estudiante revele una de las 3 pistas, se le restarán estos puntos del total ganado.</p>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}

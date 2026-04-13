@@ -186,8 +186,28 @@ class LessonService {
             }
         }
 
-        const [contentPoints] = await db.query('SELECT SUM(points) as total FROM lesson_contents WHERE lesson_id = ?', [lessonId]);
-        const pointsAwarded = (parseInt(contentPoints?.total) || 0);
+        // Calculate points with penalties
+        const allContents = await db.query('SELECT id, points, content_type, data FROM lesson_contents WHERE lesson_id = ?', [lessonId]);
+        let pointsAwarded = 0;
+
+        for (const content of allContents) {
+            let itemPoints = parseInt(content.points) || 0;
+            
+            // If it's a hack_neighbor, check for hint penalties
+            if (content.content_type === 'hack_neighbor' && itemPoints > 0) {
+                const [progress] = await db.query('SELECT response_data FROM user_content_progress WHERE user_id = ? AND content_id = ?', [userId, content.id]);
+                if (progress?.response_data) {
+                    const responseData = typeof progress.response_data === 'string' ? JSON.parse(progress.response_data) : progress.response_data;
+                    const contentData = typeof content.data === 'string' ? JSON.parse(content.data) : (content.data || {});
+                    
+                    const hintsUsed = parseInt(responseData.hintsUsed) || 0;
+                    const penaltyPerHint = parseInt(contentData.hint_penalty) || 0;
+                    itemPoints = Math.max(0, itemPoints - (hintsUsed * penaltyPerHint));
+                }
+            }
+            
+            pointsAwarded += itemPoints;
+        }
 
         await db.query(`UPDATE user_progress SET status = 'completed', progress_percentage = 100, completed_at = NOW() WHERE user_id = ? AND lesson_id = ?`, [userId, lessonId]);
         await db.query(`INSERT INTO user_points (user_id, points) VALUES (?, ?) ON DUPLICATE KEY UPDATE points = points + ?`, [userId, pointsAwarded, pointsAwarded]);
