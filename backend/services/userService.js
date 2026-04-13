@@ -191,6 +191,7 @@ class UserService {
             points_for_next: pointsForNext,
             level_progress_percentage: levelProgressPercentage,
             badges: userBadges,
+            badges_count: userBadges.length,
             rank: rank,
             departmentRank: departmentRank,
             totalUsers: totalUsersCount
