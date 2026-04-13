@@ -203,7 +203,7 @@ export function useLessonEditor(lessonId) {
                 const maxOrder = contents.length > 0 ? Math.max(...contents.map(c => c.order_index)) : 0;
                 dataToSubmit.append('order_index', maxOrder + 1);
             } else {
-                dataToSubmit.append('order_index', editingItem.order_index);
+                dataToSubmit.append('order_index', editingItem.order_index || 0);
             }
 
             let response;
@@ -252,7 +252,7 @@ export function useLessonEditor(lessonId) {
             dataToSubmit.append('is_required', item.is_required);
             dataToSubmit.append('points', item.points);
             dataToSubmit.append('data', JSON.stringify(newData));
-            dataToSubmit.append('order_index', item.order_index);
+            dataToSubmit.append('order_index', item.order_index || 0);
 
             const res = await axios.put(`${API_URL}/content/${item.id}`, dataToSubmit);
 

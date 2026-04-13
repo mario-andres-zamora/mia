@@ -192,6 +192,10 @@ class LessonContentService {
             contentData.size = file.size;
         }
 
+        // Ensure numeric fields are correctly handled (especially when coming from FormData as strings)
+        const cleanOrderIndex = (order_index === 'undefined' || order_index === 'null' || order_index === '') ? null : order_index;
+        const cleanPoints = (points === 'undefined' || points === 'null' || points === '') ? null : points;
+
         await db.query(
             `UPDATE lesson_contents SET 
                 title = COALESCE(?, title), 
@@ -201,7 +205,7 @@ class LessonContentService {
                 is_required = COALESCE(?, is_required), 
                 points = COALESCE(?, points)
              WHERE id = ?`,
-            [title ?? null, content_type ?? null, JSON.stringify(contentData), order_index ?? null, requiredVal ? 1 : 0, points ?? null, id]
+            [title ?? null, content_type ?? null, JSON.stringify(contentData), cleanOrderIndex, requiredVal ? 1 : 0, cleanPoints, id]
         );
     }
 
