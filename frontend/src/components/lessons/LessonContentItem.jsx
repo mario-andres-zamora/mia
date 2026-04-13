@@ -603,6 +603,8 @@ export default function LessonContentItem({
         case 'password_tester':
             const [passValue, setPassValue] = useState('');
             const [showPass, setShowPass] = useState(false);
+            const [pwnedCount, setPwnedCount] = useState(null);
+            const [checkingPwned, setCheckingPwned] = useState(false);
             const isTesterCompleted = visitedLinks.has(item.id);
 
             const calculateStrength = (password) => {
@@ -654,6 +656,48 @@ export default function LessonContentItem({
                 { label: 'Números', met: /[0-9]/.test(passValue) },
                 { label: 'Símbolos', met: /[^a-zA-Z0-9]/.test(passValue) }
             ];
+
+            const checkPwned = async () => {
+                if (!passValue) return;
+                setCheckingPwned(true);
+                setPwnedCount(null);
+                try {
+                    const msgUint8 = new TextEncoder().encode(passValue);
+                    const hashBuffer = await crypto.subtle.digest('SHA-1', msgUint8);
+                    const hashArray = Array.from(new Uint8Array(hashBuffer));
+                    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+                    
+                    const prefix = hashHex.substring(0, 5);
+                    const suffix = hashHex.substring(5);
+                    
+                    const response = await fetch(`https://api.pwnedpasswords.com/range/${prefix}`);
+                    
+                    if (response.status === 429) {
+                        toast.error('Demasiadas solicitudes. Inténtalo más tarde.');
+                        return;
+                    }
+                    
+                    if (!response.ok) {
+                        throw new Error('Error en la API');
+                    }
+                    
+                    const text = await response.text();
+                    const lines = text.split('\n');
+                    
+                    const match = lines.find(line => line.trim().startsWith(suffix));
+                    if (match) {
+                        const count = parseInt(match.split(':')[1]);
+                        setPwnedCount(count);
+                    } else {
+                        setPwnedCount(0);
+                    }
+                } catch (error) {
+                    console.error('Error checking pwned:', error);
+                    toast.error('Error al verificar filtraciones');
+                } finally {
+                    setCheckingPwned(false);
+                }
+            };
 
             const handleFinishTester = () => {
                 if (isTesterCompleted) return;
@@ -707,12 +751,10 @@ export default function LessonContentItem({
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center bg-black/20 p-8 rounded-3xl border border-white/5">
-                                <div className="space-y-4">
-                                    <p className="text-sm font-bold text-gray-400">
-                                        <span className="text-white font-black">{passValue.length}</span> caracteres conteniendo:
-                                    </p>
-                                    <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+                                <div className="bg-black/20 p-6 rounded-3xl border border-white/5 space-y-4">
+                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Composición:</p>
+                                    <div className="grid grid-cols-1 gap-3">
                                         {checks.map((check, idx) => (
                                             <div key={idx} className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-colors ${check.met ? 'text-emerald-400' : 'text-gray-600'}`}>
                                                 <div className={`w-2 h-2 rounded-full ${check.met ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]' : 'bg-gray-800'}`} />
@@ -722,11 +764,40 @@ export default function LessonContentItem({
                                     </div>
                                 </div>
 
-                                <div className="text-center md:border-l md:border-white/5 space-y-2">
-                                    <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest italic">Tiempo estimado para hackear:</p>
-                                    <div className={`text-4xl md:text-5xl font-black tracking-tighter ${passValue ? strength.textColor : 'text-gray-800 animate-pulse'}`}>
+                                <div className="bg-black/20 p-6 rounded-3xl border border-white/5 flex flex-col justify-center items-center text-center space-y-2">
+                                    <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest italic">Tiempo de hackeo:</p>
+                                    <div className={`text-3xl font-black tracking-tighter ${passValue ? strength.textColor : 'text-gray-800 animate-pulse'}`}>
                                         {passValue ? crackTime : '????'}
                                     </div>
+                                </div>
+
+                                <div className="bg-black/20 p-6 rounded-3xl border border-white/5 flex flex-col justify-center items-center text-center space-y-4">
+                                    <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Base de Filtraciones:</p>
+                                    
+                                    {pwnedCount === null ? (
+                                        <button
+                                            onClick={checkPwned}
+                                            disabled={!passValue || checkingPwned}
+                                            className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-30 disabled:hover:bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+                                        >
+                                            {checkingPwned ? 'Verificando...' : 'Verificar Filtraciones'}
+                                        </button>
+                                    ) : (
+                                        <div className={`flex flex-col items-center animate-comic-pop`}>
+                                            <div className={`text-2xl font-black ${pwnedCount > 0 ? 'text-red-500' : 'text-emerald-400'}`}>
+                                                {pwnedCount.toLocaleString()} veces
+                                            </div>
+                                            <p className="text-[9px] font-bold text-gray-500 uppercase mt-1">
+                                                {pwnedCount > 0 ? '¡Contraseña filtrada!' : 'Segura en filtraciones'}
+                                            </p>
+                                            <button 
+                                                onClick={() => setPwnedCount(null)}
+                                                className="mt-3 text-[9px] text-indigo-400 hover:text-indigo-300 font-bold uppercase underline"
+                                            >
+                                                Verificar otra
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
