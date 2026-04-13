@@ -83,11 +83,11 @@ router.post('/:id/submit', authMiddleware, async (req, res) => {
     try {
         const surveyId = req.params.id;
         const userId = req.user.id;
-        const { answers } = req.body; // answers: { questionId: { text: '...', optionId: 123 } }
+        const { answers } = req.body;
 
         await connection.beginTransaction();
 
-        // 1. Verificar si ya respondió (para evitar duplicados)
+        // 1. Verificar si ya respondió
         const [existing] = await connection.query(
             'SELECT id FROM survey_responses WHERE user_id = ? AND survey_id = ?',
             [userId, surveyId]
@@ -106,26 +106,28 @@ router.post('/:id/submit', authMiddleware, async (req, res) => {
         const responseId = responseResult.insertId;
 
         // 3. Guardar cada respuesta individual
-        for (const questionId in answers) {
-            const ans = answers[questionId];
-            await connection.query(
-                'INSERT INTO survey_answers (response_id, question_id, answer_text, option_id) VALUES (?, ?, ?, ?)',
-                [responseId, questionId, ans.text || null, ans.optionId || null]
-            );
+        if (answers && typeof answers === 'object') {
+            const answerEntries = Object.entries(answers);
+            logger.info(`Procesando ${answerEntries.length} respuestas para encuesta ${surveyId}`);
+            
+            for (const [qId, ans] of answerEntries) {
+                await connection.query(
+                    'INSERT INTO survey_answers (response_id, question_id, answer_text, option_id) VALUES (?, ?, ?, ?)',
+                    [responseId, qId, ans.text || null, ans.optionId || null]
+                );
+            }
         }
 
-        // 4. Otorgar puntos de gamificación si es la primera vez
-        // Buscamos los puntos definidos en lesson_contents (donde reside el survey vinculada a la lección)
+        // 4. Otorgar puntos de gamificación
+        let pointsAwarded = 0;
         const [contentRows] = await connection.query(
             "SELECT points FROM lesson_contents WHERE content_type = 'survey' AND JSON_VALUE(data, '$.survey_id') = ?",
             [surveyId]
         );
 
-        let pointsAwarded = 0;
         if (contentRows && contentRows.length > 0) {
             pointsAwarded = contentRows[0].points;
         } else {
-            // Fallback: Si no hay en lesson_contents (poco probable), revisar la tabla surveys
             const [surveyRows] = await connection.query('SELECT points FROM surveys WHERE id = ?', [surveyId]);
             if (surveyRows && surveyRows.length > 0) {
                 pointsAwarded = surveyRows[0].points || 0;
@@ -145,7 +147,7 @@ router.post('/:id/submit', authMiddleware, async (req, res) => {
 
         await connection.commit();
 
-        // Invalida el caché
+        // Limpiar caché
         await clearCache(`cache:/api/lessons/*u${userId}*`);
         await clearCache(`cache:/api/dashboard*u${userId}*`);
 
@@ -173,7 +175,6 @@ router.post('/:id/submit', authMiddleware, async (req, res) => {
 
 /**
  * @route   POST /api/surveys
- * @access  Private/Admin
  */
 router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
     try {
@@ -190,7 +191,6 @@ router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
 
 /**
  * @route   GET /api/surveys/:id/admin
- * @access  Private/Admin
  */
 router.get('/:id/admin', authMiddleware, adminMiddleware, async (req, res) => {
     try {
@@ -311,6 +311,45 @@ router.delete('/questions/:questionId', authMiddleware, adminMiddleware, async (
 });
 
 /**
+ * @route   GET /api/surveys/questions/:questionId/text-answers
+ * @desc    Obtener respuestas de texto paginadas para una pregunta específica
+ * @access  Private/Admin
+ */
+router.get('/questions/:questionId/text-answers', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const { questionId } = req.params;
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 5; // Por defecto 5 para el modal
+        const offset = (page - 1) * limit;
+
+        const [countResult] = await db.query(
+            'SELECT COUNT(*) as total FROM survey_answers WHERE question_id = ? AND answer_text IS NOT NULL AND answer_text != ""',
+            [questionId]
+        );
+        const total = countResult.total;
+
+        const answers = await db.query(
+            'SELECT answer_text as text FROM survey_answers WHERE question_id = ? AND answer_text IS NOT NULL AND answer_text != "" ORDER BY id DESC LIMIT ? OFFSET ?',
+            [questionId, limit, offset]
+        );
+
+        res.json({
+            success: true,
+            answers,
+            pagination: {
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit)
+            }
+        });
+    } catch (error) {
+        logger.error('Error al obtener respuestas de texto paginadas:', error);
+        res.status(500).json({ error: 'Error al cargar las respuestas' });
+    }
+});
+
+/**
  * @route   DELETE /api/surveys/:id
  */
 router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
@@ -319,6 +358,233 @@ router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ error: 'Error al eliminar' });
+    }
+});
+
+/**
+ * Lógica compartida para analíticas
+ */
+async function handleAnalytics(req, res) {
+    const surveyId = req.params.id;
+
+    const [survey] = await db.query('SELECT title, description FROM surveys WHERE id = ?', [surveyId]);
+    if (!survey) return res.status(404).json({ error: 'Encuesta no encontrada' });
+
+    const [respCount] = await db.query('SELECT COUNT(*) as total FROM survey_responses WHERE survey_id = ?', [surveyId]);
+    const totalResponses = respCount.total;
+
+    const questions = await db.query(
+        'SELECT id, question_text, question_type, order_index FROM survey_questions WHERE survey_id = ? ORDER BY order_index ASC',
+        [surveyId]
+    );
+
+    const analytics = [];
+
+    for (const q of questions) {
+        let data = [];
+        
+        const qType = q.question_type?.toLowerCase();
+
+        if (qType === 'rating') {
+            const counts = await db.query(
+                'SELECT answer_text as label, COUNT(*) as value FROM survey_answers WHERE question_id = ? GROUP BY answer_text',
+                [q.id]
+            );
+            for (let i = 1; i <= 5; i++) {
+                const found = counts.find(c => parseInt(c.label) === i);
+                data.push({ label: `${i}★`, value: found ? found.value : 0 });
+            }
+        } 
+        else if (qType === 'multiple_choice') {
+            data = await db.query(
+                `SELECT so.option_text as label, COUNT(sa.id) as value 
+                 FROM survey_options so 
+                 LEFT JOIN survey_answers sa ON so.id = sa.option_id 
+                 WHERE so.question_id = ? 
+                 GROUP BY so.id 
+                 ORDER BY so.order_index ASC`,
+                [q.id]
+            );
+        }
+        else if (qType === 'text') {
+            const [countResult] = await db.query(
+                'SELECT COUNT(*) as total FROM survey_answers WHERE question_id = ? AND answer_text IS NOT NULL AND answer_text != ""',
+                [q.id]
+            );
+            const total = countResult.total;
+
+            const answers = await db.query(
+                'SELECT answer_text as text FROM survey_answers WHERE question_id = ? AND answer_text IS NOT NULL AND answer_text != "" ORDER BY id DESC LIMIT 5',
+                [q.id]
+            );
+
+            data = {
+                answers,
+                total,
+                page: 1,
+                limit: 5,
+                totalPages: Math.ceil(total / 5)
+            };
+        }
+
+        analytics.push({
+            questionId: q.id,
+            text: q.question_text,
+            type: q.question_type,
+            data: data
+        });
+    }
+
+    return res.json({
+        success: true,
+        survey: {
+            id: surveyId,
+            title: survey.title,
+            totalResponses
+        },
+        analytics
+    });
+}
+
+/**
+ * Lógica para exportación a CSV
+ */
+async function handleExport(req, res) {
+    try {
+        const surveyId = req.params.id;
+        
+        const [survey] = await db.query('SELECT title FROM surveys WHERE id = ?', [surveyId]);
+        if (!survey) return res.status(404).json({ error: 'Encuesta no encontrada' });
+
+        const questions = await db.query(
+            'SELECT id, question_text FROM survey_questions WHERE survey_id = ? ORDER BY order_index ASC',
+            [surveyId]
+        );
+
+        const rows = await db.query(`
+            SELECT 
+                u.email as usuario,
+                sr.submitted_at as fecha,
+                sa.question_id,
+                COALESCE(sa.answer_text, so.option_text) as respuesta,
+                sr.id as response_id
+            FROM survey_responses sr
+            JOIN users u ON sr.user_id = u.id
+            JOIN survey_answers sa ON sr.id = sa.response_id
+            LEFT JOIN survey_options so ON sa.option_id = so.id
+            WHERE sr.survey_id = ?
+            ORDER BY sr.submitted_at DESC, sr.id DESC
+        `, [surveyId]);
+
+        const responsesMap = {};
+        rows.forEach(row => {
+            if (!responsesMap[row.response_id]) {
+                responsesMap[row.response_id] = {
+                    usuario: row.usuario,
+                    fecha: new Date(row.fecha).toISOString().split('T')[0], // YYYY-MM-DD
+                    respuestas: {}
+                };
+            }
+            responsesMap[row.response_id].respuestas[row.question_id] = row.respuesta;
+        });
+
+        const BOM = '\ufeff';
+        const headers = ['Usuario', 'Fecha', ...questions.map(q => q.question_text)];
+        let csvContent = BOM + headers.map(h => `"${h.replace(/"/g, '""')}"`).join(',') + '\n';
+
+        Object.values(responsesMap).forEach(resp => {
+            const rowData = [
+                `"${resp.usuario}"`,
+                `"${resp.fecha}"`,
+                ...questions.map(q => {
+                    const val = (resp.respuestas[q.id] || '').toString();
+                    return `"${val.replace(/"/g, '""')}"`;
+                })
+            ];
+            csvContent += rowData.join(',') + '\n';
+        });
+
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+        res.setHeader('Content-Disposition', `attachment; filename=resultados_${survey.title.replace(/[^a-z0-9]/gi, '_')}.csv`);
+        res.status(200).send(csvContent);
+    } catch (error) {
+        logger.error('Error en exportacion CSV:', error);
+        res.status(500).json({ error: 'Error al exportar los datos' });
+    }
+}
+
+/**
+ * @route   GET /api/surveys/lesson/:lessonId/analytics
+ */
+router.get('/lesson/:lessonId/analytics', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const lessonId = req.params.lessonId;
+        const [survey] = await db.query('SELECT id FROM surveys WHERE lesson_id = ? LIMIT 1', [lessonId]);
+        
+        if (!survey) {
+            const [content] = await db.query(
+                "SELECT JSON_VALUE(data, '$.survey_id') as survey_id FROM lesson_contents WHERE lesson_id = ? AND content_type = 'survey' LIMIT 1",
+                [lessonId]
+            );
+            
+            if (!content || !content.survey_id) {
+                return res.status(404).json({ error: 'No se encontró encuesta para esta lección' });
+            }
+            req.params.id = content.survey_id;
+        } else {
+            req.params.id = survey.id;
+        }
+
+        return await handleAnalytics(req, res);
+    } catch (error) {
+        res.status(500).json({ error: 'Error al procesar' });
+    }
+});
+
+/**
+ * @route   GET /api/surveys/lesson/:lessonId/export
+ */
+router.get('/lesson/:lessonId/export', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const lessonId = req.params.lessonId;
+        const [survey] = await db.query('SELECT id FROM surveys WHERE lesson_id = ? LIMIT 1', [lessonId]);
+        
+        if (!survey) {
+            const [content] = await db.query(
+                "SELECT JSON_VALUE(data, '$.survey_id') as survey_id FROM lesson_contents WHERE lesson_id = ? AND content_type = 'survey' LIMIT 1",
+                [lessonId]
+            );
+            if (!content || !content.survey_id) return res.status(404).json({ error: 'No se encontró encuesta' });
+            req.params.id = content.survey_id;
+        } else {
+            req.params.id = survey.id;
+        }
+
+        return await handleExport(req, res);
+    } catch (error) {
+        res.status(500).json({ error: 'Error al exportar' });
+    }
+});
+
+/**
+ * @route   GET /api/surveys/:id/analytics
+ */
+router.get('/:id/analytics', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        await handleAnalytics(req, res);
+    } catch (error) {
+        res.status(500).json({ error: 'Error al procesar las estadísticas' });
+    }
+});
+
+/**
+ * @route   GET /api/surveys/:id/export
+ */
+router.get('/:id/export', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        await handleExport(req, res);
+    } catch (error) {
+        res.status(500).json({ error: 'Error al exportar' });
     }
 });
 

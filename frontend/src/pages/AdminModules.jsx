@@ -11,6 +11,7 @@ import ModuleCard from '../components/admin/modules/ModuleCard';
 import ModuleModal from '../components/admin/modules/ModuleModal';
 import LessonModal from '../components/admin/modules/LessonModal';
 import ResourceModal from '../components/admin/modules/ResourceModal';
+import SurveyResultsModal from '../components/admin/modules/SurveyResultsModal';
 
 export default function AdminModules() {
     const navigate = useNavigate();
@@ -58,6 +59,15 @@ export default function AdminModules() {
     } = useAdminModules();
 
     const [deleteType, setDeleteType] = useState(null); // 'module', 'lesson', 'resource'
+    const [isResultsModalOpen, setIsResultsModalOpen] = useState(false);
+    const [selectedSurveyId, setSelectedSurveyId] = useState(null);
+
+    const handleViewResults = (lessonId) => {
+        // Ahora el modal puede manejar la búsqueda por lessonId si no le pasamos survey_id
+        // O simplemente guardamos el lessonId y el modal llama al endpoint /lesson/:id
+        setSelectedSurveyId(lessonId); // Reutilizamos el estado pero ahora enviamos el lessonId
+        setIsResultsModalOpen(true);
+    };
 
     const handleDeleteClick = (item, type) => {
         setItemToDelete(item);
@@ -119,6 +129,7 @@ export default function AdminModules() {
                             onToggleLessonOptional={toggleLessonOptional}
                             onToggleLessonPublish={toggleLessonPublish}
                             onOpenLessonEditor={(id) => navigate(`/admin/lessons/${id}/editor`)}
+                            onViewResults={handleViewResults}
                             onReorderLessons={handleReorderLessons}
                             onNewResource={handleOpenResourceModal}
                             onEditResource={(mid, r) => handleOpenResourceModal(mid, r)}
@@ -167,6 +178,12 @@ export default function AdminModules() {
                     message={`¿Estás seguro de que deseas eliminar este ${deleteType === 'module' ? 'módulo' : deleteType === 'lesson' ? 'lección' : 'recurso'}? Esta acción no se puede deshacer.`}
                 />
             )}
+
+            <SurveyResultsModal 
+                isOpen={isResultsModalOpen}
+                onClose={() => setIsResultsModalOpen(false)}
+                surveyId={selectedSurveyId}
+            />
         </div>
     );
 }

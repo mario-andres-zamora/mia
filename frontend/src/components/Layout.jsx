@@ -225,7 +225,7 @@ export default function Layout() {
 
             {/* Footer - Hidden in Quiz/Survey views to avoid overlap */}
             {!location.pathname.includes('/quiz/') && !location.pathname.includes('/survey/') && (
-                <footer className="mt-auto border-t border-primary-500/10 bg-[#0d1127]/50 backdrop-blur-sm">
+                <footer className="mt-auto border-t border-primary-500/10 bg-[#0d1127]/50 backdrop-blur-sm relative z-0">
                     <div className="w-full px-4 sm:px-6 lg:px-12 py-6">
                         <div className="flex flex-col sm:flex-row justify-between items-center gap-6">
                             <div className="flex items-center gap-4 opacity-70">

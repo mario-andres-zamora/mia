@@ -1,4 +1,4 @@
-import { Plus, CheckCircle2, Clock, Award, Target, Edit2, Trash2, Eye, EyeOff, ExternalLink, BookOpen, ChevronUp, ChevronDown } from 'lucide-react';
+import { Plus, CheckCircle2, Clock, Award, Target, Edit2, Trash2, Eye, EyeOff, ExternalLink, BookOpen, ChevronUp, ChevronDown, BarChart2 } from 'lucide-react';
 
 export default function ModuleLessons({
     lessons,
@@ -8,6 +8,7 @@ export default function ModuleLessons({
     onToggleOptional,
     onTogglePublish,
     onOpenEditor,
+    onViewResults,
     onReorderLessons,
     loading
 }) {
@@ -146,6 +147,15 @@ export default function ModuleLessons({
                                             <Trash2 className="w-4 h-4 group-hover/btn:scale-110" />
                                         </button>
                                         <div className="w-px h-5 bg-white/10 mx-2"></div>
+                                        {lesson.lesson_type === 'survey' && (
+                                            <button
+                                                onClick={() => onViewResults(lesson.id)}
+                                                className="flex items-center gap-2.5 px-5 py-2.5 bg-secondary-500/10 text-secondary-500 hover:bg-secondary-500 hover:text-white rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-lg hover:shadow-secondary-500/20 active:scale-95 group/results mr-1"
+                                            >
+                                                Resultados
+                                                <BarChart2 className="w-3.5 h-3.5 group-hover/results:scale-110 transition-transform" />
+                                            </button>
+                                        )}
                                         <button
                                             onClick={() => onOpenEditor(lesson.id)}
                                             className="flex items-center gap-2.5 px-5 py-2.5 bg-primary-500/10 text-primary-400 hover:bg-primary-500 hover:text-white rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-lg hover:shadow-primary-500/20 active:scale-95 group/edit"

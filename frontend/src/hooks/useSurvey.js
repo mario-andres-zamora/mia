@@ -10,7 +10,7 @@ const API_URL = import.meta.env.VITE_API_URL;
 export function useSurvey() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { token, updateUser } = useAuthStore();
+    const { updateUser } = useAuthStore();
     const { playSound } = useSoundStore();
 
     const [surveyData, setSurveyData] = useState(null);
@@ -46,9 +46,7 @@ export function useSurvey() {
     const fetchSurvey = async () => {
         try {
             setLoading(true);
-            const response = await axios.get(`${API_URL}/surveys/${id}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const response = await axios.get(`${API_URL}/surveys/${id}`);
             if (response.data.success) {
                 setSurveyData(response.data);
                 if (response.data.isCompleted) {
@@ -110,8 +108,6 @@ export function useSurvey() {
             setSubmitting(true);
             const response = await axios.post(`${API_URL}/surveys/${id}/submit`, {
                 answers
-            }, {
-                headers: { Authorization: `Bearer ${token}` }
             });
 
             if (response.data.success) {
