@@ -12,7 +12,7 @@ import UserEditModal from '../components/admin/users/UserEditModal';
 export default function AdminUsers() {
     const { user: currentUser, updateUser } = useAuthStore();
     const navigate = useNavigate();
-    const { filteredUsers, loading, searchTerm, setSearchTerm, departments, actions } = useUsers();
+    const { filteredUsers, loading, searchTerm, setSearchTerm, departmentFilter, setDepartmentFilter, departments, actions } = useUsers();
 
     if (loading) {
         return (
@@ -37,6 +37,9 @@ export default function AdminUsers() {
             <UserHeader
                 searchTerm={searchTerm}
                 onSearchChange={setSearchTerm}
+                departments={departments || []}
+                departmentFilter={departmentFilter}
+                onDepartmentChange={setDepartmentFilter}
                 onBack={() => navigate('/admin')}
             />
 

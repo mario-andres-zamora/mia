@@ -8,6 +8,7 @@ export function useUsers() {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [departmentFilter, setDepartmentFilter] = useState('ALL');
     const [departments, setDepartments] = useState([]);
 
     // Modals & Action states
@@ -130,12 +131,16 @@ export function useUsers() {
     };
 
     const filteredUsers = useMemo(() => {
-        return users.filter(user =>
-            `${user.first_name} ${user.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (user.department && user.department.toLowerCase().includes(searchTerm.toLowerCase()))
-        );
-    }, [users, searchTerm]);
+        return users.filter(user => {
+            const matchesSearch = `${user.first_name} ${user.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (user.department && user.department.toLowerCase().includes(searchTerm.toLowerCase()));
+            
+            const matchesDepartment = departmentFilter === 'ALL' || user.department === departmentFilter;
+
+            return matchesSearch && matchesDepartment;
+        });
+    }, [users, searchTerm, departmentFilter]);
 
     return {
         users,
@@ -143,6 +148,8 @@ export function useUsers() {
         loading,
         searchTerm,
         setSearchTerm,
+        departmentFilter,
+        setDepartmentFilter,
         departments,
         actions: {
             edit: {
