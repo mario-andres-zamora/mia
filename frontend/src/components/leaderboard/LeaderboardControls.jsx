@@ -1,16 +1,15 @@
 import { ChevronRight, Search } from 'lucide-react';
 
-export default function LeaderboardControls({ 
-    view, 
-    setView, 
-    isAdmin, 
-    levels, 
-    filterLevel, 
-    setFilterLevel, 
-    isFilterOpen, 
-    setIsFilterOpen, 
-    searchTerm, 
-    setSearchTerm 
+export default function LeaderboardControls({
+    view,
+    setView,
+    levels,
+    filterLevel,
+    setFilterLevel,
+    isFilterOpen,
+    setIsFilterOpen,
+    searchTerm,
+    setSearchTerm
 }) {
     const currentLevel = levels.find(l => l.id === filterLevel) || levels[0];
 
@@ -19,14 +18,12 @@ export default function LeaderboardControls({
             <div className="flex flex-col lg:flex-row w-full xl:w-auto gap-4">
                 {/* View Switcher Tabs */}
                 <div className="flex flex-col sm:flex-row w-full flex-1 p-1 bg-slate-900/50 rounded-2xl border border-white/5 items-stretch gap-1 sm:gap-0 h-[58px]">
-                    {isAdmin && (
-                        <button
-                            onClick={() => setView('global')}
-                            className={`flex-1 px-4 lg:px-6 h-full rounded-xl text-[10px] whitespace-nowrap font-black uppercase tracking-widest transition-all ${view === 'global' ? 'bg-primary-500 text-white shadow-lg' : 'text-gray-500 hover:bg-white/5 hover:text-white'}`}
-                        >
-                            Institucional
-                        </button>
-                    )}
+                    <button
+                        onClick={() => setView('global')}
+                        className={`flex-1 px-4 lg:px-6 h-full rounded-xl text-[10px] whitespace-nowrap font-black uppercase tracking-widest transition-all ${view === 'global' ? 'bg-primary-500 text-white shadow-lg' : 'text-gray-500 hover:bg-white/5 hover:text-white'}`}
+                    >
+                        Institucional
+                    </button>
                     <button
                         onClick={() => setView('area')}
                         className={`flex-1 px-4 lg:px-6 h-full rounded-xl text-[10px] whitespace-nowrap font-black uppercase tracking-widest transition-all ${view === 'area' ? 'bg-primary-500 text-white shadow-lg' : 'text-gray-500 hover:bg-white/5 hover:text-white'}`}

@@ -32,20 +32,21 @@ export function useReports() {
     };
 
     const refreshReports = async () => {
-        toast.promise(
-            axios.post(`${API_URL}/reports/compliance/refresh`),
-            {
-                loading: 'Sincronizando analytics...',
-                success: (res) => {
-                    if (res.data.success) {
-                        setReportData(res.data);
-                        return 'Reportes actualizados correctamente';
-                    }
-                    throw new Error('Sync failed');
-                },
-                error: 'Error al sincronizar reportes'
+        setSyncing(true);
+        const toastId = toast.loading('Sincronizando analytics...', { id: 'sync-reports' });
+        try {
+            const response = await axios.post(`${API_URL}/reports/compliance/refresh`);
+            if (response.data.success) {
+                setReportData(response.data);
+                toast.success('Reportes actualizados correctamente', { id: 'sync-reports' });
+            } else {
+                throw new Error('Sync failed');
             }
-        ).finally(() => setSyncing(false));
+        } catch (error) {
+            toast.error('Error al sincronizar reportes', { id: 'sync-reports' });
+        } finally {
+            setSyncing(false);
+        }
     };
 
     const handleExportCSV = () => {
