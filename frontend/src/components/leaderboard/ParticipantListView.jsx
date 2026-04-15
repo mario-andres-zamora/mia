@@ -1,15 +1,13 @@
-import { Lock, ShieldCheck, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 export default function ParticipantListView({ 
     view, 
     participants, 
     loggedUser, 
-    isAdmin, 
     currentUser, 
     setView 
 }) {
-    const isGlobal = view === 'global';
     
     // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
@@ -21,31 +19,6 @@ export default function ParticipantListView({
         setCurrentPage(1);
     }, [participants, view, itemsPerPage]);
 
-    if (isGlobal && !isAdmin) {
-        return (
-            <div className="py-20 flex flex-col items-center text-center space-y-6 animate-pulse-slow">
-                <div className="w-24 h-24 rounded-[2rem] bg-slate-900 border border-white/10 flex items-center justify-center text-gray-700 shadow-2xl relative">
-                    <Lock className="w-10 h-10 opacity-20" />
-                    <ShieldCheck className="w-6 h-6 text-primary-500 absolute -bottom-1 -right-1" />
-                </div>
-                <div className="max-w-md space-y-2">
-                    <h3 className="text-xl font-black text-white uppercase tracking-tight">Privacidad Institucional</h3>
-                    <p className="text-gray-500 text-sm font-medium leading-relaxed">
-                        El detalle del ranking global solo es visible para administradores.
-                        Puedes ver tu posición oficial #<span className="text-primary-400 font-bold">{currentUser?.globalRank}</span> en la cabecera.
-                    </p>
-                    <div className="pt-6">
-                        <button
-                            onClick={() => setView('area')}
-                            className="px-8 py-3 bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest text-primary-400 hover:bg-white/10 rounded-xl transition-all"
-                        >
-                            Ver Ranking de mi Área
-                        </button>
-                    </div>
-                </div>
-            </div>
-        );
-    }
 
     const totalPages = Math.ceil(participants.length / itemsPerPage);
     const startIndex = (currentPage - 1) * itemsPerPage;

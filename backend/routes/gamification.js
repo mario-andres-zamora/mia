@@ -86,10 +86,10 @@ router.get('/leaderboard', authMiddleware, cacheMiddleware(60, true), async (req
                 deptRank: myDeptRankPos,
                 department
             },
-            institutionalLeaderboard: isAdmin ? institutionalLeaderboard : [],
+            institutionalLeaderboard: institutionalLeaderboard,
             departmentLeaderboard,
             departmentRanking,
-            scope: isAdmin ? 'institutional' : 'department'
+            scope: 'institutional'
         });
     } catch (error) {
         logger.error('Error obteniendo leaderboard:', error);

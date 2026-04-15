@@ -160,6 +160,41 @@ docker-compose ps
 - Admin: admin@cgr.go.cr
 - Funcionario: funcionario@cgr.go.cr
 
+### 💾 Backup y Recuperación
+
+El sistema requiere respaldos periódicos tanto de la base de datos como de los archivos subidos por los usuarios (certificados, recursos, fotos de perfil).
+
+#### **1. Respaldo de Base de Datos (MariaDB)**
+
+Para realizar un respaldo manual de la base de datos `cgr_lms`:
+
+```powershell
+# Crear un backup completo
+docker exec cgr-lms-mariadb mariadb-dump -u cgr_user -p"cgr_password_2026" cgr_lms > backup_$(Get-Date -Format "yyyyMMdd_HHmm").sql
+```
+
+#### **2. Restauración de Base de Datos**
+
+Para restaurar un archivo SQL en el contenedor:
+
+```powershell
+# Restaurar desde un archivo .sql
+cat backup_archivo.sql | docker exec -i cgr-lms-mariadb mariadb -u cgr_user -p"cgr_password_2026" cgr_lms
+```
+
+#### **3. Respaldo de Archivos (Uploads)**
+
+Los archivos subidos se encuentran en el volumen persistente `./uploads`. Se recomienda comprimir esta carpeta periódicamente:
+
+```powershell
+# Comprimir carpeta de uploads
+Compress-Archive -Path ./uploads/* -DestinationPath ./backups/uploads_$(Get-Date -Format "yyyyMMdd").zip
+```
+
+#### **4. Automatización (Recomendación)**
+
+Se recomienda configurar una tarea programada (Windows Task Scheduler) que ejecute un script de PowerShell para automatizar estos respaldos diariamente a las 00:00.
+
 ### 📁 Estructura del Proyecto
 
 ```

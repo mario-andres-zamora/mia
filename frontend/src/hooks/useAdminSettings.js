@@ -125,14 +125,20 @@ export function useAdminSettings() {
     };
 
     const refreshLeaderboard = async () => {
-        toast.promise(
-            axios.post(`${API_URL}/gamification/leaderboard/refresh`),
-            {
-                loading: 'Recalculando ranking global...',
-                success: 'Ranking recalculado con éxito',
-                error: 'Error al sincronizar ranking'
+        setSaving(true);
+        const toastId = toast.loading('Recalculando ranking global...', { id: 'sync-leaderboard' });
+        try {
+            const response = await axios.post(`${API_URL}/gamification/leaderboard/refresh`);
+            if (response.data.success) {
+                toast.success('Ranking recalculado con éxito', { id: 'sync-leaderboard' });
+            } else {
+                throw new Error('Sync failed');
             }
-        ).finally(() => setSaving(false));
+        } catch (error) {
+            toast.error('Error al sincronizar ranking', { id: 'sync-leaderboard' });
+        } finally {
+            setSaving(false);
+        }
     };
 
     return {

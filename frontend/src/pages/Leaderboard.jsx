@@ -32,8 +32,8 @@ export default function Leaderboard() {
     const [loading, setLoading] = useState(true);
 
     // UI State
-    const isAdmin = loggedUser?.role === 'admin' && !viewAsStudent;
-    const [view, setView] = useState(isAdmin ? 'global' : 'area');
+
+    const [view, setView] = useState('global');
     const [searchTerm, setSearchTerm] = useState('');
     const [filterLevel, setFilterLevel] = useState('all');
     const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -101,7 +101,6 @@ export default function Leaderboard() {
             <LeaderboardControls
                 view={view}
                 setView={setView}
-                isAdmin={isAdmin}
                 levels={levels}
                 filterLevel={filterLevel}
                 setFilterLevel={setFilterLevel}
@@ -120,7 +119,6 @@ export default function Leaderboard() {
                         view={view}
                         participants={filteredParticipants}
                         loggedUser={loggedUser}
-                        isAdmin={isAdmin}
                         currentUser={currentUser}
                         setView={setView}
                     />

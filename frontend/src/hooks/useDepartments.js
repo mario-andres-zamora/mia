@@ -87,16 +87,19 @@ export function useDepartments() {
     };
 
     const handleSync = async () => {
+        setIsSyncing(true);
+        const toastId = toast.loading('Sincronizando con el directorio maestro...', { id: 'sync-depts' });
         try {
-            setIsSyncing(true);
             const response = await axios.post(`${API_URL}/departments/sync`);
             if (response.data.success) {
-                toast.success(response.data.message);
+                toast.success(response.data.message || 'Catálogo de áreas actualizado', { id: 'sync-depts' });
                 fetchDepartments();
                 return true;
+            } else {
+                throw new Error('Sync failed');
             }
         } catch (error) {
-            toast.error('Error al sincronizar con el directorio maestro');
+            toast.error('Error al sincronizar con el directorio maestro', { id: 'sync-depts' });
             return false;
         } finally {
             setIsSyncing(false);
