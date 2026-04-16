@@ -21,6 +21,11 @@ export function useUsers() {
     const [resetModalOpen, setResetModalOpen] = useState(false);
     const [userToReset, setUserToReset] = useState(null);
 
+    const [progressModalOpen, setProgressModalOpen] = useState(false);
+    const [userForProgress, setUserForProgress] = useState(null);
+    const [userProgressData, setUserProgressData] = useState(null);
+    const [loadingProgress, setLoadingProgress] = useState(false);
+
     useEffect(() => {
         fetchUsers();
         fetchDepartments();
@@ -107,6 +112,23 @@ export function useUsers() {
         }
     };
 
+    const handleViewProgress = async (user) => {
+        try {
+            setLoadingProgress(true);
+            setUserForProgress(user);
+            setProgressModalOpen(true);
+            // Reutilizamos full-profile que ahora incluye el desglose detallado
+            const response = await axios.get(`${API_URL}/users/${user.id}/full-profile`);
+            if (response.data.success) {
+                setUserProgressData(response.data.progress);
+            }
+        } catch (error) {
+            toast.error('Error al cargar progreso detallado');
+        } finally {
+            setLoadingProgress(false);
+        }
+    };
+
     const syncFromDirectory = async () => {
         if (!editingUser?.email) return;
 
@@ -173,6 +195,14 @@ export function useUsers() {
                 isOpen: resetModalOpen,
                 setOpen: setResetModalOpen,
                 confirm: handleConfirmReset
+            },
+            progress: {
+                user: userForProgress,
+                data: userProgressData,
+                isOpen: progressModalOpen,
+                setOpen: setProgressModalOpen,
+                loading: loadingProgress,
+                view: handleViewProgress
             },
             refresh: fetchUsers
         }

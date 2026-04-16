@@ -9,6 +9,7 @@ import PerformanceTable from '../components/reports/PerformanceTable';
 import DistributionPie from '../components/reports/DistributionPie';
 import RiskAlerts from '../components/reports/RiskAlerts';
 import DetailedUserList from '../components/reports/DetailedUserList';
+import CompletionTrend from '../components/reports/CompletionTrend';
 
 export default function Reports() {
     const navigate = useNavigate();
@@ -69,11 +70,10 @@ export default function Reports() {
                                 avgCompletion={summary.avgCompletion}
                                 summary={summary}
                             />
+                        </div>
 
-                            <RiskAlerts 
-                                atRisk={atRisk}
-                                onSendReminders={handleSendReminders}
-                            />
+                        <div className="lg:col-span-3">
+                            <CompletionTrend modules={moduleCompliance} />
                         </div>
 
                         <div className="lg:col-span-3">
@@ -83,6 +83,13 @@ export default function Reports() {
                                 onSearchChange={setSearchTerm}
                                 onSort={requestSort}
                                 sortConfig={sortConfig}
+                            />
+                        </div>
+
+                        <div className="lg:col-span-3">
+                            <RiskAlerts 
+                                atRisk={atRisk}
+                                onSendReminders={handleSendReminders}
                             />
                         </div>
                     </div>

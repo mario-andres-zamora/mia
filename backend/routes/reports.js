@@ -250,4 +250,64 @@ router.get('/compliance', authMiddleware, adminMiddleware, async (req, res) => {
     }
 });
 
+/**
+ * @route   GET /api/reports/completion-trend
+ * @desc    Obtener tendencia de finalizaciones por tiempo
+ * @access  Private/Admin
+ */
+router.get('/completion-trend', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const { module_id, interval = 'weekly', startDate, endDate } = req.query;
+        
+        if (!module_id) {
+            return res.status(400).json({ error: 'ID de módulo es requerido' });
+        }
+
+        let dateFormat = '%Y-%m-%d';
+        let groupBy = 'DATE(completed_at)';
+        
+        if (interval === 'monthly') {
+            dateFormat = '%b %Y';
+            groupBy = 'DATE_FORMAT(completed_at, "%Y-%m")';
+        } else if (interval === 'weekly') {
+            dateFormat = 'Semana %v, %Y';
+            groupBy = 'YEARWEEK(completed_at, 1)';
+        } else if (interval === 'yearly') {
+            dateFormat = '%Y';
+            groupBy = 'YEAR(completed_at)';
+        }
+
+        let dateFilter = '';
+        const params = [dateFormat, module_id];
+
+        if (startDate && endDate) {
+            dateFilter = ' AND completed_at BETWEEN ? AND ?';
+            params.push(startDate, endDate);
+        }
+
+        const stats = await db.query(`
+            SELECT 
+                DATE_FORMAT(completed_at, ?) as label,
+                COUNT(*) as value,
+                ${groupBy} as sort_key
+            FROM user_progress
+            WHERE module_id = ? 
+              AND status = 'completed'
+              AND completed_at IS NOT NULL
+              ${dateFilter}
+            GROUP BY sort_key
+            ORDER BY sort_key ASC
+            LIMIT 24
+        `, params);
+
+        res.json({
+            success: true,
+            data: stats
+        });
+    } catch (error) {
+        logger.error('Error obteniendo tendencia de finalizacion:', error);
+        res.status(500).json({ error: 'Error al cargar las estadísticas de tendencia' });
+    }
+});
+
 module.exports = router;

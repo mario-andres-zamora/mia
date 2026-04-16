@@ -8,6 +8,7 @@ import { TableSkeleton } from '../components/skeletons/TableSkeleton';
 import UserHeader from '../components/admin/users/UserHeader';
 import UserTable from '../components/admin/users/UserTable';
 import UserEditModal from '../components/admin/users/UserEditModal';
+import UserProgressModal from '../components/admin/users/UserProgressModal';
 
 export default function AdminUsers() {
     const { user: currentUser, updateUser } = useAuthStore();
@@ -60,6 +61,7 @@ export default function AdminUsers() {
                     actions.delete.setOpen(true);
                 }}
                 viewProfile={(id) => navigate(`/admin/users/${id}/profile`)}
+                onViewProgress={actions.progress.view}
             />
 
             {/* Edit User Modal */}
@@ -96,6 +98,14 @@ export default function AdminUsers() {
                 message={`¿Estás seguro de que deseas eliminar permanentemente a ${actions.delete.user?.first_name} ${actions.delete.user?.last_name}? Esta acción es IRREVERSIBLE y eliminará todas las trazas del usuario en la plataforma de capacitación.`}
                 confirmText="ELIMINAR DEFINITIVAMENTE"
                 isDestructive={true}
+            />
+
+            {/* Detailed Progress Modal */}
+            <UserProgressModal
+                isOpen={actions.progress.isOpen}
+                onClose={() => actions.progress.setOpen(false)}
+                user={actions.progress.user}
+                progress={actions.progress.data}
             />
         </div>
     );

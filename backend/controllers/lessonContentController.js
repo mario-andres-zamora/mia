@@ -140,6 +140,16 @@ class LessonContentController {
             res.status(500).json({ error: 'Error al reordenar' });
         }
     }
+
+    async getInteractionStats(req, res) {
+        try {
+            const stats = await lessonContentService.getInteractionStats();
+            res.json({ success: true, stats });
+        } catch (error) {
+            logger.error('Error obteniendo estadísticas de interacciones:', error);
+            res.status(500).json({ error: 'Error al cargar estadísticas' });
+        }
+    }
 }
 
 module.exports = new LessonContentController();

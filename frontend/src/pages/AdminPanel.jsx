@@ -76,8 +76,8 @@ export default function AdminPanel() {
             stats: 'ARCHIVOS ADJUNTOS'
         },
         {
-            title: 'Respuestas de Texto',
-            description: 'Ver las reflexiones e inputs escritos por los usuarios en las lecciones.',
+            title: 'Monitoreo de Actividades',
+            description: 'Revisar las respuestas a las actividades realizadas por los usuarios en el sistema.',
             icon: MessageSquare,
             path: '/admin/interactions',
             iconBg: 'bg-emerald-600',
@@ -107,7 +107,7 @@ export default function AdminPanel() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {adminCards.map((card, index) => (
-                    <AdminCard 
+                    <AdminCard
                         key={index}
                         {...card}
                     />

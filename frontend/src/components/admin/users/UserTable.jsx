@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { User, Mail, Briefcase, Clock, ShieldCheck, Activity, XCircle, History, Edit2, RefreshCcw, Trash2, ChevronDown, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { User, Mail, Briefcase, Clock, ShieldCheck, Activity, XCircle, History, Edit2, RefreshCcw, Trash2, ChevronDown, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, BarChart3 } from 'lucide-react';
 
 const formatRelativeTime = (dateString) => {
     if (!dateString) return 'Nunca';
@@ -15,7 +15,7 @@ const formatRelativeTime = (dateString) => {
     return date.toLocaleDateString();
 };
 
-export default function UserTable({ users, currentUserId, onEdit, onReset, onDelete, viewProfile }) {
+export default function UserTable({ users, currentUserId, onEdit, onReset, onDelete, viewProfile, onViewProgress }) {
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
     const [isPerPageOpen, setIsPerPageOpen] = useState(false);
@@ -173,13 +173,20 @@ export default function UserTable({ users, currentUserId, onEdit, onReset, onDel
                                     </div>
                                 </td>
                                 <td className="pr-4 md:pr-5 py-4">
-                                    <div className="grid grid-cols-2 gap-1.5 w-fit ml-auto">
+                                    <div className="grid grid-cols-3 gap-1.5 w-fit ml-auto">
                                         <button
                                             onClick={() => viewProfile(u.id)}
                                             className="w-8 h-8 flex items-center justify-center text-blue-400 bg-blue-500/5 hover:bg-blue-500/20 border border-blue-500/10 rounded-xl transition-all hover:scale-110 active:scale-90"
                                             title="VER PERFIL"
                                         >
                                             <History className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                            onClick={() => onViewProgress(u)}
+                                            className="w-8 h-8 flex items-center justify-center text-emerald-400 bg-emerald-500/5 hover:bg-emerald-500/20 border border-emerald-500/10 rounded-xl transition-all hover:scale-110 active:scale-90"
+                                            title="MONITOREAR AVANCE"
+                                        >
+                                            <BarChart3 className="w-4 h-4" />
                                         </button>
                                         <button
                                             onClick={() => onEdit(u)}

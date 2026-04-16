@@ -239,13 +239,18 @@ class UserService {
             [userId]
         );
 
+        // 6. Progreso detallado por módulo
+        const moduleService = require('./moduleService');
+        const detailedProgress = await moduleService.getModulesWithProgress(userId, true);
+
         return {
             user,
             stats: statsWithRank,
             progress: {
                 completed: progressResult.completed_modules || 0,
                 total: progressResult.total_modules || 0,
-                percentage: progressResult.total_modules > 0 ? Math.round((progressResult.completed_modules / progressResult.total_modules) * 100) : 0
+                percentage: progressResult.total_modules > 0 ? Math.round((progressResult.completed_modules / progressResult.total_modules) * 100) : 0,
+                detailed: detailedProgress
             },
             activities,
             certificates

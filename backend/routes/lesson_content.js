@@ -107,4 +107,11 @@ router.delete('/:id', authMiddleware, adminMiddleware, lessonContentController.d
  */
 router.post('/reorder', authMiddleware, adminMiddleware, lessonContentController.reorderContents);
 
+/**
+ * @route   GET /api/content/interactions/stats
+ * @desc    Get aggregated statistics for multiple choice questions
+ * @access  Private/Admin
+ */
+router.get('/interactions/stats', authMiddleware, adminMiddleware, lessonContentController.getInteractionStats);
+
 module.exports = router;

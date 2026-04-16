@@ -161,7 +161,7 @@ class LessonContentService {
             JOIN lessons l ON lc.lesson_id = l.id
             JOIN modules m ON l.module_id = m.id
             WHERE ucp.response_data IS NOT NULL
-            AND lc.content_type IN ('interactive_input', 'confirmation')
+            AND lc.content_type IN ('interactive_input', 'confirmation', 'multiple_choice', 'password_tester', 'mfa_defender')
             ORDER BY ucp.completed_at DESC
         `);
     }
@@ -235,6 +235,64 @@ class LessonContentService {
         for (const item of items) {
             await db.query('UPDATE lesson_contents SET order_index = ? WHERE id = ?', [item.order_index, item.id]);
         }
+    }
+
+    async getInteractionStats() {
+        const interactiveContents = await db.query(`
+            SELECT id, title, data, content_type 
+            FROM lesson_contents 
+            WHERE content_type IN ('multiple_choice', 'confirmation')
+        `);
+
+        const responses = await db.query(`
+            SELECT content_id, response_data 
+            FROM user_content_progress 
+            WHERE response_data IS NOT NULL
+        `);
+
+        const stats = interactiveContents.map(content => {
+            const contentData = typeof content.data === 'string' ? JSON.parse(content.data) : (content.data || {});
+            const options = contentData.options || [];
+            
+            // Initialize counts
+            const optionCounts = options.map((opt, index) => ({
+                label: opt.text || `Opción ${index + 1}`,
+                value: 0,
+                isCorrect: opt.is_correct || false
+            }));
+
+            // Count responses for this content
+            responses.filter(r => r.content_id === content.id).forEach(r => {
+                const resData = typeof r.response_data === 'string' ? JSON.parse(r.response_data) : (r.response_data || {});
+                
+                if (content.content_type === 'confirmation' && resData.selectedOption !== undefined) {
+                    const idx = parseInt(resData.selectedOption) - 1;
+                    if (optionCounts[idx]) optionCounts[idx].value++;
+                } else if (content.content_type === 'multiple_choice') {
+                    // Soporte para ambos formatos: seleccionado único (selectedIndex) o múltiple (selectedOptions)
+                    if (resData.selectedIndex !== undefined && resData.selectedIndex !== null) {
+                        const idx = parseInt(resData.selectedIndex);
+                        if (optionCounts[idx]) optionCounts[idx].value++;
+                    } else if (resData.selectedOptions) {
+                        const selected = Array.isArray(resData.selectedOptions) ? resData.selectedOptions : [resData.selectedOptions];
+                        selected.forEach(optIdx => {
+                            const idx = parseInt(optIdx) - (resData.isOneBased ? 1 : 0); // Ajuste de base si aplica
+                            if (optionCounts[idx]) optionCounts[idx].value++;
+                        });
+                    }
+                }
+            });
+
+            return {
+                id: content.id,
+                title: content.title,
+                type: content.content_type,
+                data: optionCounts,
+                total: responses.filter(r => r.content_id === content.id).length
+            };
+        });
+
+        return stats.filter(s => s.total > 0);
     }
 }
 
