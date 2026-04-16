@@ -40,7 +40,10 @@ const upload = multer({
  * @route   POST /api/resources
  * @desc    Crear un nuevo recurso (Admin)
  */
-router.post('/', authMiddleware, adminMiddleware, upload.single('file'), async (req, res) => {
+router.post('/', (req, res, next) => {
+    logger.info(`Incoming POST /api/resources - Type: ${req.headers['content-type']}`);
+    next();
+}, authMiddleware, adminMiddleware, upload.single('file'), async (req, res) => {
     try {
         logger.info('--- INTENTO DE CREACIÓN DE RECURSO ---');
         logger.info('Body recibido:', JSON.stringify(req.body));
@@ -89,9 +92,16 @@ router.post('/', authMiddleware, adminMiddleware, upload.single('file'), async (
  * @route   PUT /api/resources/:id
  * @desc    Actualizar un recurso (Admin)
  */
-router.put('/:id', authMiddleware, adminMiddleware, upload.single('file'), async (req, res) => {
+router.put('/:id', (req, res, next) => {
+    logger.info(`Incoming PUT /api/resources/${req.params.id} - Type: ${req.headers['content-type']}`);
+    next();
+}, authMiddleware, adminMiddleware, upload.single('file'), async (req, res) => {
     try {
         const { id } = req.params;
+        logger.info(`--- INTENTO DE ACTUALIZACIÓN DE RECURSO ${id} ---`);
+        logger.info('Body recibido:', JSON.stringify(req.body));
+        logger.info('Archivo recibido:', req.file ? req.file.filename : 'Ninguno');
+        
         const { title, description, resource_type, url } = req.body;
 
         const [current] = await db.query('SELECT url FROM resources WHERE id = ?', [id]);

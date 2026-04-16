@@ -310,14 +310,29 @@ export function useAdminModules() {
     const handleSaveResource = async (e) => {
         e.preventDefault();
         try {
-            const formData = new FormData();
-            formData.append('module_id', resourceFormData.module_id);
-            formData.append('title', resourceFormData.title);
-            formData.append('description', resourceFormData.description);
-            formData.append('resource_type', resourceFormData.resource_type);
-            formData.append('url', resourceFormData.url);
+            let data;
+            let headers = {};
+
+            // Si hay un archivo, usamos FormData (Multipart)
             if (resourceFormData.file) {
+                const formData = new FormData();
+                formData.append('module_id', resourceFormData.module_id);
+                formData.append('title', resourceFormData.title);
+                formData.append('description', resourceFormData.description);
+                formData.append('resource_type', resourceFormData.resource_type);
+                formData.append('url', resourceFormData.url);
                 formData.append('file', resourceFormData.file);
+                data = formData;
+                // No configuramos headers, Axios lo hace solo para FormData
+            } else {
+                // Si es solo un link o referencia, usamos JSON (Mucho más estable en producción)
+                data = {
+                    module_id: resourceFormData.module_id,
+                    title: resourceFormData.title,
+                    description: resourceFormData.description,
+                    resource_type: resourceFormData.resource_type,
+                    url: resourceFormData.url
+                };
             }
 
             let url = `${API_URL}/resources`;
@@ -330,7 +345,8 @@ export function useAdminModules() {
             const response = await axios({
                 method,
                 url,
-                data: formData
+                data,
+                headers
             });
 
             if (response.data.success) {
@@ -341,6 +357,7 @@ export function useAdminModules() {
                 toast.error(response.data.error || 'Error al guardar recurso');
             }
         } catch (error) {
+            console.error('Error en recurso:', error);
             toast.error('Error de conexión');
         }
     };
