@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { TrendingUp, Calendar, Filter, ChevronDown, Check } from 'lucide-react';
 import axios from 'axios';
 
@@ -7,7 +7,7 @@ const API_URL = import.meta.env.VITE_API_URL;
 
 export default function CompletionTrend({ modules = [] }) {
     const [selectedModule, setSelectedModule] = useState(modules[0]?.id || '');
-    const [interval, setInterval] = useState('weekly');
+    const [interval, setInterval] = useState('daily');
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     const [data, setData] = useState([]);
@@ -57,6 +57,7 @@ export default function CompletionTrend({ modules = [] }) {
     }, [selectedModule, interval, startDate, endDate]);
 
     const intervalOptions = [
+        { value: 'daily', label: 'Diario' },
         { value: 'weekly', label: 'Semanal' },
         { value: 'monthly', label: 'Mensual' },
         { value: 'yearly', label: 'Anual' },
@@ -184,13 +185,7 @@ export default function CompletionTrend({ modules = [] }) {
                     </div>
                 ) : (
                     <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={data} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
-                            <defs>
-                                <linearGradient id="colorValueTrend" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.3}/>
-                                    <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0}/>
-                                </linearGradient>
-                            </defs>
+                        <BarChart data={data} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#ffffff03" vertical={false} />
                             <XAxis 
                                 dataKey="label" 
@@ -206,27 +201,33 @@ export default function CompletionTrend({ modules = [] }) {
                                 fontSize={9} 
                                 tickLine={false} 
                                 axisLine={false}
+                                allowDecimals={false}
                                 tick={{ fill: '#94a3b8', fontWeight: '900' }}
                             />
                             <Tooltip
                                 contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #ffffff10', borderRadius: '12px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}
                                 itemStyle={{ color: '#0ea5e9', fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase' }}
                                 labelStyle={{ color: '#fff', fontSize: '10px', marginBottom: '8px', borderBottom: '1px solid #ffffff10', paddingBottom: '4px', fontWeight: '900' }}
-                                cursor={{ stroke: '#0ea5e9', strokeWidth: 1, strokeDasharray: '4 4' }}
+                                cursor={{ fill: '#ffffff05' }}
                             />
-                            <Area 
-                                type="monotone" 
+                            <Bar 
                                 dataKey="value" 
                                 name="Finalizaciones"
-                                stroke="#0ea5e9" 
-                                strokeWidth={3}
-                                fillOpacity={1} 
-                                fill="url(#colorValueTrend)" 
+                                radius={[6, 6, 0, 0]}
                                 animationDuration={1000}
-                                dot={{ r: 4, fill: '#0ea5e9', strokeWidth: 2, stroke: '#0f172a' }}
-                                activeDot={{ r: 6, strokeWidth: 0, fill: '#0ea5e9' }}
-                            />
-                        </AreaChart>
+                                barSize={interval === 'daily' ? 30 : 20}
+                            >
+                                {data.map((entry, index) => (
+                                    <Cell 
+                                        key={`cell-${index}`} 
+                                        fill="#0ea5e9"
+                                        fillOpacity={0.8}
+                                        className="transition-all duration-300 hover:fill-opacity-100"
+                                        style={{ filter: 'drop-shadow(0 0 8px rgba(14, 165, 233, 0.3))' }}
+                                    />
+                                ))}
+                            </Bar>
+                        </BarChart>
                     </ResponsiveContainer>
                 )}
             </div>

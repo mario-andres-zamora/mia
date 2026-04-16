@@ -264,36 +264,38 @@ router.get('/completion-trend', authMiddleware, adminMiddleware, async (req, res
         }
 
         let dateFormat = '%Y-%m-%d';
-        let groupBy = 'DATE(completed_at)';
+        let groupBy = 'DATE(created_at)';
         
         if (interval === 'monthly') {
             dateFormat = '%b %Y';
-            groupBy = 'DATE_FORMAT(completed_at, "%Y-%m")';
+            groupBy = 'DATE_FORMAT(created_at, "%Y-%m")';
         } else if (interval === 'weekly') {
             dateFormat = 'Semana %v, %Y';
-            groupBy = 'YEARWEEK(completed_at, 1)';
+            groupBy = 'YEARWEEK(created_at, 1)';
+        } else if (interval === 'daily') {
+            dateFormat = '%d %b';
+            groupBy = 'DATE(created_at)';
         } else if (interval === 'yearly') {
             dateFormat = '%Y';
-            groupBy = 'YEAR(completed_at)';
+            groupBy = 'YEAR(created_at)';
         }
 
         let dateFilter = '';
         const params = [dateFormat, module_id];
 
         if (startDate && endDate) {
-            dateFilter = ' AND completed_at BETWEEN ? AND ?';
+            dateFilter = ' AND created_at BETWEEN ? AND ?';
             params.push(startDate, endDate);
         }
 
         const stats = await db.query(`
             SELECT 
-                DATE_FORMAT(completed_at, ?) as label,
+                DATE_FORMAT(created_at, ?) as label,
                 COUNT(*) as value,
                 ${groupBy} as sort_key
-            FROM user_progress
-            WHERE module_id = ? 
-              AND status = 'completed'
-              AND completed_at IS NOT NULL
+            FROM gamification_activities
+            WHERE activity_type = 'module_completed'
+              AND reference_id = ? 
               ${dateFilter}
             GROUP BY sort_key
             ORDER BY sort_key ASC
@@ -307,6 +309,44 @@ router.get('/completion-trend', authMiddleware, adminMiddleware, async (req, res
     } catch (error) {
         logger.error('Error obteniendo tendencia de finalizacion:', error);
         res.status(500).json({ error: 'Error al cargar las estadísticas de tendencia' });
+    }
+});
+
+/**
+ * @route   GET /api/reports/department-compliance
+ * @desc    Obtener cumplimiento por departamento para un módulo específico
+ * @access  Private/Admin
+ */
+router.get('/department-compliance', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const { module_id } = req.query;
+        
+        if (!module_id) {
+            return res.status(400).json({ error: 'ID de módulo es requerido' });
+        }
+
+        const stats = await db.query(`
+            SELECT 
+                d.name as department,
+                COALESCE(dir.total_pax, 0) as total_pax,
+                COUNT(DISTINCT CASE WHEN up.status = 'completed' THEN u.id END) as completed_count,
+                ROUND((COUNT(DISTINCT CASE WHEN up.status = 'completed' THEN u.id END) / GREATEST(COALESCE(dir.total_pax, 0), 1)) * 100) as avg_completion
+            FROM departments d
+            LEFT JOIN (
+                SELECT department, COUNT(*) as total_pax 
+                FROM staff_directory 
+                GROUP BY department
+            ) dir ON d.name = dir.department
+            LEFT JOIN users u ON u.department = d.name AND u.is_active = TRUE AND u.role = 'student'
+            LEFT JOIN user_progress up ON u.id = up.user_id AND up.module_id = ? AND up.status = 'completed'
+            GROUP BY d.name, dir.total_pax
+            ORDER BY avg_completion DESC
+        `, [module_id]);
+
+        res.json({ success: true, departments: stats });
+    } catch (error) {
+        console.error('Error en cumplimiento por departamento:', error);
+        res.status(500).json({ error: 'Error al obtener datos de cumplimiento' });
     }
 });
 

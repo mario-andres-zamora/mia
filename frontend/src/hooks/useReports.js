@@ -11,11 +11,34 @@ export function useReports() {
     const [searchTerm, setSearchTerm] = useState('');
     const [view, setView] = useState('summary');
     const [chartType, setChartType] = useState('departments');
+    const [selectedModuleForDept, setSelectedModuleForDept] = useState('ALL');
+    const [deptModuleData, setDeptModuleData] = useState(null);
+    const [loadingDeptModule, setLoadingDeptModule] = useState(false);
     const [sortConfig, setSortConfig] = useState({ key: 'avg_completion', direction: 'desc' });
 
     useEffect(() => {
         fetchReports();
     }, []);
+
+    useEffect(() => {
+        if (chartType === 'departments' && selectedModuleForDept !== 'ALL') {
+            fetchDeptModuleCompliance();
+        }
+    }, [selectedModuleForDept, chartType]);
+
+    const fetchDeptModuleCompliance = async () => {
+        try {
+            setLoadingDeptModule(true);
+            const response = await axios.get(`${API_URL}/reports/department-compliance?module_id=${selectedModuleForDept}`);
+            if (response.data.success) {
+                setDeptModuleData(response.data.departments);
+            }
+        } catch (error) {
+            toast.error('Error al cargar cumplimiento específico');
+        } finally {
+            setLoadingDeptModule(false);
+        }
+    };
 
     const fetchReports = async () => {
         try {
@@ -133,6 +156,10 @@ export function useReports() {
         handleSendReminders,
         filteredUsers,
         sortedDepartments,
-        refreshReports
+        refreshReports,
+        selectedModuleForDept,
+        setSelectedModuleForDept,
+        deptModuleData,
+        loadingDeptModule
     };
 }

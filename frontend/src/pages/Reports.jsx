@@ -29,7 +29,11 @@ export default function Reports() {
         handleSendReminders,
         filteredUsers,
         sortedDepartments,
-        refreshReports
+        refreshReports,
+        selectedModuleForDept,
+        setSelectedModuleForDept,
+        deptModuleData,
+        loadingDeptModule
     } = useReports();
 
     if (loading) {
@@ -61,7 +65,11 @@ export default function Reports() {
                             <ComplianceCharts 
                                 chartType={chartType}
                                 onTypeChange={setChartType}
-                                data={activeChartData}
+                                data={selectedModuleForDept === 'ALL' || chartType === 'modules' ? activeChartData : (deptModuleData || [])}
+                                modules={moduleCompliance}
+                                selectedModule={selectedModuleForDept}
+                                onModuleChange={setSelectedModuleForDept}
+                                loading={loadingDeptModule}
                             />
                         </div>
 
