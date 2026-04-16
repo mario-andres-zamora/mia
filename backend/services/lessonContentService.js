@@ -148,6 +148,24 @@ class LessonContentService {
         );
     }
 
+    async getAllInteractions() {
+        return await db.query(`
+            SELECT ucp.id, ucp.response_data, ucp.completed_at,
+                   u.first_name, u.last_name, u.email,
+                   lc.title as content_title, lc.content_type, lc.id as content_id,
+                   l.title as lesson_title, l.id as lesson_id,
+                   m.title as module_title, m.id as module_id
+            FROM user_content_progress ucp
+            JOIN users u ON ucp.user_id = u.id
+            JOIN lesson_contents lc ON ucp.content_id = lc.id
+            JOIN lessons l ON lc.lesson_id = l.id
+            JOIN modules m ON l.module_id = m.id
+            WHERE ucp.response_data IS NOT NULL
+            AND lc.content_type IN ('interactive_input', 'confirmation')
+            ORDER BY ucp.completed_at DESC
+        `);
+    }
+
     async createContent(data, file) {
         let { lesson_id, title, content_type, data: jsonData, order_index, is_required, points } = data;
         const requiredVal = is_required === 'true' || is_required === true || is_required === 1 || is_required === '1';

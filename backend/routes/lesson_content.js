@@ -59,6 +59,13 @@ router.post('/:id/trace', authMiddleware, lessonContentController.trackProgress)
 router.get('/assignments/all-submissions', authMiddleware, adminMiddleware, lessonContentController.getAllSubmissions);
 
 /**
+ * @route   GET /api/content/interactions/all
+ * @desc    Get all interactive responses from lessons
+ * @access  Private/Admin
+ */
+router.get('/interactions/all', authMiddleware, adminMiddleware, lessonContentController.getAllInteractions);
+
+/**
  * @route   GET /api/content/assignment/:contentId/submissions
  * @desc    Get all submissions for an assignment
  * @access  Private/Admin

@@ -49,6 +49,16 @@ class LessonContentController {
         }
     }
 
+    async getAllInteractions(req, res) {
+        try {
+            const interactions = await lessonContentService.getAllInteractions();
+            res.json({ success: true, interactions });
+        } catch (error) {
+            logger.error('Error obteniendo todas las interacciones:', error);
+            res.status(500).json({ error: 'Error al cargar interacciones' });
+        }
+    }
+
     async getSubmissionsByContent(req, res) {
         try {
             const submissions = await lessonContentService.getSubmissionsByContent(req.params.contentId);

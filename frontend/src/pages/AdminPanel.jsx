@@ -8,7 +8,8 @@ import {
     Settings,
     ShieldAlert,
     Users,
-    ClipboardList
+    ClipboardList,
+    MessageSquare
 } from 'lucide-react';
 import { useAdminPanel } from '../hooks/useAdminPanel';
 import AdminHeader from '../components/admin/AdminHeader';
@@ -68,11 +69,19 @@ export default function AdminPanel() {
         },
         {
             title: 'Revisión de Tareas',
-            description: 'Evaluar y retroalimentar las entregas pendientes de los estudiantes.',
+            description: 'Evaluar y retroalimentar las entregas pendientes de archivos.',
             icon: ClipboardList,
             path: '/admin/assignments',
             iconBg: 'bg-rose-600',
-            stats: 'SUPERVISIÓN CONTINUA'
+            stats: 'ARCHIVOS ADJUNTOS'
+        },
+        {
+            title: 'Respuestas de Texto',
+            description: 'Ver las reflexiones e inputs escritos por los usuarios en las lecciones.',
+            icon: MessageSquare,
+            path: '/admin/interactions',
+            iconBg: 'bg-emerald-600',
+            stats: 'REFLEXIONES'
         },
         {
             title: 'Directorio Maestro',
