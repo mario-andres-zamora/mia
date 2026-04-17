@@ -25,6 +25,8 @@ import AdminSettings from './pages/AdminSettings';
 import AdminAssignments from './pages/AdminAssignments';
 import AdminPhishing from './pages/AdminPhishing';
 import AdminInteractions from './pages/AdminInteractions';
+import AdminSurveys from './pages/AdminSurveys';
+import AdminSurveyDetail from './pages/AdminSurveyDetail';
 import NotFound from './pages/NotFound';
 import ServerError from './pages/ServerError';
 import Maintenance from './pages/Maintenance';
@@ -79,6 +81,8 @@ function App() {
               <Route path="/admin/assignments" element={<AdminAssignments />} />
               <Route path="/admin/phishing" element={<AdminPhishing />} />
               <Route path="/admin/interactions" element={<AdminInteractions />} />
+              <Route path="/admin/surveys" element={<AdminSurveys />} />
+              <Route path="/admin/surveys/:id" element={<AdminSurveyDetail />} />
               <Route path="/admin/lessons/:id/editor" element={<AdminLessonEditor />} />
             </Route>
 

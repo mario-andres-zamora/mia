@@ -84,6 +84,14 @@ export default function AdminPanel() {
             stats: 'REFLEXIONES'
         },
         {
+            title: 'Respuestas de Encuestas',
+            description: 'Ver y analizar los resultados y feedback de las encuestas de satisfacción.',
+            icon: ClipboardList,
+            path: '/admin/surveys',
+            iconBg: 'bg-teal-500',
+            stats: 'FEEDBACK'
+        },
+        {
             title: 'Directorio Maestro',
             description: 'Subir lista oficial de funcionarios (CSV) y ver quién falta de entrar.',
             icon: BookUser,

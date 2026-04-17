@@ -174,6 +174,31 @@ router.post('/:id/submit', authMiddleware, async (req, res) => {
 // --- Rutas de Admin ---
 
 /**
+ * @route   GET /api/surveys
+ * @desc    Obtener todas las encuestas con estadísticas de respuestas
+ * @access  Private/Admin
+ */
+router.get('/', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const surveys = await db.query(`
+            SELECT 
+                s.id, s.title, s.description, s.points, s.created_at,
+                m.title as module_title, 
+                l.title as lesson_title,
+                (SELECT COUNT(*) FROM survey_responses sr WHERE sr.survey_id = s.id) as response_count
+            FROM surveys s
+            LEFT JOIN modules m ON s.module_id = m.id
+            LEFT JOIN lessons l ON s.lesson_id = l.id
+            ORDER BY s.id DESC
+        `);
+        res.json({ success: true, surveys });
+    } catch (error) {
+        logger.error('Error al obtener encuestas:', error);
+        res.status(500).json({ error: 'Error al obtener encuestas' });
+    }
+});
+
+/**
  * @route   POST /api/surveys
  */
 router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
