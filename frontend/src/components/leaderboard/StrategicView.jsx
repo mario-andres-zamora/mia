@@ -1,19 +1,87 @@
-import { Building2, Star } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Building2, Star, ArrowUpDown, ChevronUp, ChevronDown } from 'lucide-react';
 
 export default function StrategicView({ filteredDepts }) {
+    const [sortConfig, setSortConfig] = useState({ key: 'average_points', direction: 'desc' });
+
+    const requestSort = (key) => {
+        let direction = 'desc';
+        if (sortConfig.key === key && sortConfig.direction === 'desc') {
+            direction = 'asc';
+        }
+        setSortConfig({ key, direction });
+    };
+
+    const sortedDepts = useMemo(() => {
+        let items = [...filteredDepts];
+        if (sortConfig.key) {
+            items.sort((a, b) => {
+                let aValue = a[sortConfig.key];
+                let bValue = b[sortConfig.key];
+
+                // Handle numeric strings or nulls
+                if (typeof aValue === 'string' && !isNaN(aValue)) aValue = parseFloat(aValue);
+                if (typeof bValue === 'string' && !isNaN(bValue)) bValue = parseFloat(bValue);
+
+                if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+                if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+                return 0;
+            });
+        }
+        return items;
+    }, [filteredDepts, sortConfig]);
+
+    const SortIcon = ({ column }) => {
+        if (sortConfig.key !== column) return <ArrowUpDown className="w-3 h-3 opacity-30 group-hover:opacity-50 transition-opacity" />;
+        return sortConfig.direction === 'asc' 
+            ? <ChevronUp className="w-3 h-3 text-secondary-400" /> 
+            : <ChevronDown className="w-3 h-3 text-secondary-400" />;
+    };
+
     return (
         <div className="space-y-6">
             <div className="space-y-3">
                 <div className="grid grid-cols-12 px-8 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">
                     <div className="col-span-1 text-center">Pos</div>
-                    <div className="col-span-4 text-left pl-4">Área / Unidad</div>
-                    <div className="col-span-3 italic text-gray-600">Mejor Funcionario (Líder)</div>
-                    <div className="col-span-2 text-right uppercase">Promedio</div>
-                    <div className="col-span-2 text-right uppercase">Total</div>
+                    
+                    <button 
+                        onClick={() => requestSort('department')}
+                        className="col-span-4 flex items-center gap-2 text-left pl-4 hover:text-white transition-colors group"
+                    >
+                        Área / Unidad
+                        <SortIcon column="department" />
+                    </button>
+
+                    <button 
+                        onClick={() => requestSort('top_performer')}
+                        className="col-span-3 flex items-center gap-2 italic text-gray-600 hover:text-white transition-colors group"
+                    >
+                        Mejor Funcionario (Líder)
+                        <SortIcon column="top_performer" />
+                    </button>
+
+                    <button 
+                        onClick={() => requestSort('average_points')}
+                        className="col-span-2 flex items-center justify-end gap-2 uppercase hover:text-white transition-colors group"
+                    >
+                        Promedio
+                        <SortIcon column="average_points" />
+                    </button>
+
+                    <button 
+                        onClick={() => requestSort('total_points')}
+                        className="col-span-2 flex items-center justify-end gap-2 uppercase hover:text-white transition-colors group"
+                    >
+                        Total
+                        <SortIcon column="total_points" />
+                    </button>
                 </div>
-                {filteredDepts.map((dept, index) => (
+
+                {sortedDepts.map((dept, index) => (
                     <div key={index} className="grid grid-cols-12 items-center px-8 py-6 rounded-3xl border bg-slate-800/20 border-white/5 hover:border-primary-500/30 transition-all group cursor-default">
-                        <div className="col-span-1 text-center font-black text-lg text-gray-500">{index + 1}</div>
+                        <div className="col-span-1 text-center font-black text-lg text-gray-500">
+                            {sortConfig.key === 'average_points' && sortConfig.direction === 'desc' ? index + 1 : '-'}
+                        </div>
                         <div className="col-span-4 flex items-center gap-3">
                             <div className="w-10 h-10 rounded-xl bg-secondary-500/10 flex items-center justify-center text-secondary-500 shadow-lg shadow-secondary-500/10 shrink-0">
                                 <Building2 className="w-5 h-5" />

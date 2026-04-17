@@ -6,7 +6,7 @@ import axios from 'axios';
 const API_URL = import.meta.env.VITE_API_URL;
 
 export default function CompletionTrend({ modules = [] }) {
-    const [selectedModule, setSelectedModule] = useState(modules[0]?.id || '');
+    const [selectedModule, setSelectedModule] = useState('');
     const [interval, setInterval] = useState('daily');
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
@@ -64,7 +64,7 @@ export default function CompletionTrend({ modules = [] }) {
         { value: 'custom', label: 'Rango de fechas' }
     ];
 
-    const currentModule = modules.find(m => String(m.id) === String(selectedModule)) || modules[0];
+    const currentModule = modules.find(m => String(m.id) === String(selectedModule));
     const currentInterval = intervalOptions.find(o => o.value === interval);
 
     return (
