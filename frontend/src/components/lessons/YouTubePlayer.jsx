@@ -1,12 +1,15 @@
 import { useEffect, useRef } from 'react';
 
-export default function YouTubePlayer({ id, videoId, onEnded, ytApiLoaded }) {
+export default function YouTubePlayer({ id, videoId, onEnded, ytApiLoaded, isWatched }) {
     const playerRef = useRef(null);
+    const lastTimeRef = useRef(0);
 
     useEffect(() => {
         if (!ytApiLoaded || !videoId) return;
 
         let player;
+        let interval;
+        
         const initPlayer = () => {
             player = new window.YT.Player(`yt-player-${id}`, {
                 videoId: videoId,
@@ -14,26 +17,54 @@ export default function YouTubePlayer({ id, videoId, onEnded, ytApiLoaded }) {
                 height: '100%',
                 playerVars: {
                     'rel': 0,
-                    'modestbranding': 1
+                    'modestbranding': 1,
+                    'controls': isWatched ? 1 : 1 // We keep controls but monitor seeking
                 },
                 events: {
                     'onStateChange': (event) => {
                         if (event.data === window.YT.PlayerState.ENDED) {
-                            onEnded();
+                            const duration = player.getDuration();
+                            // Only mark as watched if they actually reached the end legitimately (or if it was already watched)
+                            // We allow a small margin (3 seconds) for duration differences
+                            if (isWatched || lastTimeRef.current >= duration - 3) {
+                                onEnded();
+                            } else {
+                                // User skipped to the end illegally
+                                player.seekTo(lastTimeRef.current);
+                                player.playVideo();
+                            }
                         }
                     }
                 }
             });
             playerRef.current = player;
+
+            // Monitor seeking forward
+            if (!isWatched) {
+                interval = setInterval(() => {
+                    if (player && player.getCurrentTime) {
+                        const currentTime = player.getCurrentTime();
+                        // If they skip ahead more than 2 seconds from the last recorded max time
+                        if (currentTime > lastTimeRef.current + 2) {
+                            player.seekTo(lastTimeRef.current);
+                        } else {
+                            if (currentTime > lastTimeRef.current) {
+                                lastTimeRef.current = currentTime;
+                            }
+                        }
+                    }
+                }, 1000);
+            }
         };
 
         // Small delay to ensure container is ready in DOM
         const timer = setTimeout(initPlayer, 100);
         return () => {
             clearTimeout(timer);
+            if (interval) clearInterval(interval);
             if (player && player.destroy) player.destroy();
         };
-    }, [videoId, ytApiLoaded, id, onEnded]);
+    }, [videoId, ytApiLoaded, id, onEnded, isWatched]);
 
     return (
         <div className="w-full h-full bg-slate-900 flex items-center justify-center">

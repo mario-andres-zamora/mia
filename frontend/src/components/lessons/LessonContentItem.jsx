@@ -33,6 +33,7 @@ export default function LessonContentItem({
     const [isIncorrect, setIsIncorrect] = useState(null);
     const [revealing, setRevealing] = useState(false);
     const { playSound } = useSoundStore();
+    const lastTimeRef = useRef(0);
 
     const playSuccess = () => playSound('/sounds/success.mp3');
     const playError = () => playSound('/sounds/error.mp3');
@@ -100,13 +101,33 @@ export default function LessonContentItem({
                                 videoId={ytId}
                                 ytApiLoaded={ytApiLoaded}
                                 onEnded={() => markVideoAsWatched(item.id)}
+                                isWatched={isWatched}
                             />
                         ) : videoSrc ? (
                             <video
                                 src={videoSrc}
                                 className="w-full h-full"
                                 controls
-                                onEnded={() => markVideoAsWatched(item.id)}
+                                onEnded={(e) => {
+                                    if (isWatched || lastTimeRef.current >= e.target.duration - 3) {
+                                        markVideoAsWatched(item.id);
+                                    } else {
+                                        e.target.currentTime = lastTimeRef.current;
+                                        e.target.play();
+                                    }
+                                }}
+                                onTimeUpdate={(e) => {
+                                    if (!isWatched && !e.target.seeking) {
+                                        if (e.target.currentTime > lastTimeRef.current) {
+                                            lastTimeRef.current = e.target.currentTime;
+                                        }
+                                    }
+                                }}
+                                onSeeking={(e) => {
+                                    if (!isWatched && e.target.currentTime > lastTimeRef.current + 1) {
+                                        e.target.currentTime = lastTimeRef.current;
+                                    }
+                                }}
                                 controlsList="nodownload"
                             ></video>
                         ) : (
@@ -838,11 +859,11 @@ export default function LessonContentItem({
             );
 
         case 'mfa_defender':
-            return <MfaDefenderActivity 
-                item={item} 
-                data={ensureDataObject(item.data)} 
-                visitedLinks={visitedLinks} 
-                markLinkAsVisited={markLinkAsVisited} 
+            return <MfaDefenderActivity
+                item={item}
+                data={ensureDataObject(item.data)}
+                visitedLinks={visitedLinks}
+                markLinkAsVisited={markLinkAsVisited}
                 playSuccess={playSuccess}
                 playError={playError}
             />;
@@ -1327,7 +1348,7 @@ function MfaDefenderActivity({ item, data, visitedLinks, markLinkAsVisited, play
     const [mfaCode, setMfaCode] = useState('------');
     const [userMfaInput, setUserMfaInput] = useState('');
     const [mfaFails, setMfaFails] = useState(0);
-    
+
     // Cálculos derivados reactivos
     const hackTimeLimit = data.hack_time || 20;
     const mfaRotateTime = data.rotate_time || 5;
