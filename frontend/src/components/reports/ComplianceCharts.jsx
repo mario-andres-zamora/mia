@@ -161,8 +161,12 @@ export default function ComplianceCharts({ chartType, onTypeChange, data, module
                                                     <span className="text-[10px] font-black text-primary-400">{data.avg_completion}%</span>
                                                 </div>
                                                 <div className="flex items-center justify-between gap-8">
+                                                    <span className="text-[9px] font-black text-gray-400 uppercase">Completados:</span>
+                                                    <span className="text-[10px] font-black text-white">{data.completed_count || 0}</span>
+                                                </div>
+                                                <div className="flex items-center justify-between gap-8">
                                                     <span className="text-[9px] font-black text-gray-400 uppercase">Total Funcionarios:</span>
-                                                    <span className="text-[10px] font-black text-white">{count}</span>
+                                                    <span className="text-[10px] font-black text-slate-400">{count}</span>
                                                 </div>
                                             </div>
                                         </div>

@@ -17,7 +17,7 @@ const refreshReportsCache = async () => {
         logger.info('📊 Refrescando caché de reportes de cumplimiento...');
 
         // 0. Obtener total de módulos publicados una sola vez
-        const [moduleData] = await db.query('SELECT COUNT(*) as total FROM modules WHERE is_published = TRUE');
+        const [moduleData] = await db.query('SELECT COUNT(*) as total FROM modules WHERE is_published = TRUE AND (release_date IS NULL OR release_date <= CURRENT_DATE)');
         const totalModules = moduleData?.total || 1;
 
         // 1. Estadísticas Globales (Directorio vs Registrados)
@@ -31,12 +31,12 @@ const refreshReportsCache = async () => {
             LEFT JOIN (
                 SELECT 
                     user_id, 
-                    (COUNT(DISTINCT module_id) / ${totalModules}) * 100 as completion_rate
-                FROM user_progress
-                WHERE status = 'completed'
+                    (COUNT(DISTINCT reference_id) / ${totalModules}) * 100 as completion_rate
+                FROM gamification_activities
+                WHERE activity_type = 'module_completed'
                 GROUP BY user_id
             ) up_agg ON u.id = up_agg.user_id
-            WHERE u.is_active = TRUE AND u.role = 'student'
+            WHERE u.is_active = TRUE AND u.role IN ('student', 'admin', 'instructor')
         `);
 
         // 2. Cumplimiento por Departamento (Incluyendo Directorio Maestro)
@@ -45,6 +45,7 @@ const refreshReportsCache = async () => {
                 d.name as department,
                 COALESCE(dir.total_pax, 0) as total_pax,
                 COUNT(u.id) as registered_count,
+                SUM(CASE WHEN up_agg.completion_rate = 100 THEN 1 ELSE 0 END) as completed_count,
                 SUM(COALESCE(up_agg.completion_rate, 0)) / GREATEST(COALESCE(dir.total_pax, 0), 1) as real_compliance
             FROM departments d
             LEFT JOIN (
@@ -52,13 +53,13 @@ const refreshReportsCache = async () => {
                 FROM staff_directory 
                 GROUP BY department
             ) dir ON d.name = dir.department
-            LEFT JOIN users u ON u.department = d.name AND u.is_active = TRUE AND u.role = 'student'
+            LEFT JOIN users u ON u.department = d.name AND u.is_active = TRUE AND u.role IN ('student', 'admin', 'instructor')
             LEFT JOIN (
                 SELECT 
                     user_id, 
-                    (COUNT(DISTINCT module_id) / ${totalModules}) * 100 as completion_rate
-                FROM user_progress
-                WHERE status = 'completed'
+                    (COUNT(DISTINCT reference_id) / ${totalModules}) * 100 as completion_rate
+                FROM gamification_activities
+                WHERE activity_type = 'module_completed'
                 GROUP BY user_id
             ) up_agg ON u.id = up_agg.user_id
             GROUP BY d.name, dir.total_pax
@@ -74,12 +75,12 @@ const refreshReportsCache = async () => {
             LEFT JOIN (
                 SELECT 
                     user_id, 
-                    (COUNT(DISTINCT module_id) / ${totalModules}) * 100 as completion_rate
-                FROM user_progress
-                WHERE status = 'completed'
+                    (COUNT(DISTINCT reference_id) / ${totalModules}) * 100 as completion_rate
+                FROM gamification_activities
+                WHERE activity_type = 'module_completed'
                 GROUP BY user_id
             ) up_agg ON u.id = up_agg.user_id
-            WHERE u.is_active = TRUE AND u.role = 'student'
+            WHERE u.is_active = TRUE AND u.role IN ('student', 'admin', 'instructor')
             HAVING progress < 20
             ORDER BY progress ASC
             LIMIT 50
@@ -102,13 +103,13 @@ const refreshReportsCache = async () => {
             LEFT JOIN (
                 SELECT 
                     user_id, 
-                    COUNT(DISTINCT module_id) as completed_modules,
-                    (COUNT(DISTINCT module_id) / ${totalModules}) * 100 as completion_rate
-                FROM user_progress
-                WHERE status = 'completed'
+                    COUNT(DISTINCT reference_id) as completed_modules,
+                    (COUNT(DISTINCT reference_id) / ${totalModules}) * 100 as completion_rate
+                FROM gamification_activities
+                WHERE activity_type = 'module_completed'
                 GROUP BY user_id
             ) up_agg ON u.id = up_agg.user_id
-            WHERE u.is_active = TRUE AND u.role = 'student'
+            WHERE u.is_active = TRUE AND u.role IN ('student', 'admin', 'instructor')
             ORDER BY progress DESC
         `);
 
@@ -122,8 +123,8 @@ const refreshReportsCache = async () => {
                 COUNT(DISTINCT u.id) as completed_count,
                 stats.avg_time
             FROM modules m
-            LEFT JOIN user_progress up ON up.module_id = m.id AND up.status = 'completed'
-            LEFT JOIN users u ON up.user_id = u.id AND u.role = 'student' AND u.is_active = TRUE
+            LEFT JOIN gamification_activities ga ON ga.reference_id = m.id AND ga.activity_type = 'module_completed'
+            LEFT JOIN users u ON ga.user_id = u.id AND u.role IN ('student', 'admin', 'instructor') AND u.is_active = TRUE
             LEFT JOIN (
                 SELECT 
                     comp.reference_id,
@@ -172,6 +173,7 @@ const refreshReportsCache = async () => {
                 department: d.department,
                 total_pax: d.total_pax,
                 registered_count: d.registered_count,
+                completed_count: Math.round(d.completed_count || 0),
                 avg_completion: Math.round(d.real_compliance || 0)
             })),
             moduleCompliance: moduleCompliance.map(m => ({
@@ -345,16 +347,16 @@ router.get('/department-compliance', authMiddleware, adminMiddleware, async (req
             SELECT 
                 d.name as department,
                 COALESCE(dir.total_pax, 0) as total_pax,
-                COUNT(DISTINCT CASE WHEN up.status = 'completed' THEN u.id END) as completed_count,
-                ROUND((COUNT(DISTINCT CASE WHEN up.status = 'completed' THEN u.id END) / GREATEST(COALESCE(dir.total_pax, 0), 1)) * 100) as avg_completion
+                COUNT(DISTINCT CASE WHEN ga.activity_type = 'module_completed' THEN u.id END) as completed_count,
+                ROUND((COUNT(DISTINCT CASE WHEN ga.activity_type = 'module_completed' THEN u.id END) / GREATEST(COALESCE(dir.total_pax, 0), 1)) * 100) as avg_completion
             FROM departments d
             LEFT JOIN (
                 SELECT department, COUNT(*) as total_pax 
                 FROM staff_directory 
                 GROUP BY department
             ) dir ON d.name = dir.department
-            LEFT JOIN users u ON u.department = d.name AND u.is_active = TRUE AND u.role = 'student'
-            LEFT JOIN user_progress up ON u.id = up.user_id AND up.module_id = ? AND up.status = 'completed'
+            LEFT JOIN users u ON u.department = d.name AND u.is_active = TRUE AND u.role IN ('student', 'admin', 'instructor')
+            LEFT JOIN gamification_activities ga ON u.id = ga.user_id AND ga.reference_id = ? AND ga.activity_type = 'module_completed'
             GROUP BY d.name, dir.total_pax
             ORDER BY avg_completion DESC
         `, [module_id]);
