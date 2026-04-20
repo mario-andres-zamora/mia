@@ -46,7 +46,7 @@ export default function StrategicView({ filteredDepts }) {
                     
                     <button 
                         onClick={() => requestSort('department')}
-                        className="col-span-4 flex items-center gap-2 text-left pl-4 hover:text-white transition-colors group"
+                        className="col-span-5 md:col-span-4 flex items-center gap-2 text-left pl-4 hover:text-white transition-colors group"
                     >
                         Área / Unidad
                         <SortIcon column="department" />
@@ -54,15 +54,15 @@ export default function StrategicView({ filteredDepts }) {
 
                     <button 
                         onClick={() => requestSort('top_performer')}
-                        className="col-span-3 flex items-center gap-2 italic text-gray-600 hover:text-white transition-colors group"
+                        className="col-span-6 md:col-span-3 flex items-center gap-2 italic text-gray-600 hover:text-white transition-colors group"
                     >
-                        Mejor Funcionario (Líder)
+                        Mejor Funcionario
                         <SortIcon column="top_performer" />
                     </button>
 
                     <button 
                         onClick={() => requestSort('average_points')}
-                        className="col-span-2 flex items-center justify-end gap-2 uppercase hover:text-white transition-colors group"
+                        className="hidden md:flex col-span-2 items-center justify-end gap-2 uppercase hover:text-white transition-colors group"
                     >
                         Promedio
                         <SortIcon column="average_points" />
@@ -70,7 +70,7 @@ export default function StrategicView({ filteredDepts }) {
 
                     <button 
                         onClick={() => requestSort('total_points')}
-                        className="col-span-2 flex items-center justify-end gap-2 uppercase hover:text-white transition-colors group"
+                        className="hidden md:flex col-span-2 items-center justify-end gap-2 uppercase hover:text-white transition-colors group"
                     >
                         Total
                         <SortIcon column="total_points" />
@@ -82,7 +82,7 @@ export default function StrategicView({ filteredDepts }) {
                         <div className="col-span-1 text-center font-black text-lg text-gray-500">
                             {sortConfig.key === 'average_points' && sortConfig.direction === 'desc' ? index + 1 : '-'}
                         </div>
-                        <div className="col-span-4 flex items-center gap-3">
+                        <div className="col-span-5 md:col-span-4 flex items-center gap-3">
                             <div className="w-10 h-10 rounded-xl bg-secondary-500/10 flex items-center justify-center text-secondary-500 shadow-lg shadow-secondary-500/10 shrink-0">
                                 <Building2 className="w-5 h-5" />
                             </div>
@@ -91,20 +91,23 @@ export default function StrategicView({ filteredDepts }) {
                                 <p className="text-[10px] text-gray-300 font-bold uppercase">{dept.staff_count} Funcionarios</p>
                             </div>
                         </div>
-                        <div className="col-span-3 flex items-center gap-3 text-left">
+                        <div className="col-span-6 md:col-span-3 flex items-center gap-3 text-left">
                             <div className="w-8 h-8 rounded-lg bg-primary-500/10 flex items-center justify-center text-primary-400 shrink-0">
                                 <Star className="w-4 h-4 fill-primary-400" />
                             </div>
                             <div className="min-w-0">
-                                <p className="text-sm font-bold text-gray-300 uppercase tracking-tight line-clamp-1">{dept.top_performer}</p>
-                                <p className="text-[9px] text-gray-400 font-bold uppercase italic">Líder: {dept.top_points} PTS</p>
+                                <p className="text-sm font-bold text-gray-100 uppercase tracking-tight leading-tight mb-0.5">{dept.top_performer}</p>
+                                <div className="flex flex-wrap items-center gap-x-2">
+                                    <p className="text-[9px] text-gray-400 font-bold uppercase italic">Líder: {dept.top_points} PTS</p>
+                                    <p className="md:hidden text-[9px] text-secondary-400 font-black uppercase italic">| AVG: {parseFloat(dept.average_points || 0).toFixed(1)}</p>
+                                </div>
                             </div>
                         </div>
-                        <div className="col-span-2 text-right">
+                        <div className="hidden md:block col-span-2 text-right">
                             <p className="text-xl font-black text-[#EF8843] italic">{parseFloat(dept.average_points || 0).toFixed(1)} PTS</p>
                             <p className="text-[9px] text-gray-500 font-bold uppercase">Promedio</p>
                         </div>
-                        <div className="col-span-2 text-right opacity-60">
+                        <div className="hidden md:block col-span-2 text-right opacity-60">
                             <p className="text-sm font-black text-white italic">{dept.total_points.toLocaleString()} PTS</p>
                             <p className="text-[8px] text-gray-600 font-bold uppercase">Total</p>
                         </div>
