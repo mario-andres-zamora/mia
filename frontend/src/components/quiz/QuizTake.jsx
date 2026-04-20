@@ -261,28 +261,38 @@ function HackNeighborQuestion({ question, isAnswered, onWin }) {
                                             )}
                                         </div>
                                         <div className="grid gap-2">
-                                            {[0, 1, 2].map((idx) => (
-                                                <div key={idx} className="space-y-1">
-                                                    {!revealedHints[idx] ? (
-                                                        <button
-                                                            onClick={() => setRevealedHints(prev => ({ ...prev, [idx]: true }))}
-                                                            className="w-full py-2.5 px-4 bg-[#111] hover:bg-slate-900 border border-white/5 rounded-xl text-[10px] font-bold text-gray-500 transition-all flex items-center justify-between group/btn shadow-inner"
-                                                        >
-                                                            <div className="flex items-center gap-2">
-                                                                <Lock className="w-3.5 h-3.5 group-hover/btn:text-primary-500 transition-colors" />
-                                                                <span className="group-hover/btn:text-gray-300 transition-colors">Ver Pista #{idx + 1}</span>
+                                            {[0, 1, 2].map((idx) => {
+                                                const isLocked = idx > 0 && !revealedHints[idx - 1];
+                                                return (
+                                                    <div key={idx} className="space-y-1">
+                                                        {!revealedHints[idx] ? (
+                                                            <button
+                                                                onClick={() => !isLocked && setRevealedHints(prev => ({ ...prev, [idx]: true }))}
+                                                                disabled={isLocked}
+                                                                className={`w-full py-2.5 px-4 rounded-xl text-[10px] font-bold transition-all flex items-center justify-between group/btn shadow-inner ${isLocked
+                                                                    ? 'bg-[#0a0a0a] border-white/0 text-gray-700 cursor-not-allowed opacity-50'
+                                                                    : 'bg-[#111] hover:bg-slate-900 border border-white/5 text-gray-500'}`}
+                                                            >
+                                                                <div className="flex items-center gap-2">
+                                                                    <Lock className={`w-3.5 h-3.5 transition-colors ${!isLocked && 'group-hover/btn:text-primary-500'}`} />
+                                                                    <span className={`transition-colors ${!isLocked && 'group-hover/btn:text-gray-300'}`}>
+                                                                        {isLocked ? `Pista #${idx + 1} (Desbloquea la anterior)` : `Ver Pista #${idx + 1}`}
+                                                                    </span>
+                                                                </div>
+                                                                {!isLocked && (
+                                                                    <span className="text-[9px] text-red-500/50 font-black tracking-tighter">
+                                                                        -{question.data?.hint_penalty || 0} PTS
+                                                                    </span>
+                                                                )}
+                                                            </button>
+                                                        ) : (
+                                                            <div className="w-full py-2 px-3 bg-primary-500/10 border border-primary-500/20 rounded-xl text-[10px] font-medium text-primary-200 animate-fade-in text-left">
+                                                                {profile.hints?.[idx] || "Revisa los datos personales."}
                                                             </div>
-                                                            <span className="text-[9px] text-red-500/50 font-black tracking-tighter">
-                                                                -{question.data?.hint_penalty || 0} PTS
-                                                            </span>
-                                                        </button>
-                                                    ) : (
-                                                        <div className="w-full py-2 px-3 bg-primary-500/10 border border-primary-500/20 rounded-xl text-[10px] font-medium text-primary-200 animate-fade-in text-left">
-                                                            {profile.hints?.[idx] || "Revisa los datos personales."}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            ))}
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
                                     </div>
                                 </div>

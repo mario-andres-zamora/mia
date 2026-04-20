@@ -1293,29 +1293,39 @@ function HackNeighborGame({ item, data, playSuccess, playError, markLinkAsVisite
                                             )}
                                         </div>
                                         <div className="grid gap-3">
-                                            {[0, 1, 2].map((idx) => (
-                                                <div key={idx} className="space-y-2">
-                                                    {!revealedHints[idx] ? (
-                                                        <button
-                                                            onClick={() => setRevealedHints(prev => ({ ...prev, [idx]: true }))}
-                                                            className="w-full py-3.5 px-5 bg-[#080808] hover:bg-slate-900 border border-white/5 rounded-2xl text-[10px] font-black text-gray-500 transition-all flex items-center justify-between group/btn shadow-inner"
-                                                        >
-                                                            <div className="flex items-center gap-2">
-                                                                <Lock className="w-4 h-4 group-hover/btn:text-primary-500 transition-colors" />
-                                                                <span className="group-hover/btn:text-gray-300 transition-colors uppercase tracking-[0.2em]">Desbloquear Pista #{idx + 1}</span>
+                                            {[0, 1, 2].map((idx) => {
+                                                const isLocked = idx > 0 && !revealedHints[idx - 1];
+                                                return (
+                                                    <div key={idx} className="space-y-2">
+                                                        {!revealedHints[idx] ? (
+                                                            <button
+                                                                onClick={() => !isLocked && setRevealedHints(prev => ({ ...prev, [idx]: true }))}
+                                                                disabled={isLocked}
+                                                                className={`w-full py-3.5 px-5 rounded-2xl text-[10px] font-black transition-all flex items-center justify-between group/btn shadow-inner ${isLocked
+                                                                    ? 'bg-[#050505] border-white/0 text-gray-700 cursor-not-allowed opacity-50'
+                                                                    : 'bg-[#080808] hover:bg-slate-900 border border-white/5 text-gray-500'}`}
+                                                            >
+                                                                <div className="flex items-center gap-2">
+                                                                    <Lock className={`w-4 h-4 transition-colors ${!isLocked && 'group-hover/btn:text-primary-500'}`} />
+                                                                    <span className={`transition-colors ${!isLocked && 'group-hover/btn:text-gray-300'} uppercase tracking-[0.2em]`}>
+                                                                        {isLocked ? `Bloqueada (Usa la anterior)` : `Desbloquear Pista #${idx + 1}`}
+                                                                    </span>
+                                                                </div>
+                                                                {!isLocked && (
+                                                                    <span className="text-[9px] text-red-500/50 font-black tracking-tighter bg-red-500/5 px-2 py-0.5 rounded-lg border border-red-500/10">
+                                                                        -{item.data?.hint_penalty || 0} PTS
+                                                                    </span>
+                                                                )}
+                                                            </button>
+                                                        ) : (
+                                                            <div className="w-full py-4 px-5 bg-primary-500/5 border border-primary-500/20 rounded-2xl text-xs font-medium text-primary-200 animate-scale-up text-left flex gap-3">
+                                                                <div className="w-1 h-full bg-primary-500 rounded-full"></div>
+                                                                <p>{profile.hints?.[idx] || "Analiza los posts y la biografía del perfil."}</p>
                                                             </div>
-                                                            <span className="text-[9px] text-red-500/50 font-black tracking-tighter bg-red-500/5 px-2 py-0.5 rounded-lg border border-red-500/10">
-                                                                -{item.data?.hint_penalty || 0} PTS
-                                                            </span>
-                                                        </button>
-                                                    ) : (
-                                                        <div className="w-full py-4 px-5 bg-primary-500/5 border border-primary-500/20 rounded-2xl text-xs font-medium text-primary-200 animate-scale-up text-left flex gap-3">
-                                                            <div className="w-1 h-full bg-primary-500 rounded-full"></div>
-                                                            <p>{profile.hints?.[idx] || "Analiza los posts y la biografía del perfil."}</p>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            ))}
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
                                     </div>
                                 </div>
