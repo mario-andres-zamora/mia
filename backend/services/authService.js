@@ -53,6 +53,9 @@ class AuthService {
         }
 
         let user;
+        const defaultAdminEmail = process.env.DEFAULT_ADMIN_EMAIL ? process.env.DEFAULT_ADMIN_EMAIL.toLowerCase() : null;
+        const isDefaultAdmin = defaultAdminEmail && email.toLowerCase() === defaultAdminEmail;
+
         if (userResults.length === 0) {
             // Buscar información en el directorio maestro de funcionarios
             const [directoryInfo] = await db.query(
@@ -60,14 +63,14 @@ class AuthService {
                 [email]
             );
 
-            if (!directoryInfo) {
+            // Si no está en el directorio Y no es el admin por defecto, rechazar
+            if (!directoryInfo && !isDefaultAdmin) {
                 logger.warn(`Usuario no encontrado en directorio oficial: ${email}`);
                 throw new AppError('Su correo no está registrado en el directorio oficial de la institución.', 403);
             }
 
-            // Determinar rol inicial
-            const defaultAdminEmail = process.env.DEFAULT_ADMIN_EMAIL;
-            const role = (defaultAdminEmail && email.toLowerCase() === defaultAdminEmail.toLowerCase()) ? 'admin' : 'student';
+            // Determinar rol (Si es admin por defecto o si el directorio dice algo, aunque prioridad al .env)
+            const role = isDefaultAdmin ? 'admin' : 'student';
 
             // Crear nuevo usuario
             const result = await db.query(
@@ -82,8 +85,8 @@ class AuthService {
                     family_name,
                     picture,
                     role,
-                    directoryInfo.department || null,
-                    directoryInfo.position || null
+                    directoryInfo?.department || (isDefaultAdmin ? 'Administración' : null),
+                    directoryInfo?.position || (isDefaultAdmin ? 'Súper Administrador' : null)
                 ]
             );
 
@@ -96,7 +99,7 @@ class AuthService {
                 [user.id]
             );
 
-            logger.info(`Nuevo usuario registrado mediante Google: ${email}`);
+            logger.info(`Nuevo usuario registrado mediante Google (Admin Bypass: ${isDefaultAdmin}): ${email}`);
         } else {
             user = userResults[0];
 

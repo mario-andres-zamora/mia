@@ -73,8 +73,8 @@ app.use(cors({
     origin: (origin, callback) => {
         // En producción y tras proxies, el origin puede venir con espacios o variaciones
         const cleanOrigin = origin ? origin.trim().replace(/\/$/, '') : null;
-        
-        if (!origin || allowedOrigins.some(o => o.trim().replace(/\/$/, '') === cleanOrigin) || 
+
+        if (!origin || allowedOrigins.some(o => o.trim().replace(/\/$/, '') === cleanOrigin) ||
             (cleanOrigin && (cleanOrigin.includes('localhost') || cleanOrigin.includes('lvh.me')))) {
             callback(null, true);
         } else {
@@ -89,10 +89,9 @@ app.use(cors({
 
 // Middlewares de seguridad
 app.use(helmet({
-    contentSecurityPolicy: false,
-    crossOriginResourcePolicy: { policy: "cross-origin" },
+    crossOriginOpenerPolicy: false,
     crossOriginEmbedderPolicy: false,
-    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" }, // Permite popups de Google
+    contentSecurityPolicy: false,
 }));
 
 // Confiar en 3 niveles de proxy (Cloudflare -> NPM -> Nginx local)
@@ -101,7 +100,7 @@ app.set('trust proxy', 3);
 // Rate limiting
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutos
-    max: parseInt(process.env.RATE_LIMIT_MAX) || 1000, 
+    max: parseInt(process.env.RATE_LIMIT_MAX) || 1000,
     message: 'Demasiadas solicitudes desde esta IP, por favor intente más tarde.',
     standardHeaders: true,
     legacyHeaders: false,
@@ -135,7 +134,7 @@ app.use(session({
     saveUninitialized: false,
     proxy: true, // Siempre confiar en el proxy para las sesiones en este entorno
     cookie: {
-        secure: true, // Forzar secure ya que usamos HTTPS en mortasoft.com
+        secure: process.env.NODE_ENV === 'production', // Dinámico para permitir login en local
         httpOnly: true,
         sameSite: 'lax',
         maxAge: 24 * 60 * 60 * 1000 // 24 horas
@@ -243,7 +242,7 @@ app.use((err, req, res, next) => {
     err.status = err.status || 'error';
 
     logger.error('Error:', err);
-    
+
     res.status(err.statusCode).json({
         success: false,
         error: err.message || 'Error interno del servidor',
