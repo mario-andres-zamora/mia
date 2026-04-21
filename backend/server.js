@@ -46,17 +46,13 @@ const maintenanceMiddleware = require('./middleware/maintenance');
 const errorMiddleware = require('./middleware/errorMiddleware');
 const { initializeDatabase } = require('./services/dbInitService');
 
-// Inicializar esquemas de base de datos sync/async
-initializeDatabase();
-
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT;
 
 const redisClient = require('./config/redis');
 
 // Middleware de emergencia: Forzar HTTPS para que las cookies funcionen tras el proxy
 app.use((req, res, next) => {
-    // Si viene de un proxy seguro o estamos en producción, forzamos la detección de HTTPS
     if (req.headers['x-forwarded-proto'] === 'https' || process.env.NODE_ENV === 'production') {
         req.connection.proxySecure = true;
     }
@@ -71,15 +67,17 @@ if (process.env.FRONTEND_URL) {
 
 app.use(cors({
     origin: (origin, callback) => {
-        // En producción y tras proxies, el origin puede venir con espacios o variaciones
-        const cleanOrigin = origin ? origin.trim().replace(/\/$/, '') : null;
+        if (!origin) return callback(null, true);
+        const cleanOrigin = origin.trim().replace(/\/$/, '');
+        const isAllowed = allowedOrigins.some(o => o.trim().replace(/\/$/, '') === cleanOrigin) ||
+            cleanOrigin.includes('localhost') ||
+            cleanOrigin.includes('lvh.me');
 
-        if (!origin || allowedOrigins.some(o => o.trim().replace(/\/$/, '') === cleanOrigin) ||
-            (cleanOrigin && (cleanOrigin.includes('localhost') || cleanOrigin.includes('lvh.me')))) {
+        if (isAllowed) {
             callback(null, true);
         } else {
-            logger.warn(`CORS Reject: [${origin}] - No está en la lista de permitidos para CGR Seguridad`);
-            callback(new Error('Bloqueado por política de CORS de CGR Seguridad'));
+            logger.warn(`CORS Reject: [${origin}] - No en lista permitida`);
+            callback(null, false);
         }
     },
     credentials: true,
@@ -94,23 +92,22 @@ app.use(helmet({
     contentSecurityPolicy: false,
 }));
 
-// Confiar en 3 niveles de proxy (Cloudflare -> NPM -> Nginx local)
+// Confiar en el proxy
 app.set('trust proxy', 3);
 
 // Rate limiting
 const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutos
+    windowMs: 15 * 60 * 1000,
     max: parseInt(process.env.RATE_LIMIT_MAX) || 1000,
     message: 'Demasiadas solicitudes desde esta IP, por favor intente más tarde.',
     standardHeaders: true,
     legacyHeaders: false,
-    validate: { trustProxy: false }, // Desactivar validación estricta de trust proxy para evitar 500
+    validate: { trustProxy: false },
 });
 
 app.use('/api/', limiter);
 
 // Middlewares generales
-
 app.use(compression());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -132,12 +129,12 @@ app.use(session({
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
-    proxy: true, // Siempre confiar en el proxy para las sesiones en este entorno
+    proxy: true,
     cookie: {
-        secure: process.env.NODE_ENV === 'production', // Dinámico para permitir login en local
+        secure: process.env.NODE_ENV === 'production',
         httpOnly: true,
         sameSite: 'lax',
-        maxAge: 24 * 60 * 60 * 1000 // 24 horas
+        maxAge: 24 * 60 * 60 * 1000
     }
 }));
 
@@ -209,22 +206,11 @@ app.put('/api/system/settings', authMiddleware, adminMiddleware, async (req, res
     }
 });
 
-// Health Check Endpoint (Público para monitoreo y stress tests)
-app.get('/api/health', (req, res) => {
-    res.json({
-        status: 'OK',
-        timestamp: new Date(),
-        uptime: process.uptime(),
-        environment: process.env.NODE_ENV || 'development'
-    });
-});
-
 // Ruta raíz
 app.get('/', (req, res) => {
     res.json({
         message: 'CGR LMS API',
-        version: '1.0.0',
-        documentation: '/api/docs'
+        version: '1.0.0'
     });
 });
 
@@ -236,26 +222,12 @@ app.use((req, res) => {
     });
 });
 
-// Manejo global de errores
-app.use((err, req, res, next) => {
-    err.statusCode = err.statusCode || 500;
-    err.status = err.status || 'error';
-
-    logger.error('Error:', err);
-
-    res.status(err.statusCode).json({
-        success: false,
-        error: err.message || 'Error interno del servidor',
-        ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
-    });
-});
-
 // Inicializar esquemas de base de datos y arrancar servidor
 const startServer = async () => {
     try {
         // Inicializar esquemas de base de datos sync/async
         await initializeDatabase();
-        
+
         const server = app.listen(PORT, () => {
             logger.info(`🚀 Servidor CGR LMS corriendo en puerto ${PORT}`);
             logger.info(`📚 Ambiente: ${process.env.NODE_ENV || 'development'}`);

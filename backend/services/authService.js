@@ -24,7 +24,7 @@ class AuthService {
             throw new AppError('No se pudo validar la identidad con Google. Intente de nuevo.', 401);
         }
 
-        const email = payload.email;
+        const email = payload.email.toLowerCase();
         const googleId = payload.sub;
         const given_name = payload.given_name || '';
         const family_name = payload.family_name || '';
@@ -54,14 +54,16 @@ class AuthService {
 
         let user;
         const defaultAdminEmail = process.env.DEFAULT_ADMIN_EMAIL ? process.env.DEFAULT_ADMIN_EMAIL.toLowerCase() : null;
-        const isDefaultAdmin = defaultAdminEmail && email.toLowerCase() === defaultAdminEmail;
+        const isDefaultAdmin = defaultAdminEmail && email === defaultAdminEmail;
 
         if (userResults.length === 0) {
+            logger.info(`Buscando usuario en directorio oficial: ${email}`);
             // Buscar información en el directorio maestro de funcionarios
-            const [directoryInfo] = await db.query(
+            const directoryResults = await db.query(
                 'SELECT department, full_name, position FROM staff_directory WHERE email = ?',
                 [email]
             );
+            const directoryInfo = directoryResults.length > 0 ? directoryResults[0] : null;
 
             // Si no está en el directorio Y no es el admin por defecto, rechazar
             if (!directoryInfo && !isDefaultAdmin) {
