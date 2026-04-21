@@ -2,7 +2,7 @@ services:
   # MariaDB Database
   mariadb:
     image: mariadb:11.2
-    container_name: cgrlms-general-mariadb
+    container_name: mia-lms-mariadb
     restart: unless-stopped
     environment:
       TZ: ${TZ:-America/Costa_Rica}
@@ -23,7 +23,7 @@ services:
   # Redis Cache
   redis:
     image: redis:7.2-alpine
-    container_name: cgrlms-general-redis
+    container_name: mia-lms-redis
     restart: unless-stopped
     # Redis requiere el password como comando si no se usa archivo de config
     command: >
@@ -48,7 +48,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile.dev
-    container_name: cgrlms-general-backend
+    container_name: mia-lms-backend
     restart: unless-stopped
     environment:
       - TZ=${TZ:-America/Costa_Rica}
@@ -83,7 +83,7 @@ services:
       args:
         VITE_API_URL: ${VITE_API_URL}
         VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID}
-    container_name: cgrlms-general-frontend
+    container_name: mia-lms-frontend
     restart: unless-stopped
     environment:
       - NODE_ENV=development
