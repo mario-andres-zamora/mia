@@ -53,10 +53,11 @@ const PORT = process.env.PORT || 5000;
 
 const redisClient = require('./config/redis');
 
-// Middleware de emergencia: Forzar HTTPS para que las cookies funcionen tras el proxy de la CGR
+// Middleware de emergencia: Forzar HTTPS para que las cookies funcionen tras el proxy
 app.use((req, res, next) => {
-    if (process.env.NODE_ENV === 'production') {
-        req.headers['x-forwarded-proto'] = 'https';
+    // Si viene de un proxy seguro o estamos en producción, forzamos la detección de HTTPS
+    if (req.headers['x-forwarded-proto'] === 'https' || process.env.NODE_ENV === 'production') {
+        req.connection.proxySecure = true;
     }
     next();
 });
@@ -100,8 +101,8 @@ app.use(helmet({
     crossOriginEmbedderPolicy: false,
 }));
 
-// Enable trust proxy before setting up rate limiters
-app.set('trust proxy', 1);
+// Confiar en todos los proxies (necesario para Cloudflare + Nginx)
+app.set('trust proxy', true);
 
 // Rate limiting
 const limiter = rateLimit({
@@ -141,7 +142,7 @@ app.use(session({
     cookie: {
         secure: process.env.NODE_ENV === 'production',
         httpOnly: true,
-        sameSite: process.env.NODE_ENV === 'production' ? 'lax' : 'lax', // Lax es seguro y compatible
+        sameSite: 'lax',
         maxAge: 24 * 60 * 60 * 1000 // 24 horas
     }
 }));
