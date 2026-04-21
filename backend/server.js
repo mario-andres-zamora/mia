@@ -70,12 +70,14 @@ if (process.env.FRONTEND_URL) {
 
 app.use(cors({
     origin: (origin, callback) => {
-        // En desarrollo permitimos peticiones sin origin (como herramientas locales/server-side)
-        // o si el origin especificado está en nuestra whitelist
-        if (!origin || allowedOrigins.includes(origin) || origin.includes('localhost') || origin.includes('lvh.me')) {
+        // En producción y tras proxies, el origin puede venir con espacios o variaciones
+        const cleanOrigin = origin ? origin.trim().replace(/\/$/, '') : null;
+        
+        if (!origin || allowedOrigins.some(o => o.trim().replace(/\/$/, '') === cleanOrigin) || 
+            (cleanOrigin && (cleanOrigin.includes('localhost') || cleanOrigin.includes('lvh.me')))) {
             callback(null, true);
         } else {
-            logger.warn(`CORS Reject: ${origin}`);
+            logger.warn(`CORS Reject: [${origin}] - No está en la lista de permitidos para CGR Seguridad`);
             callback(new Error('Bloqueado por política de CORS de CGR Seguridad'));
         }
     },
