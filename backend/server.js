@@ -89,7 +89,7 @@ app.use(cors({
 
 // Middlewares de seguridad
 app.use(helmet({
-    crossOriginOpenerPolicy: false,
+    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
     crossOriginEmbedderPolicy: false,
     contentSecurityPolicy: false,
 }));
@@ -250,19 +250,33 @@ app.use((err, req, res, next) => {
     });
 });
 
-// Iniciar servidor
-app.listen(PORT, () => {
-    logger.info(`🚀 Servidor CGR LMS corriendo en puerto ${PORT}`);
-    logger.info(`📚 Ambiente: ${process.env.NODE_ENV || 'development'}`);
-});
+// Inicializar esquemas de base de datos y arrancar servidor
+const startServer = async () => {
+    try {
+        // Inicializar esquemas de base de datos sync/async
+        await initializeDatabase();
+        
+        const server = app.listen(PORT, () => {
+            logger.info(`🚀 Servidor CGR LMS corriendo en puerto ${PORT}`);
+            logger.info(`📚 Ambiente: ${process.env.NODE_ENV || 'development'}`);
+        });
 
-// Manejo de cierre graceful
-process.on('SIGTERM', async () => {
-    logger.info('SIGTERM recibido, cerrando servidor...');
-    await redisClient.quit();
-    await db.end();
-    process.exit(0);
-});
+        // Manejo de cierre gracioso
+        process.on('SIGTERM', () => {
+            logger.info('SIGTERM recibido, cerrando servidor...');
+            server.close(() => {
+                logger.info('Servidor cerrado.');
+                process.exit(0);
+            });
+        });
+
+    } catch (error) {
+        logger.error('❌ Error crítico durante el arranque del servidor:', error);
+        process.exit(1);
+    }
+};
+
+startServer();
 
 // Middleware de errores global (Debe ir después de todas las rutas)
 app.use(errorMiddleware);
