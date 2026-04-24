@@ -4,7 +4,7 @@ const logger = require('../config/logger');
 const initializeDatabase = async () => {
     try {
         logger.info('🔄 Verificando integridad de la base de datos...');
-        
+
         // Crear tabla user_content_progress si no existe
         await db.query(`
             CREATE TABLE IF NOT EXISTS user_content_progress (

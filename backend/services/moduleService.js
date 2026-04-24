@@ -75,6 +75,8 @@ class ModuleService {
             module.userProgress = {
                 completed_lessons: completedLessons,
                 completed_quizzes: completedQuizzes,
+                completed_surveys: completedSurveys,
+                completed_items: completedItems,
                 total_items: totalItems
             };
         }

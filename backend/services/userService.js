@@ -197,16 +197,6 @@ class UserService {
             totalUsers: totalUsersCount
         };
 
-        // 3. Progreso de módulos
-        const [progressResult] = await db.query(
-            `SELECT 
-                COUNT(DISTINCT module_id) as completed_modules,
-                (SELECT COUNT(*) FROM modules WHERE is_published = TRUE) as total_modules
-             FROM user_progress 
-             WHERE user_id = ? AND status = 'completed'`,
-            [userId]
-        );
-
         // 4. Actividad reciente
         const activities = await db.query(
             `SELECT ga.activity_type as type, ga.points_earned, ga.created_at, ga.reference_id,
@@ -230,7 +220,50 @@ class UserService {
             [userId]
         );
 
-        // 5. Certificados
+        // 6. Progreso detallado por módulo
+        const moduleService = require('./moduleService');
+        // Obtener módulos detallados asegurando que no somos admin para que solo tome los publicados
+        const detailedProgress = await moduleService.getModulesWithProgress(userId, false);
+
+        let globalTotalItems = 0;
+        let globalCompletedItems = 0;
+        let fullyCompletedModulesCount = 0;
+
+        let activeModulesCount = 0;
+
+        const gamification = require('../utils/gamification');
+
+        for (const mod of detailedProgress) {
+            // Ignorar módulos cuya fecha de lanzamiento es en el futuro
+            if (mod.release_date && new Date(mod.release_date) > new Date()) {
+                continue;
+            }
+
+            activeModulesCount++;
+
+            const total = mod.userProgress?.total_items || 0;
+            // Limitamos completados al total para evitar sumar lecciones opcionales extras
+            const completed = Math.min(mod.userProgress?.completed_items || 0, total);
+
+            globalTotalItems += total;
+            globalCompletedItems += completed;
+
+            if (mod.completionPercentage >= 100) {
+                fullyCompletedModulesCount++;
+                // Auto-corrección: Si tiene 100% pero no se le otorgó el certificado en su momento (por algún bug previo o backfill), forzar la verificación.
+                await gamification.checkAndRecordModuleCompletion(userId, mod.id);
+            }
+        }
+
+        let globalPercentage = globalTotalItems > 0
+            ? Math.round((globalCompletedItems / globalTotalItems) * 100)
+            : 0;
+
+        if (globalPercentage > 100) {
+            globalPercentage = 100;
+        }
+
+        // 5. Certificados (consultados después de la auto-corrección para asegurar que se retornen)
         const certificates = await db.query(
             `SELECT c.*, m.title as module_title 
              FROM certificates c
@@ -239,17 +272,13 @@ class UserService {
             [userId]
         );
 
-        // 6. Progreso detallado por módulo
-        const moduleService = require('./moduleService');
-        const detailedProgress = await moduleService.getModulesWithProgress(userId, true);
-
         return {
             user,
             stats: statsWithRank,
             progress: {
-                completed: progressResult.completed_modules || 0,
-                total: progressResult.total_modules || 0,
-                percentage: progressResult.total_modules > 0 ? Math.round((progressResult.completed_modules / progressResult.total_modules) * 100) : 0,
+                completed: fullyCompletedModulesCount,
+                total: activeModulesCount,
+                percentage: globalPercentage,
                 detailed: detailedProgress
             },
             activities,

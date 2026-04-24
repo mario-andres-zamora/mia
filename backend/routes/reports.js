@@ -368,4 +368,97 @@ router.get('/department-compliance', authMiddleware, adminMiddleware, async (req
     }
 });
 
+/**
+ * @route   GET /api/reports/module-completions-detail
+ * @desc    Obtener listado detallado de personas que terminaron un módulo
+ * @access  Private/Admin
+ */
+router.get('/module-completions-detail', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const { module_id } = req.query;
+
+        if (!module_id) {
+            return res.status(400).json({ error: 'ID de módulo es requerido' });
+        }
+
+        const completions = await db.query(`
+            SELECT 
+                CONCAT_WS(' ', u.first_name, u.last_name) as full_name, 
+                u.email, 
+                m.title as module_name, 
+                ga.created_at as completion_date
+            FROM gamification_activities ga
+            JOIN users u ON ga.user_id = u.id
+            JOIN modules m ON ga.reference_id = m.id
+            WHERE ga.activity_type = 'module_completed'
+              AND ga.reference_id = ?
+            ORDER BY ga.created_at DESC
+        `, [module_id]);
+
+        res.json({
+            success: true,
+            data: completions
+        });
+    } catch (error) {
+        logger.error('Error obteniendo detalle de finalizaciones:', error);
+        res.status(500).json({ error: 'Error al cargar el detalle de finalizaciones' });
+    }
+});
+
+/**
+ * @route   POST /api/reports/remind-unregistered
+ * @desc    Enviar correos de invitación a funcionarios que no han ingresado a la plataforma
+ * @access  Private/Admin
+ */
+router.post('/remind-unregistered', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const { department } = req.body;
+
+        if (!department) {
+            return res.status(400).json({ error: 'El nombre del departamento es requerido' });
+        }
+
+        // 1. Encontrar funcionarios en el directorio que NO tengan usuario creado
+        const pendingUsers = await db.query(`
+            SELECT s.full_name, s.email 
+            FROM staff_directory s 
+            LEFT JOIN users u ON s.email = u.email 
+            WHERE s.department = ? AND u.id IS NULL
+        `, [department]);
+
+        if (pendingUsers.length === 0) {
+            return res.json({ success: true, message: 'No hay funcionarios pendientes de registro en este departamento.' });
+        }
+
+        const emailService = require('../services/emailService');
+        let sentCount = 0;
+        let errorCount = 0;
+
+        // 2. Enviar correos de forma secuencial (para no saturar el servidor de correo)
+        // Usamos un bucle simple con await
+        for (const user of pendingUsers) {
+            try {
+                await emailService.sendInvitationEmail(user.email, user.full_name);
+                sentCount++;
+                // Pequeño delay de 200ms entre correos
+                await new Promise(resolve => setTimeout(resolve, 200));
+            } catch (err) {
+                errorCount++;
+                logger.error(`Fallo al enviar invitación a ${user.email}:`, err);
+            }
+        }
+
+        res.json({ 
+            success: true, 
+            message: `Proceso finalizado. Invitaciones enviadas: ${sentCount}. Fallidos: ${errorCount}.`,
+            sentCount,
+            errorCount
+        });
+
+    } catch (error) {
+        logger.error('Error en proceso de recordatorio masivo:', error);
+        res.status(500).json({ error: 'Error interno al procesar los recordatorios' });
+    }
+});
+
 module.exports = router;

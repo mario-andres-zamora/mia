@@ -9,6 +9,7 @@ import ModuleGrid from '../components/dashboard/ModuleGrid';
 import DashboardSidebar from '../components/dashboard/DashboardSidebar';
 import DashboardLoading from '../components/dashboard/DashboardLoading';
 import BadgesModal from '../components/dashboard/BadgesModal';
+import CertificatesModal from '../components/dashboard/CertificatesModal';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -19,6 +20,7 @@ export default function Dashboard() {
     const [modules, setModules] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isBadgesModalOpen, setIsBadgesModalOpen] = useState(false);
+    const [isCertificatesModalOpen, setIsCertificatesModalOpen] = useState(false);
 
     useEffect(() => {
         fetchDashboardData();
@@ -71,6 +73,7 @@ export default function Dashboard() {
                         user={user}
                         stats={stats}
                         onShowBadges={() => setIsBadgesModalOpen(true)}
+                        onShowCertificates={() => setIsCertificatesModalOpen(true)}
                     />
                 </aside>
             </div>
@@ -79,6 +82,12 @@ export default function Dashboard() {
                 isOpen={isBadgesModalOpen}
                 onClose={() => setIsBadgesModalOpen(false)}
                 badges={stats?.badges || []}
+            />
+
+            <CertificatesModal 
+                isOpen={isCertificatesModalOpen}
+                onClose={() => setIsCertificatesModalOpen(false)}
+                certificates={stats?.certificates || []}
             />
         </div>
     );
