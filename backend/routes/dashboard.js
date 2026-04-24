@@ -185,6 +185,15 @@ router.get('/', authMiddleware, cacheMiddleware(300, true), async (req, res) => 
             }
         }
 
+        // 4. Obtener certificados
+        const certificates = await db.query(
+            `SELECT c.*, m.title as module_title 
+             FROM certificates c
+             JOIN modules m ON c.module_id = m.id
+             WHERE c.user_id = ?`,
+            [userId]
+        );
+
         const stats = {
             completedModules: completedModulesCount,
             totalModules: totalModulesCount,
@@ -195,6 +204,7 @@ router.get('/', authMiddleware, cacheMiddleware(300, true), async (req, res) => 
             totalInDepartment,
             totalUsers: totalUsersCount,
             badges: userBadges || [],
+            certificates: certificates || [],
             completionPercentage: totalMandatoryItemsGlobally > 0
                 ? Math.round((completedMandatoryItemsGlobally / totalMandatoryItemsGlobally) * 100)
                 : 0

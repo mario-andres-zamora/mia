@@ -220,15 +220,6 @@ class UserService {
             [userId]
         );
 
-        // 5. Certificados
-        const certificates = await db.query(
-            `SELECT c.*, m.title as module_title 
-             FROM certificates c
-             JOIN modules m ON c.module_id = m.id
-             WHERE c.user_id = ?`,
-            [userId]
-        );
-
         // 6. Progreso detallado por módulo
         const moduleService = require('./moduleService');
         // Obtener módulos detallados asegurando que no somos admin para que solo tome los publicados
@@ -240,33 +231,46 @@ class UserService {
 
         let activeModulesCount = 0;
 
-        detailedProgress.forEach(mod => {
+        const gamification = require('../utils/gamification');
+
+        for (const mod of detailedProgress) {
             // Ignorar módulos cuya fecha de lanzamiento es en el futuro
             if (mod.release_date && new Date(mod.release_date) > new Date()) {
-                return;
+                continue;
             }
 
             activeModulesCount++;
-            
+
             const total = mod.userProgress?.total_items || 0;
             // Limitamos completados al total para evitar sumar lecciones opcionales extras
             const completed = Math.min(mod.userProgress?.completed_items || 0, total);
-            
+
             globalTotalItems += total;
             globalCompletedItems += completed;
 
             if (mod.completionPercentage >= 100) {
                 fullyCompletedModulesCount++;
+                // Auto-corrección: Si tiene 100% pero no se le otorgó el certificado en su momento (por algún bug previo o backfill), forzar la verificación.
+                await gamification.checkAndRecordModuleCompletion(userId, mod.id);
             }
-        });
+        }
 
-        let globalPercentage = globalTotalItems > 0 
-            ? Math.round((globalCompletedItems / globalTotalItems) * 100) 
+        let globalPercentage = globalTotalItems > 0
+            ? Math.round((globalCompletedItems / globalTotalItems) * 100)
             : 0;
-            
+
         if (globalPercentage > 100) {
             globalPercentage = 100;
         }
+
+        // 5. Certificados (consultados después de la auto-corrección para asegurar que se retornen)
+        const certificates = await db.query(
+            `SELECT c.*, m.title as module_title 
+             FROM certificates c
+             JOIN modules m ON c.module_id = m.id
+             WHERE c.user_id = ?`,
+            [userId]
+        );
 
         return {
             user,
