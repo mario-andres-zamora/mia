@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function GlitchBackground() {
+export default function GlitchBackground({ code = '404' }) {
     return (
         <>
             {/* Background elements */}
@@ -10,9 +10,9 @@ export default function GlitchBackground() {
                 <div className="absolute inset-0 opacity-[0.02]" style={{ backgroundImage: 'radial-gradient(#fff 1px, transparent 1px)', backgroundSize: '30px 30px' }}></div>
             </div>
 
-            {/* Big 404 with Glitch Effect */}
+            {/* Big code with Glitch Effect */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[60%] opacity-10 pointer-events-none">
-                <span className="text-[10rem] md:text-[15rem] font-black text-white tracking-widest leading-none select-none">404</span>
+                <span className="text-[10rem] md:text-[15rem] font-black text-white tracking-widest leading-none select-none">{code}</span>
             </div>
         </>
     );

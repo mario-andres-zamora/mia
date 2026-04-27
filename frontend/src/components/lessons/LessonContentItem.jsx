@@ -102,6 +102,7 @@ export default function LessonContentItem({
                                 ytApiLoaded={ytApiLoaded}
                                 onEnded={() => markVideoAsWatched(item.id)}
                                 isWatched={isWatched}
+                                isRequired={item.is_required}
                             />
                         ) : videoSrc ? (
                             <video
@@ -124,7 +125,8 @@ export default function LessonContentItem({
                                     }
                                 }}
                                 onSeeking={(e) => {
-                                    if (!isWatched && e.target.currentTime > lastTimeRef.current + 1) {
+                                    // Solo bloquear el adelanto si el elemento es obligatorio
+                                    if (item.is_required && !isWatched && e.target.currentTime > lastTimeRef.current + 1) {
                                         e.target.currentTime = lastTimeRef.current;
                                     }
                                 }}
@@ -168,8 +170,8 @@ export default function LessonContentItem({
                                         <CheckCircle className="w-3.5 h-3.5" /> ¡Video Completado!
                                     </span>
                                 ) : (
-                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white/5 text-gray-500 text-[10px] font-black uppercase tracking-widest border border-white/5">
-                                        <Eye className="w-3.5 h-3.5" /> Pendiente
+                                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${item.is_required ? 'bg-white/5 text-gray-500 border-white/5' : 'bg-blue-500/10 text-blue-400 border-blue-500/20'}`}>
+                                        <Eye className="w-3.5 h-3.5" /> {item.is_required ? 'Pendiente' : 'Opcional'}
                                     </span>
                                 )}
                             </div>
@@ -265,8 +267,8 @@ export default function LessonContentItem({
                                         <CheckCircle className="w-3.5 h-3.5 mr-1 inline" /> Visitado
                                     </span>
                                 ) : (
-                                    <span className="px-3 py-1 rounded-lg bg-white/5 text-gray-500 text-[10px] font-black uppercase tracking-widest border border-white/5">
-                                        <Eye className="w-3.5 h-3.5 mr-1 inline" /> Pendiente
+                                    <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${item.is_required ? 'bg-white/5 text-gray-500 border-white/5' : 'bg-blue-500/10 text-blue-400 border-blue-500/20'}`}>
+                                        <Eye className="w-3.5 h-3.5 mr-1 inline" /> {item.is_required ? 'Pendiente' : 'Opcional'}
                                     </span>
                                 )}
                             </div>

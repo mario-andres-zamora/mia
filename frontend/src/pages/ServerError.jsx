@@ -10,7 +10,7 @@ export default function ServerError() {
         <div className="h-screen w-full bg-[#0d1127] flex items-center justify-center p-4 relative overflow-hidden font-sans select-none">
             {/* Background elements - Reuse GlitchBackground with a reddish tint if possible, 
                 or just keep it as is since it provides the texture and blobs */}
-            <GlitchBackground />
+            <GlitchBackground code="500" />
             
             {/* Additional red glows for the server error theme */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">

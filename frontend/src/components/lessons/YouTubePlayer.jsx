@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 
-export default function YouTubePlayer({ id, videoId, onEnded, ytApiLoaded, isWatched }) {
+export default function YouTubePlayer({ id, videoId, onEnded, ytApiLoaded, isWatched, isRequired }) {
     const playerRef = useRef(null);
     const lastTimeRef = useRef(0);
 
@@ -18,15 +18,15 @@ export default function YouTubePlayer({ id, videoId, onEnded, ytApiLoaded, isWat
                 playerVars: {
                     'rel': 0,
                     'modestbranding': 1,
-                    'controls': isWatched ? 1 : 1 // We keep controls but monitor seeking
+                    'controls': 1 // Controls are always visible now
                 },
                 events: {
                     'onStateChange': (event) => {
                         if (event.data === window.YT.PlayerState.ENDED) {
                             const duration = player.getDuration();
-                            // Only mark as watched if they actually reached the end legitimately (or if it was already watched)
-                            // We allow a small margin (3 seconds) for duration differences
-                            if (isWatched || lastTimeRef.current >= duration - 3) {
+                            // Only mark as watched if they actually reached the end legitimately
+                            // If isRequired is false, we always allow it
+                            if (!isRequired || isWatched || lastTimeRef.current >= duration - 3) {
                                 onEnded();
                             } else {
                                 // User skipped to the end illegally
@@ -39,8 +39,8 @@ export default function YouTubePlayer({ id, videoId, onEnded, ytApiLoaded, isWat
             });
             playerRef.current = player;
 
-            // Monitor seeking forward
-            if (!isWatched) {
+            // Monitor seeking forward only if it's REQUIRED and not watched
+            if (isRequired && !isWatched) {
                 interval = setInterval(() => {
                     if (player && player.getCurrentTime) {
                         const currentTime = player.getCurrentTime();
