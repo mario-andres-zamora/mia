@@ -87,6 +87,15 @@ const initializeDatabase = async () => {
             ALTER TABLE badges ADD COLUMN IF NOT EXISTS points INT DEFAULT 10;
         `);
 
+        // Asegurar que 'categorization' existe en el ENUM de content_type
+        await db.query(`
+            ALTER TABLE lesson_contents MODIFY COLUMN content_type ENUM(
+                'text','video','image','file','link','quiz','survey','assignment','note',
+                'heading','bullets','confirmation','interactive_input','password_tester',
+                'multiple_choice','mfa_defender','hack_neighbor','dork_search','categorization'
+            ) NOT NULL;
+        `);
+
         logger.info('✅ Estructura de base de datos verificada y actualizada.');
     } catch (error) {
         logger.error('❌ Error inicializando base de datos:', error);

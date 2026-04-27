@@ -11,6 +11,7 @@ import InteractiveInputEditor from './editors/InteractiveInputEditor.jsx';
 import PasswordTesterEditor from './editors/PasswordTesterEditor.jsx';
 import MultipleChoiceEditor from './editors/MultipleChoiceEditor.jsx';
 import MfaDefenderEditor from './editors/MfaDefenderEditor.jsx';
+import CategorizationEditor from './editors/CategorizationEditor.jsx';
 
 export default function ContentEditorModal({
     isOpen,
@@ -114,6 +115,13 @@ export default function ContentEditorModal({
             case 'mfa_defender':
                 return (
                     <MfaDefenderEditor
+                        formData={formData}
+                        setFormData={setFormData}
+                    />
+                );
+            case 'categorization':
+                return (
+                    <CategorizationEditor
                         formData={formData}
                         setFormData={setFormData}
                     />

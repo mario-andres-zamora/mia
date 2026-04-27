@@ -39,7 +39,11 @@ export function useLessonEditor(lessonId) {
         validation_type: 'free',
         correct_answer: '',
         regex_pattern: '',
-        placeholder: 'Escribe tu respuesta aquí...'
+        placeholder: 'Escribe tu respuesta aquí...',
+        categories: [],
+        items: [],
+        feedbackSuccess: '',
+        feedbackError: ''
     });
 
     const fetchLessonAndContents = useCallback(async () => {
@@ -119,7 +123,11 @@ export function useLessonEditor(lessonId) {
                 correct_answer: item.content_type === 'interactive_input' ? (item.data?.correct_answer || '') : '',
                 regex_pattern: item.content_type === 'interactive_input' ? (item.data?.regex_pattern || '') : '',
                 placeholder: item.content_type === 'interactive_input' ? (item.data?.placeholder || 'Escribe tu respuesta aquí...') : 'Escribe tu respuesta aquí...',
-                options: item.content_type === 'multiple_choice' ? (item.data?.options || []) : []
+                options: item.content_type === 'multiple_choice' ? (item.data?.options || []) : [],
+                categories: item.content_type === 'categorization' ? (item.data?.categories || []) : [],
+                items: item.content_type === 'categorization' ? (item.data?.items || []) : [],
+                feedbackSuccess: item.content_type === 'categorization' ? (item.data?.feedbackSuccess || '') : '',
+                feedbackError: item.content_type === 'categorization' ? (item.data?.feedbackError || '') : ''
             });
         } else {
             setEditingItem(null);
@@ -139,7 +147,11 @@ export function useLessonEditor(lessonId) {
                 correct_answer: '',
                 regex_pattern: '',
                 placeholder: 'Escribe tu respuesta aquí...',
-                options: []
+                options: [],
+                categories: [],
+                items: [],
+                feedbackSuccess: '',
+                feedbackError: ''
             });
         }
         setIsModalOpen(true);
@@ -191,6 +203,14 @@ export function useLessonEditor(lessonId) {
                 };
             } else if (['note', 'heading', 'password_tester'].includes(formData.content_type)) {
                 finalData = { text: formData.data };
+            } else if (formData.content_type === 'categorization') {
+                finalData = {
+                    description: formData.data,
+                    categories: formData.categories || [],
+                    items: formData.items || [],
+                    feedbackSuccess: formData.feedbackSuccess,
+                    feedbackError: formData.feedbackError
+                };
             } else if (formData.content_type === 'mfa_defender') {
                 finalData = typeof formData.data === 'string' ? { description: formData.data } : formData.data;
             } else {

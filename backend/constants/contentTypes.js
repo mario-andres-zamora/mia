@@ -5,7 +5,8 @@ const TRACEABLE_CONTENT_TYPES = [
     'interactive_input', 
     'multiple_choice', 
     'password_tester',
-    'mfa_defender'
+    'mfa_defender',
+    'categorization'
 ];
 
 module.exports = {

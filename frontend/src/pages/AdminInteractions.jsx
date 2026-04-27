@@ -119,6 +119,8 @@ export default function AdminInteractions() {
                 answer = resData.selectedOptions ? `Opciones: ${resData.selectedOptions.join(', ')}` : "Sin selección";
             } else if (item.content_type === 'password_tester') {
                 answer = `Clave probada: ${resData.password} (${resData.score}/4)`;
+            } else if (item.content_type === 'categorization') {
+                answer = `Categorizado Correctamente (Feedback: ${resData.feedback})`;
             } else {
                 answer = (resData.answer || "").replace(/"/g, '""').replace(/\n/g, ' ');
             }
@@ -374,6 +376,20 @@ export default function AdminInteractions() {
                                                                             <div className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase ${resData.score >= 3 ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
                                                                                 Fortaleza: {resData.score}/4
                                                                             </div>
+                                                                        </div>
+                                                                    </div>
+                                                                ) : item.content_type === 'categorization' ? (
+                                                                    <div className="space-y-4">
+                                                                        <div className="flex items-center justify-between">
+                                                                            <p className="text-[10px] uppercase font-black text-gray-500 tracking-widest">Actividad de Categorización:</p>
+                                                                            <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase ${resData.feedback === 'success' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
+                                                                                {resData.feedback === 'success' ? 'Éxito' : 'Error'}
+                                                                            </span>
+                                                                        </div>
+                                                                        <div className="bg-slate-950 p-4 rounded-2xl border border-white/5">
+                                                                            <p className="text-[11px] text-gray-400 font-medium italic">
+                                                                                El usuario completó la actividad de clasificación el {resData.completed_at ? new Date(resData.completed_at).toLocaleString() : 'N/A'}.
+                                                                            </p>
                                                                         </div>
                                                                     </div>
                                                                 ) : (

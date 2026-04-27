@@ -161,7 +161,7 @@ class LessonContentService {
             JOIN lessons l ON lc.lesson_id = l.id
             JOIN modules m ON l.module_id = m.id
             WHERE ucp.response_data IS NOT NULL
-            AND lc.content_type IN ('interactive_input', 'confirmation', 'multiple_choice', 'password_tester', 'mfa_defender')
+            AND lc.content_type IN ('interactive_input', 'confirmation', 'multiple_choice', 'password_tester', 'mfa_defender', 'categorization')
             ORDER BY ucp.completed_at DESC
         `);
     }
