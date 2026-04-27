@@ -244,11 +244,12 @@ const checkAndRecordModuleCompletion = async (userId, moduleId, isAdmin = false)
             );
             if (incompleteLessons.count > 0) return { completed: false };
 
-            // Verificar quizzes obligatorios no aprobados
+            // Verificar quizzes obligatorios no aprobados (Solo quizzes independientes del módulo)
             const [incompleteQuizzes] = await db.query(
                 `SELECT COUNT(*) as count FROM quizzes q
                  WHERE q.module_id = ? 
-                 ${isAdmin ? '' : 'AND q.is_published = TRUE'}
+                 AND q.lesson_id IS NULL
+                 ${isAdmin ? "" : "AND q.is_published = TRUE"}
                  AND q.id NOT IN (
                     SELECT quiz_id FROM quiz_attempts WHERE user_id = ? AND passed = TRUE
                  )`,
@@ -263,13 +264,21 @@ const checkAndRecordModuleCompletion = async (userId, moduleId, isAdmin = false)
         const shouldGenerate = moduleData ? !!moduleData.generates_certificate : true;
 
         if (shouldGenerate) {
-            // Generar Certificado
-            const certificateCode = `CERT-${userId}-${moduleId}-${Date.now()}`;
-            await db.query(
-                `INSERT INTO certificates (user_id, module_id, issued_at, certificate_code) 
-                 VALUES (?, ?, NOW(), ?)`,
-                [userId, moduleId, certificateCode]
+            // EVITAR DUPLICADOS: Verificar si ya existe el certificado
+            const [existingCert] = await db.query(
+                "SELECT id FROM certificates WHERE user_id = ? AND module_id = ?",
+                [userId, moduleId]
             );
+
+            if (!existingCert) {
+                // Generar Certificado con código único
+                const certificateCode = `CERT-${userId}-${moduleId}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+                await db.query(
+                    `INSERT INTO certificates (user_id, module_id, issued_at, certificate_code) 
+                     VALUES (?, ?, NOW(), ?)`,
+                    [userId, moduleId, certificateCode]
+                );
+            }
         }
 
         // 5. Registrar actividad y dar puntos (solo si es nuevo)
