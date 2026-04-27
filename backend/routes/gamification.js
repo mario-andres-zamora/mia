@@ -146,6 +146,9 @@ router.put('/settings', authMiddleware, adminMiddleware, async (req, res) => {
                 );
             }
             await getLevels(true); // Refrescar caché
+            // Sincronizar niveles de todos los usuarios en segundo plano para reflejar los nuevos umbrales
+            const { syncAllUsersLevels } = require('../utils/gamification');
+            syncAllUsersLevels().catch(err => logger.error('Error in background mass sync after settings update:', err));
         }
 
         // points removal handled here (nothing to do as we only process levels if present)
@@ -164,12 +167,12 @@ router.put('/settings', authMiddleware, adminMiddleware, async (req, res) => {
  */
 router.post('/leaderboard/refresh', authMiddleware, adminMiddleware, async (req, res) => {
     try {
-        const { clearCache } = require('../middleware/cache');
-        
-        // 1. Recalcular la data central
-        await refreshLeaderboardCache();
+        // 1. Recalcular la data central e invalidar niveles
+        const { syncAllUsersLevels } = require('../utils/gamification');
+        await syncAllUsersLevels();
         
         // 2. Invalidar todos los resultados cacheados por usuario del endpoint de leaderboard
+        const { clearCache } = require('../middleware/cache');
         await clearCache('cache:/api/gamification/leaderboard*');
         
         res.json({ success: true, message: 'Ranking actualizado correctamente' });
