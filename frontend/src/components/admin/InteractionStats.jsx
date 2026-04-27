@@ -6,30 +6,40 @@ import { useAuthStore } from '../../store/authStore';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-export default function InteractionStats() {
+export default function InteractionStats({ filters }) {
     const { token } = useAuthStore();
     const [stats, setStats] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const fetchStats = async () => {
-            try {
-                setLoading(true);
-                const response = await axios.get(`${API_URL}/content/interactions/stats`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                if (response.data.success) {
-                    setStats(response.data.stats);
-                }
-            } catch (error) {
-                console.error('Error fetching interaction stats:', error);
-            } finally {
-                setLoading(false);
+    const fetchStats = async () => {
+        try {
+            setLoading(true);
+            const response = await axios.get(`${API_URL}/content/interactions/stats`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (response.data.success) {
+                setStats(response.data.stats);
             }
-        };
+        } catch (error) {
+            console.error('Error fetching interaction stats:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
+    useEffect(() => {
         fetchStats();
     }, [token]);
+
+    const filteredStats = React.useMemo(() => {
+        return stats.filter(item => {
+            const matchesModule = !filters.moduleId || item.module_id === parseInt(filters.moduleId);
+            const matchesLesson = !filters.lessonId || item.lesson_id === parseInt(filters.lessonId);
+            const matchesContent = !filters.contentId || item.id === parseInt(filters.contentId);
+            
+            return matchesModule && matchesLesson && matchesContent;
+        });
+    }, [stats, filters]);
 
     if (loading) {
         return (
@@ -40,18 +50,18 @@ export default function InteractionStats() {
         );
     }
 
-    if (stats.length === 0) {
+    if (filteredStats.length === 0) {
         return (
             <div className="py-40 text-center border-2 border-dashed border-white/5 rounded-[3rem]">
                 <LayoutGrid className="w-16 h-16 text-gray-800 mx-auto mb-6" />
-                <p className="text-sm font-black text-gray-500 uppercase">No hay datos suficientes para generar gráficos</p>
+                <p className="text-sm font-black text-gray-500 uppercase">No hay datos suficientes para generar gráficos con los filtros actuales</p>
             </div>
         );
     }
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {stats.map((item) => (
+            {filteredStats.map((item) => (
                 <div key={item.id} className="bg-slate-900/40 border border-white/5 rounded-[2.5rem] p-8 flex flex-col gap-6 group hover:border-emerald-500/20 transition-all">
                     <div className="flex items-start justify-between">
                         <div className="flex-1">

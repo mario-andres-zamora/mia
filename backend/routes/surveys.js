@@ -337,26 +337,32 @@ router.delete('/questions/:questionId', authMiddleware, adminMiddleware, async (
 
 /**
  * @route   GET /api/surveys/questions/:questionId/text-answers
- * @desc    Obtener respuestas de texto paginadas para una pregunta específica
+ * @desc    Obtener respuestas de texto paginadas para una pregunta específica con búsqueda
  * @access  Private/Admin
  */
 router.get('/questions/:questionId/text-answers', authMiddleware, adminMiddleware, async (req, res) => {
     try {
         const { questionId } = req.params;
         const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 5; // Por defecto 5 para el modal
+        const limit = parseInt(req.query.limit) || 10;
+        const search = req.query.search || '';
         const offset = (page - 1) * limit;
 
-        const [countResult] = await db.query(
-            'SELECT COUNT(*) as total FROM survey_answers WHERE question_id = ? AND answer_text IS NOT NULL AND answer_text != ""',
-            [questionId]
-        );
+        let queryStr = 'SELECT answer_text as text FROM survey_answers WHERE question_id = ? AND answer_text IS NOT NULL AND answer_text != ""';
+        let countQueryStr = 'SELECT COUNT(*) as total FROM survey_answers WHERE question_id = ? AND answer_text IS NOT NULL AND answer_text != ""';
+        const params = [questionId];
+
+        if (search) {
+            queryStr += ' AND answer_text LIKE ?';
+            countQueryStr += ' AND answer_text LIKE ?';
+            params.push(`%${search}%`);
+        }
+
+        const [countResult] = await db.query(countQueryStr, params);
         const total = countResult.total;
 
-        const answers = await db.query(
-            'SELECT answer_text as text FROM survey_answers WHERE question_id = ? AND answer_text IS NOT NULL AND answer_text != "" ORDER BY id DESC LIMIT ? OFFSET ?',
-            [questionId, limit, offset]
-        );
+        queryStr += ' ORDER BY id DESC LIMIT ? OFFSET ?';
+        const answers = await db.query(queryStr, [...params, limit, offset]);
 
         res.json({
             success: true,

@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-    ClipboardList, 
-    ChevronLeft, 
-    Search, 
-    BarChart3, 
-    Users, 
+import {
+    ClipboardList,
+    ChevronLeft,
+    ChevronDown,
+    Search,
+    BarChart3,
+    Users,
     Calendar,
     ArrowRight,
     Loader2,
@@ -15,6 +16,62 @@ import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
 
 const API_URL = import.meta.env.VITE_API_URL;
+
+const PremiumSelect = ({ value, onChange, options, placeholder }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const selectedOption = options.find(opt => opt.value === value) || { label: placeholder, value: 'all' };
+
+    return (
+        <div className="relative w-full md:w-72 z-[100]">
+            <button
+                type="button"
+                onClick={() => setIsOpen(!isOpen)}
+                className={`w-full flex items-center justify-between bg-slate-950 border rounded-2xl py-5 px-8 text-sm text-white transition-all duration-300 group focus:outline-none shadow-2xl ${isOpen ? 'border-teal-500/50 ring-4 ring-teal-500/10' : 'border-white/10 hover:border-white/20'
+                    }`}
+            >
+                <div className="flex flex-col items-start text-left max-w-[85%]">
+                    <span className="text-[9px] font-black uppercase text-gray-500 tracking-widest mb-1">Filtrar por Módulo</span>
+                    <span className="truncate w-full font-bold tracking-tight text-base">{selectedOption.label}</span>
+                </div>
+                <ChevronDown className={`w-5 h-5 flex-shrink-0 text-gray-500 transition-transform duration-500 ease-out ${isOpen ? 'rotate-180 text-teal-500' : 'group-hover:text-gray-300'}`} />
+            </button>
+
+            {isOpen && (
+                <>
+                    <div
+                        className="fixed inset-0 z-10"
+                        onClick={() => setIsOpen(false)}
+                    ></div>
+                    <div className="absolute top-[calc(100%+0.75rem)] w-full bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden z-20 animate-in fade-in slide-in-from-top-2 duration-300">
+                        <div className="py-3 max-h-80 overflow-y-auto custom-scrollbar">
+                            {options.map((opt) => (
+                                <button
+                                    key={opt.value}
+                                    type="button"
+                                    onClick={() => {
+                                        onChange(opt.value);
+                                        setIsOpen(false);
+                                    }}
+                                    className={`w-full text-left px-8 py-5 text-xs transition-all flex items-center justify-between group/item ${value === opt.value
+                                            ? 'bg-teal-500/10 text-teal-400 font-black'
+                                            : 'text-gray-400 hover:bg-white/5 hover:text-white font-bold'
+                                        }`}
+                                >
+                                    <span className="uppercase tracking-wider">{opt.label}</span>
+                                    {value === opt.value ? (
+                                        <div className="w-2 h-2 rounded-full bg-teal-500 shadow-[0_0_15px_#14b8a6]"></div>
+                                    ) : (
+                                        <div className="w-1.5 h-1.5 rounded-full bg-white/5 group-hover/item:bg-white/20 transition-colors"></div>
+                                    )}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </>
+            )}
+        </div>
+    );
+};
 
 export default function AdminSurveys() {
     const navigate = useNavigate();
@@ -46,6 +103,11 @@ export default function AdminSurveys() {
 
     const uniqueModules = Array.from(new Set(surveys.map(s => s.module_title).filter(Boolean)));
 
+    const moduleOptions = [
+        { label: 'Todos los módulos', value: 'all' },
+        ...uniqueModules.map(m => ({ label: m, value: m }))
+    ];
+
     const filteredSurveys = surveys.filter(s => {
         const matchesSearch = s.title.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesModule = selectedModule === 'all' || s.module_title === selectedModule;
@@ -70,12 +132,12 @@ export default function AdminSurveys() {
     return (
         <div className="space-y-8 animate-fade-in max-w-7xl mx-auto pb-24 px-4 md:px-0">
             {/* Header */}
-            <div className="relative p-8 rounded-[2.5rem] bg-gradient-to-br from-slate-900 via-slate-900 to-teal-950/20 border border-white/5 shadow-2xl overflow-hidden group">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-teal-500/5 blur-[100px] rounded-full -mr-20 -mt-20 group-hover:bg-teal-500/10 transition-all duration-1000"></div>
-                
+            <div className="relative p-8 rounded-[2.5rem] bg-gradient-to-br from-slate-900 via-slate-900 to-teal-950/20 border border-white/5 shadow-2xl group">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-teal-500/5 blur-[100px] rounded-full -mr-20 -mt-20 group-hover:bg-teal-500/10 transition-all duration-1000 pointer-events-none"></div>
+
                 <div className="relative flex flex-col md:flex-row justify-between items-center gap-6">
                     <div className="flex items-center gap-6 text-center md:text-left">
-                        <button 
+                        <button
                             onClick={() => navigate('/admin')}
                             className="w-14 h-14 bg-white/5 hover:bg-white/10 rounded-2xl border border-white/10 flex items-center justify-center transition-all group/back active:scale-90"
                         >
@@ -87,29 +149,25 @@ export default function AdminSurveys() {
                                 <span className="w-1.5 h-1.5 rounded-full bg-white/20"></span>
                                 <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{surveys.length} Encuestas</span>
                             </div>
-                            <h1 className="text-3xl font-black text-white italic uppercase tracking-tighter">Feedback de <span className="text-teal-500">Encuestas</span></h1>
+                            <h1 className="text-3xl font-black text-white italic uppercase tracking-tighter">Respuestas de <span className="text-teal-500">Encuestas</span></h1>
                         </div>
                     </div>
 
                     <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-                        <select
+                        <PremiumSelect
                             value={selectedModule}
-                            onChange={(e) => setSelectedModule(e.target.value)}
-                            className="w-full md:w-64 bg-slate-950 border border-white/5 rounded-2xl py-4 px-6 text-sm text-white focus:outline-none focus:ring-2 focus:ring-teal-500/20 appearance-none cursor-pointer font-medium"
-                        >
-                            <option value="all">Todos los módulos</option>
-                            {uniqueModules.map(m => (
-                                <option key={m} value={m}>{m}</option>
-                            ))}
-                        </select>
+                            onChange={setSelectedModule}
+                            options={moduleOptions}
+                            placeholder="Todos los módulos"
+                        />
 
                         <div className="w-full md:w-80 relative group">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 group-focus-within:text-teal-500 transition-colors" />
-                            <input 
+                            <Search className="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500 group-focus-within:text-teal-500 transition-colors" />
+                            <input
                                 type="text"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="block w-full bg-slate-950 border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-sm text-white focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition-all font-medium"
+                                className="block w-full bg-slate-950 border border-white/10 rounded-2xl py-6 pl-14 pr-6 text-sm text-white focus:outline-none focus:ring-4 focus:ring-teal-500/10 transition-all font-medium placeholder:text-gray-600"
                                 placeholder="Buscar encuesta..."
                             />
                         </div>
@@ -126,7 +184,7 @@ export default function AdminSurveys() {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredSurveys.map((survey) => (
-                        <div 
+                        <div
                             key={survey.id}
                             className="group relative bg-slate-900/40 hover:bg-slate-900/60 border border-white/5 hover:border-teal-500/30 rounded-[2.5rem] p-8 transition-all duration-500 shadow-lg flex flex-col justify-between overflow-hidden"
                         >
@@ -158,14 +216,14 @@ export default function AdminSurveys() {
                                             <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Respuestas</span>
                                         </div>
                                     </div>
-                                    
+
                                     <div className="p-3 bg-teal-500/10 rounded-2xl border border-teal-500/20 text-teal-400 group-hover:bg-teal-500 group-hover:text-white transition-all shadow-lg shadow-teal-500/0 group-hover:shadow-teal-500/20">
                                         <BarChart3 className="w-5 h-5" />
                                     </div>
                                 </div>
                             </div>
 
-                            <button 
+                            <button
                                 onClick={() => navigate(`/admin/surveys/${survey.id}`)}
                                 className="mt-8 w-full bg-orange-500 hover:bg-orange-600 text-white py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-lg shadow-orange-500/20 flex items-center justify-center gap-3 active:scale-[0.98] group/btn"
                             >

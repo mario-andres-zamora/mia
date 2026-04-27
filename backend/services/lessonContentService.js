@@ -239,9 +239,10 @@ class LessonContentService {
 
     async getInteractionStats() {
         const interactiveContents = await db.query(`
-            SELECT id, title, data, content_type 
-            FROM lesson_contents 
-            WHERE content_type IN ('multiple_choice', 'confirmation')
+            SELECT lc.id, lc.title, lc.data, lc.content_type, lc.lesson_id, l.module_id 
+            FROM lesson_contents lc
+            JOIN lessons l ON lc.lesson_id = l.id
+            WHERE lc.content_type IN ('multiple_choice', 'confirmation')
         `);
 
         const responses = await db.query(`
@@ -285,6 +286,8 @@ class LessonContentService {
 
             return {
                 id: content.id,
+                lesson_id: content.lesson_id,
+                module_id: content.module_id,
                 title: content.title,
                 type: content.content_type,
                 data: optionCounts,
