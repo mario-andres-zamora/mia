@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { CheckCircle2, HelpCircle, XCircle, Zap, Clock } from 'lucide-react';
+import DOMPurify from 'dompurify';
+import { linkify } from '../../../utils/textUtils';
 
 export default function ConfirmationActivity({ item, data, visitedLinks, markLinkAsVisited, playSuccess, playError }) {
     const [isIncorrect, setIsIncorrect] = useState(null);
@@ -34,9 +36,17 @@ export default function ConfirmationActivity({ item, data, visitedLinks, markLin
 
                 <div className="flex-1 space-y-4 text-center md:text-left">
                     <div>
-                        <h3 className="text-xl font-bold text-white leading-tight">
-                            {data.description || 'Por favor confirma la siguiente información:'}
-                        </h3>
+                        <div className="text-xl font-bold text-white leading-tight">
+                            {(() => {
+                                const desc = data.description || 'Por favor confirma la siguiente información:';
+                                const isHtml = /<[a-z][\s\S]*>/i.test(desc);
+                                return isHtml ? (
+                                    <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(desc) }} />
+                                ) : (
+                                    <h3>{linkify(desc)}</h3>
+                                );
+                            })()}
+                        </div>
                     </div>
 
                     <div className="flex flex-col sm:flex-row gap-4 pt-2">

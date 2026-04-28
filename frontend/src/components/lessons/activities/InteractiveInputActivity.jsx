@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Type, Zap, CheckCircle, CheckCircle2, AlertTriangle } from 'lucide-react';
+import DOMPurify from 'dompurify';
+import { linkify } from '../../../utils/textUtils';
 
 export default function InteractiveInputActivity({ item, data, visitedLinks, markLinkAsVisited }) {
     const [inputValue, setInputValue] = useState('');
@@ -48,7 +50,17 @@ export default function InteractiveInputActivity({ item, data, visitedLinks, mar
                     </div>
                     <div>
                         <h3 className="text-lg font-bold text-white uppercase tracking-tight">{item.title}</h3>
-                        <p className="text-sm text-gray-400 font-medium italic">{data.description || 'Proporciona una respuesta:'}</p>
+                        <div className="text-sm text-gray-400 font-medium italic">
+                            {(() => {
+                                const desc = data.description || 'Proporciona una respuesta:';
+                                const isHtml = /<[a-z][\s\S]*>/i.test(desc);
+                                return isHtml ? (
+                                    <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(desc) }} />
+                                ) : (
+                                    <p>{linkify(desc)}</p>
+                                );
+                            })()}
+                        </div>
                     </div>
                 </div>
 

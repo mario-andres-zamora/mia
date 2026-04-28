@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { CheckSquare, CheckCircle2, Zap, XCircle, AlertTriangle } from 'lucide-react';
 import DOMPurify from 'dompurify';
 import toast from 'react-hot-toast';
+import { linkify } from '../../../utils/textUtils';
 
 export default function MultipleChoiceActivity({ item, data, playSuccess, playError, markLinkAsVisited }) {
     const options_mc = data.options || [];
@@ -59,10 +60,17 @@ export default function MultipleChoiceActivity({ item, data, playSuccess, playEr
                     <div className="flex-1">
                         <h3 className="text-xl font-bold text-white uppercase tracking-tight">{item.title}</h3>
                         {data.description && (
-                            <div
-                                className="text-sm text-gray-400 font-medium leading-relaxed mt-1"
-                                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(data.description) }}
-                            />
+                            <div className="text-sm text-gray-400 font-medium leading-relaxed mt-1">
+                                {(() => {
+                                    const desc = data.description;
+                                    const isHtml = /<[a-z][\s\S]*>/i.test(desc);
+                                    return isHtml ? (
+                                        <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(desc) }} />
+                                    ) : (
+                                        <p>{linkify(desc)}</p>
+                                    );
+                                })()}
+                            </div>
                         )}
                     </div>
                     {status_mc === 'completed' && (

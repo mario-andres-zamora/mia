@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { LayoutGrid, XCircle, AlertTriangle, Tag, CheckCircle2, Zap } from 'lucide-react';
+import DOMPurify from 'dompurify';
+import { linkify } from '../../../utils/textUtils';
 
 export default function CategorizationActivity({ item, data, visitedLinks, markLinkAsVisited, playSuccess, playError }) {
     const isCompleted = visitedLinks.has(item.id);
@@ -70,9 +72,17 @@ export default function CategorizationActivity({ item, data, visitedLinks, markL
                     </div>
                     <div className="flex-1">
                         <h3 className="text-xl font-bold text-white uppercase tracking-tight">{item.title}</h3>
-                        <p className="text-sm text-gray-400 font-medium italic mt-1">
-                            {data.description || data.instruction || data.text || 'Clasifica los siguientes conceptos en sus categorías correspondientes:'}
-                        </p>
+                        <div className="text-sm text-gray-400 font-medium italic mt-1">
+                            {(() => {
+                                const desc = data.description || data.instruction || data.text || 'Clasifica los siguientes conceptos en sus categorías correspondientes:';
+                                const isHtml = /<[a-z][\s\S]*>/i.test(desc);
+                                return isHtml ? (
+                                    <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(desc) }} />
+                                ) : (
+                                    <p>{linkify(desc)}</p>
+                                );
+                            })()}
+                        </div>
                     </div>
                 </div>
 
