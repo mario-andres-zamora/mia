@@ -1,5 +1,6 @@
 import React from 'react';
 import DOMPurify from 'dompurify';
+import { linkify } from '../../../utils/textUtils';
 
 export default function TextActivity({ data }) {
     let textContent = data.text || '';
@@ -9,7 +10,7 @@ export default function TextActivity({ data }) {
     const isHtml = /<[a-z][\s\S]*>/i.test(textContent);
 
     return (
-        <div className="card p-5 md:p-7 prose prose-invert prose-slate max-w-none bg-slate-800/30 border-white/5 shadow-inner">
+        <div className="card p-5 md:p-7 prose prose-invert prose-slate max-w-none bg-slate-800/30 border-white/5 shadow-inner animate-fade-in">
             {isHtml ? (
                 <div
                     className="whitespace-pre-wrap"
@@ -19,7 +20,7 @@ export default function TextActivity({ data }) {
                 <div className="text-gray-300">
                     {textContent.split('\n').map((paragraph, idx) => (
                         <p key={idx} className={paragraph.trim() === '' ? 'h-4 m-0' : 'mb-4 leading-relaxed'}>
-                            {paragraph}
+                            {linkify(paragraph)}
                         </p>
                     ))}
                 </div>
