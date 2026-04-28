@@ -35,15 +35,15 @@ export default function ModuleCard({ module, user, viewAsStudent }) {
                         toast.error(module.lock_reason || 'Módulo Bloqueado', { id: 'module-locked-warning' });
                     }
                 }}
-                className={`group relative flex flex-col h-full bg-slate-800/20 border border-white/5 rounded-[1.5rem] overflow-hidden transition-all duration-500 ${isLocked
-                    ? 'grayscale-[0.5] opacity-80 cursor-not-allowed'
+                className={`group relative flex flex-col h-full bg-[#151B2E]/40 border rounded-[2rem] overflow-hidden transition-all duration-500 ${isLocked
+                    ? 'grayscale-[0.5] opacity-80 cursor-not-allowed border-white/5'
                     : module.completionPercentage === 100
-                        ? 'bg-green-500/[0.03] border-green-500/30 shadow-[0_0_30px_rgba(34,197,94,0.08)] hover:border-green-500/50'
-                        : 'hover:bg-slate-800/40 hover:border-primary-500/30 hover:shadow-[0_20px_50px_rgba(0,0,0,0.3)] hover:-translate-y-2 cursor-pointer'
+                        ? 'bg-emerald-500/[0.03] border-emerald-500/20 shadow-[0_0_30px_rgba(16,185,129,0.08)] hover:border-emerald-500/40'
+                        : 'bg-[#151B2E] border-white/5 hover:border-white/10 hover:shadow-[0_20px_50px_rgba(0,0,0,0.3)] hover:-translate-y-2 cursor-pointer'
                     }`}
             >
                 {/* Banner Image */}
-                <div className="h-32 w-full relative overflow-hidden">
+                <div className="h-36 w-full relative overflow-hidden">
                     <img
                         src={cardSrc}
                         alt={module.title}
@@ -53,19 +53,19 @@ export default function ModuleCard({ module, user, viewAsStudent }) {
                             else e.target.style.display = 'none';
                         }}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/40 to-transparent"></div>
                 </div>
 
                 {/* Accent line top */}
-                <div className={`absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r ${isLocked ? 'from-gray-600 to-gray-400' : 'from-primary-500 to-secondary-500'} opacity-60 z-20`}></div>
+                <div className={`absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r ${isLocked ? 'from-gray-600 to-gray-400' : module.completionPercentage === 100 ? 'from-emerald-600 to-teal-500' : 'from-primary-500 to-secondary-500'} opacity-60 z-20`}></div>
 
-                <div className="flex-1 flex flex-col p-4 md:p-5">
+                <div className="flex-1 flex flex-col p-5 md:p-6">
                     {/* Badge and Number */}
-                    <div className="flex justify-between items-center mb-4">
+                    <div className="flex justify-between items-center mb-5">
                         <div className="flex items-center gap-4">
-                            <div className={`w-14 h-14 bg-slate-900 rounded-2xl border flex items-center justify-center text-2xl font-black transition-all shadow-2xl shrink-0 ${module.completionPercentage === 100
-                                ? 'border-green-500/30 text-green-500 shadow-green-500/10'
-                                : 'border-white/10 text-white group-hover:text-secondary-500'
+                            <div className={`w-14 h-14 bg-[#0B0F1C] rounded-2xl border flex items-center justify-center text-2xl font-black transition-all shadow-2xl shrink-0 ${module.completionPercentage === 100
+                                ? 'border-emerald-500/30 text-emerald-500 shadow-emerald-500/10'
+                                : 'border-white/10 text-white group-hover:text-primary-400'
                                 }`}>
                                 {(module.module_number ?? 0) < 10 ? `0${module.module_number}` : module.module_number}
                             </div>
@@ -77,22 +77,24 @@ export default function ModuleCard({ module, user, viewAsStudent }) {
                     </div>
 
                     {/* Content */}
-                    <div className="mb-4">
-                        <div className="flex justify-between items-start">
-                            <h3 className={`text-xl font-bold text-white mb-2 ${!isLocked && 'group-hover:text-primary-400'} transition-colors leading-tight min-h-[3rem]`}>
+                    <div className="mb-6">
+                        <div className="flex justify-between items-start gap-4 mb-2">
+                            <h3 className={`text-xl font-bold transition-colors leading-tight min-h-[3rem] ${
+                                module.completionPercentage === 100 ? 'text-emerald-400' : 'text-white group-hover:text-primary-400'
+                            }`}>
                                 {module.title}
                             </h3>
                             {module.completionPercentage === 100 && (
-                                <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-1" />
+                                <CheckCircle className="w-6 h-6 text-emerald-500 flex-shrink-0 mt-1 drop-shadow-[0_0_8px_rgba(16,185,129,0.4)]" />
                             )}
                         </div>
-                        <p className="text-gray-400 text-sm line-clamp-3 leading-relaxed font-medium">
+                        <p className="text-gray-400 text-sm line-clamp-3 leading-relaxed font-medium opacity-80">
                             {module.description}
                         </p>
                     </div>
 
                     {/* Stats Footer */}
-                    <div className="pt-4 mt-auto border-t border-white/5 space-y-3">
+                    <div className="pt-5 mt-auto border-t border-white/5 space-y-4">
                         <div className="flex items-center gap-6">
                             <div className="flex items-center gap-2 text-gray-500">
                                 <BookOpen className="w-4 h-4" />
@@ -104,14 +106,14 @@ export default function ModuleCard({ module, user, viewAsStudent }) {
                             </div>
                         </div>
 
-                        {/* Link and Arrow */}
-                        <div className="flex items-center justify-between group/btn">
+                        {/* Progress and Link */}
+                        <div className="flex flex-col gap-4">
                             {isLocked ? (
                                 <motion.div
                                     initial={{ opacity: 0.8 }}
                                     animate={{ opacity: [0.8, 1, 0.8] }}
                                     transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                                    className="w-full py-5 flex flex-col items-center justify-center gap-2 bg-orange-500/10 rounded-xl border border-orange-500/30 text-orange-200 px-4 shadow-[0_0_20px_rgba(249,115,22,0.1)]"
+                                    className="w-full py-4 flex flex-col items-center justify-center gap-2 bg-orange-500/10 rounded-xl border border-orange-500/30 text-orange-200 px-4 shadow-[0_0_20px_rgba(249,115,22,0.1)]"
                                 >
                                     <div className="flex items-center gap-3 text-xs font-black uppercase tracking-[0.2em] text-orange-400">
                                         <CyberCat className="w-6 h-6 opacity-80" variant="static" color="#f97316" />
@@ -125,14 +127,33 @@ export default function ModuleCard({ module, user, viewAsStudent }) {
                                 </motion.div>
                             ) : (
                                 <>
-                                    <div className="progress-bar flex-1 mr-6">
-                                        <div
-                                            className={`progress-fill ${module.completionPercentage === 100 ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.4)]' : ''}`}
-                                            style={{ width: `${module.completionPercentage || 0}%` }}
-                                        ></div>
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between items-end text-[9px] font-bold uppercase tracking-widest">
+                                            <span className={module.completionPercentage === 100 ? 'text-emerald-500/50' : 'text-gray-500'}>PROGRESO</span>
+                                            <span className={module.completionPercentage === 100 ? 'text-emerald-400' : 'text-white'}>{module.completionPercentage || 0}%</span>
+                                        </div>
+                                        <div className={`h-1.5 rounded-full overflow-hidden ${module.completionPercentage === 100 ? 'bg-emerald-950/30' : 'bg-slate-950'}`}>
+                                            <div
+                                                className={`h-full transition-all duration-1000 shadow-sm ${
+                                                    module.completionPercentage === 100 
+                                                    ? 'bg-gradient-to-r from-emerald-600 to-teal-500' 
+                                                    : 'bg-gradient-to-r from-[#EF8843] to-[#E56B24]'
+                                                }`}
+                                                style={{ width: `${module.completionPercentage || 0}%` }}
+                                            ></div>
+                                        </div>
                                     </div>
-                                    <div className="flex items-center gap-1 text-primary-400 font-black text-[11px] uppercase tracking-widest opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 transition-all duration-300">
-                                        Explorar <ChevronRight className="w-4 h-4" />
+                                    
+                                    <div className={`w-full py-3 rounded-xl text-[9px] font-bold uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 border ${
+                                        module.completionPercentage === 100
+                                        ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 group-hover:bg-emerald-500 group-hover:text-white'
+                                        : 'bg-primary-500/10 text-primary-400 border-primary-500/20 group-hover:bg-primary-500 group-hover:text-white'
+                                    }`}>
+                                        {module.completionPercentage === 100 ? (
+                                            <>FINALIZADO <CheckCircle className="w-4 h-4" /></>
+                                        ) : (
+                                            <>CONTINUAR <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" /></>
+                                        )}
                                     </div>
                                 </>
                             )}
