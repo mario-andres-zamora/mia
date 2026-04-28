@@ -61,7 +61,7 @@ export default function HackNeighborGame({ item, data, playSuccess, playError, m
                             </div>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto p-6 space-y-6 max-h-[500px] scrollbar-hide">
+                        <div className="p-6 space-y-6">
                             <div className="relative">
                                 <div className="h-40 bg-gradient-to-br from-slate-800 to-slate-900 rounded-3xl border border-white/5 overflow-hidden relative">
                                     <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>

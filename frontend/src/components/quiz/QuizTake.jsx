@@ -58,7 +58,7 @@ function HackNeighborQuestion({ question, isAnswered, onWin }) {
                             </div>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto p-6 space-y-6 max-h-[500px] scrollbar-hide">
+                        <div className="p-6 space-y-6">
                             {/* Profile Header */}
                             <div className="relative">
                                 <div className="h-32 bg-gradient-to-r from-primary-600/30 to-indigo-600/30 rounded-2xl border border-white/5 relative overflow-hidden">
