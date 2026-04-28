@@ -13,12 +13,17 @@ export default function RiskAlerts({
     const [selectedDept, setSelectedDept] = useState('');
     const itemsPerPage = 6;
 
+    // Reset to first page when data changes significantly
+    React.useEffect(() => {
+        setCurrentPage(1);
+    }, [atRisk.length]);
+
     // Filtered items based on search
     const filteredAtRisk = useMemo(() => {
         return atRisk.filter(user => 
-            `${user.first_name} ${user.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            user.department?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            user.email?.toLowerCase().includes(searchTerm.toLowerCase())
+            `${user.first_name || ''} ${user.last_name || ''}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (user.department || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (user.email || '').toLowerCase().includes(searchTerm.toLowerCase())
         );
     }, [atRisk, searchTerm]);
 
@@ -34,7 +39,7 @@ export default function RiskAlerts({
 
     return (
         <div className="card bg-red-500/5 border-red-500/20 p-8 space-y-6 relative overflow-hidden group text-left">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/10 rounded-bl-full blur-[80px] group-hover:bg-red-500/20 transition-all"></div>
+            <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/10 rounded-bl-full blur-[80px] group-hover:bg-red-500/20 transition-all pointer-events-none"></div>
 
             <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6">
                 <div className="space-y-1">
