@@ -76,10 +76,18 @@ export default function QuizResults({ results, quiz, onBack, onRetry, onReplay }
                     </button>
                     {results.passed && onReplay && (
                         <button
-                            onClick={onReplay}
-                            className="px-10 py-3.5 bg-secondary-600/20 text-secondary-400 rounded-2xl font-black uppercase tracking-widest text-[10px] border border-secondary-500/30 hover:bg-secondary-600 hover:text-white transition-all flex items-center justify-center gap-2"
+                            className="px-10 py-4 bg-secondary-600/20 text-secondary-400 rounded-2xl font-black uppercase tracking-widest text-[10px] border border-secondary-500/30 hover:bg-secondary-600 hover:text-white transition-all flex flex-col items-center justify-center gap-1"
                         >
-                            <Gamepad2 className="w-4 h-4" /> Rejugar por diversión
+                            {/* Fila superior: Icono + Texto principal */}
+                            <div className="flex items-center gap-2">
+                                <Gamepad2 className="w-4 h-4" />
+                                <span>Rejugar por diversión</span>
+                            </div>
+
+                            {/* Fila inferior: Texto aclaratorio */}
+                            <span className="text-[9px] text-white font-bold uppercase">
+                                (No da puntos extra, es solo para practicar)
+                            </span>
                         </button>
                     )}
                     {!results.passed && results.attemptNumber < quiz.max_attempts && (
