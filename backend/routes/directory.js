@@ -47,4 +47,11 @@ router.delete('/:email', authMiddleware, adminMiddleware, directoryController.de
  */
 router.get('/template', authMiddleware, adminMiddleware, directoryController.getTemplate);
 
+/**
+ * @route   POST /api/directory/invite
+ * @desc    Enviar invitación individual por correo
+ * @access  Private/Admin
+ */
+router.post('/invite', authMiddleware, adminMiddleware, directoryController.sendInvitation);
+
 module.exports = router;

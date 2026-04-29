@@ -152,6 +152,20 @@ export function useDirectory() {
         }
     };
 
+    const handleSendInvite = async (person) => {
+        try {
+            const response = await axios.post(`${API_URL}/directory/invite`, {
+                email: person.email,
+                full_name: person.full_name
+            });
+            if (response.data.success) {
+                toast.success(response.data.message);
+            }
+        } catch (error) {
+            toast.error('Error al enviar la invitación');
+        }
+    };
+
     const filteredDirectory = useMemo(() => {
         let result = directory.filter(person => {
             const matchesSearch = person.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -236,6 +250,7 @@ export function useDirectory() {
             delete: handleConfirmDelete,
             update: handleUpdateRecord,
             create: handleCreateRecord,
+            sendInvite: handleSendInvite,
             downloadTemplate: handleDownloadTemplate,
             refresh: fetchDirectory,
             sort: (key) => {

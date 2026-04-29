@@ -73,6 +73,21 @@ class DirectoryController {
         res.setHeader('Content-Disposition', 'attachment; filename=plantilla_directorio_cgr.csv');
         res.status(200).send(csvContent);
     }
+
+    async sendInvitation(req, res) {
+        try {
+            const { email, full_name } = req.body;
+            if (!email || !full_name) {
+                return res.status(400).json({ error: 'Email y nombre son requeridos' });
+            }
+            const emailService = require('../services/emailService');
+            await emailService.sendInvitationEmail(email, full_name);
+            res.json({ success: true, message: `Invitación enviada correctamente a ${full_name}` });
+        } catch (error) {
+            logger.error('Error enviando invitación individual:', error);
+            res.status(500).json({ error: 'Error al enviar la invitación' });
+        }
+    }
 }
 
 module.exports = new DirectoryController();

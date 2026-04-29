@@ -95,6 +95,7 @@ export default function AdminDirectory() {
                 onSort={actions.sort}
                 onEdit={(person) => { setEditingRecord({ ...person }); modals.edit.setOpen(true); }}
                 onDelete={(email) => { modals.delete.setRecord(email); modals.delete.setOpen(true); }}
+                onSendInvite={actions.sendInvite}
             />
 
             {/* Pagination Controls */}
