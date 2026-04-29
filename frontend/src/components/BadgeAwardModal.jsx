@@ -121,7 +121,7 @@ const BadgeAwardModal = ({ isOpen, onClose, badge }) => {
 
                                 <div className="w-16 h-1.5 bg-gradient-to-r from-transparent via-secondary-500 to-transparent mx-auto rounded-full shadow-[0_0_15px_rgba(229,123,60,0.8)]" />
 
-                                <p className="text-gray-400 text-sm font-medium px-4 leading-relaxed line-clamp-3">
+                                <p className="text-gray-400 text-sm font-medium px-4 leading-relaxed">
                                     {badge.description}
                                 </p>
                             </div>
