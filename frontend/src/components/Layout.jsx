@@ -18,6 +18,10 @@ import ModuleCompletionModal from './ModuleCompletionModal';
 import BadgeAwardModal from './BadgeAwardModal';
 import SoundControl from './SoundControl';
 import ScrollToTop from './ScrollToTop';
+import AnnouncementModal from './AnnouncementModal';
+import axios from 'axios';
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 const NAV_ITEMS = [
     { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -36,19 +40,38 @@ export default function Layout() {
     const navigate = useNavigate();
     const location = useLocation();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [activeAnnouncement, setActiveAnnouncement] = useState(null);
+
+    const isAdmin = user?.role === 'admin' && !viewAsStudent;
 
     // Cerrar menú móvil al cambiar de ruta
     useEffect(() => {
         setIsMobileMenuOpen(false);
     }, [location.pathname]);
 
+    // Buscar anuncios activos al cargar la plataforma
+    useEffect(() => {
+        const checkAnnouncements = async () => {
+            if (user && !isAdmin) { // Solo para estudiantes (o admin en modo estudiante)
+                try {
+                    const response = await axios.get(`${API_URL}/announcements/active`);
+                    if (response.data.success && response.data.announcement) {
+                        setActiveAnnouncement(response.data.announcement);
+                    }
+                } catch (error) {
+                    console.error('Error checking announcements:', error);
+                }
+            }
+        };
+
+        checkAnnouncements();
+    }, [user, isAdmin]);
+
     const handleLogout = async () => {
         await logout();
         toast.success('Sesión cerrada correctamente');
         navigate('/login');
     };
-
-    const isAdmin = user?.role === 'admin' && !viewAsStudent;
 
     return (
         <div className="min-h-screen bg-[#0d1127] flex flex-col">
@@ -280,6 +303,14 @@ export default function Layout() {
                 onClose={clearBadge}
                 badge={pendingBadge}
             />
+
+            {/* System Announcement Modal */}
+            {activeAnnouncement && (
+                <AnnouncementModal
+                    announcement={activeAnnouncement}
+                    onClose={() => setActiveAnnouncement(null)}
+                />
+            )}
         </div>
     );
 }

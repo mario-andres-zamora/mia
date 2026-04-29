@@ -9,8 +9,10 @@ import {
     ShieldAlert,
     Users,
     ClipboardList,
-    MessageSquare
+    MessageSquare,
+    Bell
 } from 'lucide-react';
+
 import { useAdminPanel } from '../hooks/useAdminPanel';
 import AdminHeader from '../components/admin/AdminHeader';
 import AdminCard from '../components/admin/AdminCard';
@@ -92,7 +94,16 @@ export default function AdminPanel() {
             stats: 'FEEDBACK'
         },
         {
+            title: 'Anuncios del Sistema',
+            description: 'Configurar notificaciones modales globales o segmentadas por módulo.',
+            icon: Bell,
+            path: '/admin/announcements',
+            iconBg: 'bg-indigo-500',
+            stats: 'MODALES'
+        },
+        {
             title: 'Directorio Maestro',
+
             description: 'Subir lista oficial de funcionarios (CSV) y ver quién falta de entrar.',
             icon: BookUser,
             path: '/admin/directory',
