@@ -113,7 +113,7 @@ export default function AdminDirectory() {
             {/* Add Record Modal */}
             {modals.add.isOpen && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in">
-                    <div className="card w-full max-w-lg !p-0 overflow-hidden border-white/10 shadow-[0_0_100px_rgba(249,115,22,0.15)] text-left">
+                    <div className="card w-full max-w-2xl !p-0 overflow-hidden border-white/10 shadow-[0_0_100px_rgba(249,115,22,0.15)] text-left">
                         <div className="p-10 border-b border-white/5 bg-white/5">
                             <h2 className="text-xl font-black text-white uppercase tracking-tight">Agregar Funcionario</h2>
                             <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest mt-2 px-1">Ingresa los datos del nuevo funcionario autorizado.</p>
@@ -152,7 +152,7 @@ export default function AdminDirectory() {
             {/* Edit Record Modal */}
             {modals.edit.isOpen && editingRecord && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in text-left">
-                    <div className="card w-full max-w-lg !p-0 overflow-hidden border-white/10 shadow-[0_0_100px_rgba(56,74,153,0.15)]">
+                    <div className="card w-full max-w-2xl !p-0 overflow-hidden border-white/10 shadow-[0_0_100px_rgba(56,74,153,0.15)]">
                         <div className="p-10 border-b border-white/5 bg-white/5">
                             <h2 className="text-xl font-black text-white uppercase tracking-tight">Editar Registro</h2>
                             <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest mt-2 px-1">Actualizando datos de <span className="text-primary-400">{editingRecord.email}</span></p>

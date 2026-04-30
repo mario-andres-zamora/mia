@@ -39,41 +39,43 @@ export default function LeaderboardControls({
                 </div>
 
                 {/* Level Filter Dropdown */}
-                <div className="relative w-full lg:w-64">
-                    <button
-                        onClick={() => setIsFilterOpen(!isFilterOpen)}
-                        className="w-full flex items-center justify-between px-6 py-4 bg-slate-800/40 border border-white/5 rounded-2xl text-white text-[10px] font-black uppercase tracking-widest hover:bg-slate-800/60 transition-all shadow-inner group"
-                    >
-                        <div className="flex items-center gap-3">
-                            <currentLevel.icon className="w-4 h-4 text-primary-400" />
-                            <span>{currentLevel.name}</span>
-                        </div>
-                        <ChevronRight className={`w-4 h-4 text-gray-500 transition-transform duration-300 ${isFilterOpen ? '-rotate-90' : 'rotate-90'}`} />
-                    </button>
-
-                    {isFilterOpen && (
-                        <>
-                            <div className="fixed inset-0 z-40" onClick={() => setIsFilterOpen(false)}></div>
-                            <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
-                                <div className="max-h-80 overflow-y-auto custom-scrollbar p-1">
-                                    {levels.map((level) => (
-                                        <button
-                                            key={level.id}
-                                            onClick={() => {
-                                                setFilterLevel(level.id);
-                                                setIsFilterOpen(false);
-                                            }}
-                                            className={`w-full flex items-center gap-3 px-5 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${filterLevel === level.id ? 'bg-primary-500 text-white' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
-                                        >
-                                            <level.icon className={`w-4 h-4 ${filterLevel === level.id ? 'text-white' : 'text-gray-500'}`} />
-                                            {level.name}
-                                        </button>
-                                    ))}
-                                </div>
+                {view !== 'strategic' && (
+                    <div className="relative w-full lg:w-64">
+                        <button
+                            onClick={() => setIsFilterOpen(!isFilterOpen)}
+                            className="w-full flex items-center justify-between px-6 py-4 bg-slate-800/40 border border-white/5 rounded-2xl text-white text-[10px] font-black uppercase tracking-widest hover:bg-slate-800/60 transition-all shadow-inner group"
+                        >
+                            <div className="flex items-center gap-3">
+                                <currentLevel.icon className="w-4 h-4 text-primary-400" />
+                                <span>{currentLevel.name}</span>
                             </div>
-                        </>
-                    )}
-                </div>
+                            <ChevronRight className={`w-4 h-4 text-gray-500 transition-transform duration-300 ${isFilterOpen ? '-rotate-90' : 'rotate-90'}`} />
+                        </button>
+
+                        {isFilterOpen && (
+                            <>
+                                <div className="fixed inset-0 z-40" onClick={() => setIsFilterOpen(false)}></div>
+                                <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
+                                    <div className="max-h-80 overflow-y-auto custom-scrollbar p-1">
+                                        {levels.map((level) => (
+                                            <button
+                                                key={level.id}
+                                                onClick={() => {
+                                                    setFilterLevel(level.id);
+                                                    setIsFilterOpen(false);
+                                                }}
+                                                className={`w-full flex items-center gap-3 px-5 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${filterLevel === level.id ? 'bg-primary-500 text-white' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
+                                            >
+                                                <level.icon className={`w-4 h-4 ${filterLevel === level.id ? 'text-white' : 'text-gray-500'}`} />
+                                                {level.name}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                )}
             </div>
 
             {/* Search Input */}

@@ -118,6 +118,7 @@ async function seedBadges() {
                 icon_name: 'Shield',
                 image_url: 'enfrentamiento-seguridad.svg',
                 criteria_type: 'manual',
+                criteria_value: null
             },
             {
                 name: 'Enlace con el Operador',
@@ -136,13 +137,22 @@ async function seedBadges() {
                 criteria_type: 'manual',
                 criteria_value: null,
                 points: 50
+            },
+            {
+                name: 'Arcade Replay',
+                description: 'El conocimiento es un músculo que se entrena. Ganada por rejugar los niveles finales de CGR Segura hasta dominar cada mecánica y lograr una ejecución libre de riesgos.',
+                icon_name: 'RotateCcw',
+                image_url: 'arcade-replay.svg',
+                criteria_type: 'manual',
+                criteria_value: null,
+                points: 20
             }
         ];
 
         for (const badge of badges) {
             // Asignamos 10 puntos por defecto si no está definido en el objeto
             const badgePoints = badge.points || 10;
-            
+
             const existing = await db.query('SELECT id FROM badges WHERE name = ?', [badge.name]);
             if (existing && existing.length > 0) {
                 logger.info(`Actualizando insignia: ${badge.name}`);
