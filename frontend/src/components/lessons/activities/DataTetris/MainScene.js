@@ -86,7 +86,12 @@ export default class MainScene extends Phaser.Scene {
         this.baseFallSpeed = speeds[difficulty] || 1.5;
         this.fallSpeed = this.baseFallSpeed;
 
-        this.integrity = 100;
+        const integrityLevels = {
+            easy: 100,
+            medium: 70,
+            hard: 50
+        };
+        this.integrity = integrityLevels[difficulty] || 100;
         this.score = 0;
         this.combo = 0;
         this.isGameOver = false;
