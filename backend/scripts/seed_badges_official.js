@@ -146,6 +146,15 @@ async function seedBadges() {
                 criteria_type: 'manual',
                 criteria_value: null,
                 points: 20
+            },
+            {
+                name: 'Combo x5',
+                description: "Has ingresado a la plataforma durante 5 días consecutivos. Bonus de 'Combo x5' aplicado. Tu compromiso con la misión es total!!!",
+                icon_name: 'Zap',
+                image_url: 'combo-x5.svg',
+                criteria_type: 'manual',
+                criteria_value: null,
+                points: 10
             }
         ];
 

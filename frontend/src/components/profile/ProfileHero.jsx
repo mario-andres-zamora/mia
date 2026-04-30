@@ -1,5 +1,5 @@
 import React from 'react';
-import { Mail, Briefcase, Building2, Shield } from 'lucide-react';
+import { Mail, Briefcase, Building2, Shield, Zap } from 'lucide-react';
 
 export default function ProfileHero({ user, stats }) {
     return (
@@ -28,8 +28,19 @@ export default function ProfileHero({ user, stats }) {
                 {/* Basic Info */}
                 <div className="flex-1 text-center md:text-left space-y-4">
                     <div className="space-y-1">
-                        <h1 className="text-4xl font-black text-white tracking-tighter uppercase leading-none">
+                        <h1 className="text-4xl font-black text-white tracking-tighter uppercase leading-none flex items-center justify-center md:justify-start gap-3">
                             {user.first_name} {user.last_name}
+                            {user.login_streak > 1 && (
+                                <div className="group relative cursor-help">
+                                    <Zap className="w-5 h-5 text-secondary-500 fill-secondary-500/10 animate-pulse" />
+                                    <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-3 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none">
+                                        <div className="bg-slate-900 border border-secondary-500/30 text-white text-[9px] font-black uppercase tracking-[0.2em] px-3 py-1.5 rounded-full shadow-2xl whitespace-nowrap">
+                                            Secuencia: <span className="text-secondary-400">x{user.login_streak}</span>
+                                        </div>
+                                        <div className="w-2 h-2 bg-slate-900 border-r border-b border-secondary-500/30 rotate-45 mx-auto -mt-1"></div>
+                                    </div>
+                                </div>
+                            )}
                         </h1>
                         <div className="flex flex-wrap justify-center md:justify-start gap-4 text-gray-400 text-sm font-medium">
                             <span className="flex items-center gap-1.5" title="Correo Institucional"><Mail className="w-4 h-4 text-primary-400" /> {user.email}</span>

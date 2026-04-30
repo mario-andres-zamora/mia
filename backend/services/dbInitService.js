@@ -96,6 +96,14 @@ const initializeDatabase = async () => {
             ) NOT NULL;
         `);
 
+        // Columnas para racha de login
+        await db.query(`
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS login_streak INT DEFAULT 0;
+        `);
+        await db.query(`
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS last_streak_date DATE DEFAULT NULL;
+        `);
+
         logger.info('✅ Estructura de base de datos verificada y actualizada.');
     } catch (error) {
         logger.error('❌ Error inicializando base de datos:', error);

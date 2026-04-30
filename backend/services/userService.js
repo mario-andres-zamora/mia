@@ -9,7 +9,7 @@ class UserService {
      */
     async getAllUsers() {
         return await db.query(
-            `SELECT u.id, u.first_name, u.last_name, u.email, u.role, u.department, u.position, u.is_active, u.created_at, u.last_login,
+            `SELECT u.id, u.first_name, u.last_name, u.email, u.role, u.department, u.position, u.is_active, u.created_at, u.last_login, u.login_streak,
                     up.points, up.level
              FROM users u
              LEFT JOIN user_points up ON u.id = up.user_id
@@ -22,7 +22,7 @@ class UserService {
      */
     async getUserById(userId) {
         const [user] = await db.query(
-            'SELECT id, first_name, last_name, email, role, department, position, is_active FROM users WHERE id = ?',
+            'SELECT id, first_name, last_name, email, role, department, position, is_active, login_streak FROM users WHERE id = ?',
             [userId]
         );
         return user;
@@ -75,7 +75,7 @@ class UserService {
     async getUserProfileData(userId) {
         // 1. Datos básicos
         const [user] = await db.query(
-            `SELECT id, first_name, last_name, email, profile_picture, role, department, position, created_at, is_active 
+            `SELECT id, first_name, last_name, email, profile_picture, role, department, position, created_at, is_active, login_streak 
              FROM users WHERE id = ?`,
             [userId]
         );

@@ -286,6 +286,58 @@ async function checkReplayBadge(userId) {
 }
 
 /**
+ * Lógica para la insignia "Combo x5"
+ * (5 días seguidos entrando)
+ */
+async function checkComboX5Badge(userId) {
+    try {
+        // 1. Obtener datos de racha del usuario
+        const [user] = await db.query('SELECT login_streak, last_streak_date FROM users WHERE id = ?', [userId]);
+        if (!user) return null;
+
+        const today = new Date().toISOString().split('T')[0];
+        
+        // Manejar el caso de last_streak_date que viene de la DB
+        let lastDate = null;
+        if (user.last_streak_date) {
+            const d = new Date(user.last_streak_date);
+            lastDate = d.toISOString().split('T')[0];
+        }
+
+        if (lastDate === today) {
+            // Ya contó la racha para hoy
+            return null;
+        }
+
+        let newStreak = 1;
+        if (lastDate) {
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+            if (lastDate === yesterdayStr) {
+                newStreak = (user.login_streak || 0) + 1;
+            }
+        }
+
+        // 2. Actualizar racha en DB
+        await db.query('UPDATE users SET login_streak = ?, last_streak_date = ? WHERE id = ?', [newStreak, today, userId]);
+
+        // 3. Evaluar insignia
+        if (newStreak >= 5) {
+            const [badge] = await db.query("SELECT id FROM badges WHERE name = 'Combo x5' LIMIT 1");
+            if (badge) {
+                return await awardBadge(userId, badge.id);
+            }
+        }
+        return null;
+    } catch (error) {
+        logger.error(`Error en checkComboX5Badge para usuario ${userId}:`, error);
+        return null;
+    }
+}
+
+/**
  * Revisa todas las insignias automáticas para un usuario.
  * @returns Un objeto con 'awarded' (boolean) y 'badges' (array de insignias otorgadas)
  */
@@ -347,5 +399,6 @@ module.exports = {
     checkSabanaBadge,
     checkModuleOneBadge,
     checkReplayBadge,
+    checkComboX5Badge,
     checkAllBadges
 };
