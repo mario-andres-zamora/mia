@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { ArrowLeft, Target, ChevronLeft, ChevronRight, ShieldAlert, Terminal, Smartphone, XCircle, CheckCircle2, Heart, MessageCircle, Share2, Search, Camera, Calendar, Briefcase, Users, AtSign, Lock, Eye, EyeOff, Activity, Trophy, Zap, Maximize, Minimize } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { ArrowLeft, Target, ChevronLeft, ChevronRight, ShieldAlert, Terminal, Smartphone, XCircle, CheckCircle2, Heart, MessageCircle, Share2, Search, Camera, Calendar, Briefcase, Users, AtSign, Lock, Eye, EyeOff, Activity, Trophy, Zap, Maximize, Minimize, Star, Award, TrendingUp } from 'lucide-react';
+import { calculateTetrisPoints, TETRIS_RANKS } from '../lessons/activities/DataTetris/tetrisUtils';
 import PhaserGame from '../lessons/activities/DataTetris/PhaserGame';
 import '../lessons/activities/DataTetris/DataTetris.css';
 import { HACK_PROFILES } from '../../utils/gamesData';
+import CyberCat from '../CyberCat';
 
 export const INTERACTIVE_QUESTION_TYPES = ['mfa_defender', 'hack_neighbor', 'data_tetris'];
 
@@ -620,14 +623,27 @@ function MfaDefenderQuestion({ question, isAnswered, storedAnswer, onWin }) {
     );
 }
 
-function DataTetrisQuestion({ question, isAnswered, onWin }) {
+function DataTetrisQuestion({ question, isAnswered, onWin, onRetry }) {
     const [score, setScore] = useState(0);
     const [combo, setCombo] = useState(0);
     const [lines, setLines] = useState(0);
     const [integrity, setIntegrity] = useState(100);
     const [gameState, setGameState] = useState(isAnswered ? 'won' : 'start');
     const [isFullscreen, setIsFullscreen] = useState(false);
+    const [difficulty, setDifficulty] = useState('easy');
     const containerRef = useRef(null);
+
+    const ensureDataObject = (data) => {
+        if (!data) return {};
+        if (typeof data === 'object') return data;
+        try {
+            return JSON.parse(data);
+        } catch (e) {
+            return {};
+        }
+    };
+
+    const minScore = ensureDataObject(question.data).min_score || 500;
 
     const toggleFullscreen = () => {
         if (!containerRef.current) return;
@@ -651,24 +667,25 @@ function DataTetrisQuestion({ question, isAnswered, onWin }) {
         return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
     }, []);
 
-    const ensureDataObject = (data) => {
-        if (!data) return {};
-        if (typeof data === 'object') return data;
-        try {
-            return JSON.parse(data);
-        } catch (e) {
-            return {};
+    useEffect(() => {
+        if (gameState === 'start') {
+            const initialIntegrity = difficulty === 'hard' ? 50 : difficulty === 'medium' ? 70 : 100;
+            setIntegrity(initialIntegrity);
         }
-    };
-
-    const qData = ensureDataObject(question.data);
-    const difficulty = qData.difficulty || 'easy';
-    const minScore = qData.min_score || 500;
+    }, [difficulty, gameState]);
 
     const handleGameOver = (finalScore) => {
+        if (document.fullscreenElement) {
+            document.exitFullscreen().catch(err => console.error(err));
+        }
+
         if (finalScore >= minScore) {
+            onWin({
+                success: true,
+                score: finalScore,
+                difficulty: difficulty
+            });
             setGameState('won');
-            onWin({ success: true, score: finalScore });
         } else {
             setGameState('failed');
         }
@@ -678,7 +695,8 @@ function DataTetrisQuestion({ question, isAnswered, onWin }) {
         setScore(0);
         setCombo(0);
         setLines(0);
-        setIntegrity(100);
+        const initialIntegrity = difficulty === 'hard' ? 50 : difficulty === 'medium' ? 70 : 100;
+        setIntegrity(initialIntegrity);
         setGameState('playing');
     };
 
@@ -688,15 +706,6 @@ function DataTetrisQuestion({ question, isAnswered, onWin }) {
             className={`data-tetris-container animate-fade-in shadow-2xl border-2 border-white/5 mt-4 ${isFullscreen ? 'dt-fullscreen bg-slate-950' : ''}`}
         >
             <div className="data-tetris-wrapper relative">
-                {/* Fullscreen Toggle Button */}
-                <button
-                    onClick={toggleFullscreen}
-                    className="absolute top-4 right-4 z-[100] p-2 bg-black/40 hover:bg-black/60 text-white/70 hover:text-white rounded-lg border border-white/10 transition-all"
-                    title={isFullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
-                >
-                    {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
-                </button>
-
                 <header className="dt-header">
                     <div className="dt-logo-container">
                         <div className="dt-logo-main">
@@ -726,7 +735,7 @@ function DataTetrisQuestion({ question, isAnswered, onWin }) {
                         </div>
                         <div className="dt-stat-box">
                             <span className="dt-stat-label">Meta</span>
-                            <span className="dt-stat-value dt-stat-value-highlight text-emerald-400">{minScore}</span>
+                            <span className="dt-stat-value dt-stat-value-highlight text-emerald-400">{ensureDataObject(question.data).min_score || 500}</span>
                         </div>
                     </div>
                 </header>
@@ -770,32 +779,87 @@ function DataTetrisQuestion({ question, isAnswered, onWin }) {
 
                     <div className="dt-game-container">
                         {gameState === 'start' && (
-                            <div className="dt-overlay">
+                            <div
+                                className="dt-overlay cursor-pointer"
+                                onClick={() => !isFullscreen && toggleFullscreen()}
+                                title="Click para expandir y ver instrucciones"
+                            >
                                 <div className="dt-overlay-content">
-                                    <div className="flex justify-center mb-2">
-                                        <div className="p-4 bg-primary-500/10 rounded-3xl border border-primary-500/20">
-                                            <Activity className="w-12 h-12 text-primary-400" />
+                                    <div className="flex flex-col gap-2 mb-2">
+                                        <p className="text-gray-300 text-sm leading-relaxed max-width-xl mx-auto font-medium">
+                                            Juego clásico de Tetris, pero con un giro de seguridad de la información.
+                                            <br />Clasifica las piezas de datos según su nivel de seguridad antes de que toquen el suelo.
+                                        </p>
+                                    </div>
+
+                                    <div className="dt-overlay-grid">
+                                        {/* Columna Izquierda: Recompensas */}
+                                        <div className="dt-overlay-left">
+                                            <div className="bg-black/40 rounded-2xl p-5 border border-white/5 flex-1 flex flex-col">
+                                                <div className="flex items-center gap-2 mb-4 justify-center">
+                                                    <Star className="w-4 h-4 text-yellow-400" />
+                                                    <span className="text-xs font-black uppercase tracking-widest text-gray-400">Tabla de Recompensas</span>
+                                                </div>
+                                                <div className="grid grid-cols-1 gap-2 flex-1">
+                                                    {TETRIS_RANKS.map(rank => {
+                                                        const qData = ensureDataObject(question.data);
+                                                        const minScoreThreshold = qData.min_score || 500;
+                                                        const thresholdScore = Math.ceil(minScoreThreshold * rank.threshold);
+                                                        const basePoints = question.points || 0;
+                                                        const pot = Math.round((basePoints * (1 + (rank.bonus / 100))) * (difficulty === 'easy' ? 1 : difficulty === 'medium' ? 1.2 : 1.5));
+
+                                                        return (
+                                                            <div key={rank.name} className="flex items-center justify-between p-3 rounded-xl bg-black/40 border border-white/5 px-4">
+                                                                <span className={`text-[10px] font-black uppercase ${rank.color}`}>{rank.name}</span>
+                                                                <span className="text-white text-sm font-bold">{thresholdScore} <span className="text-[8px] text-gray-500 uppercase">Pts</span></span>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Columna Derecha: Controles y Dificultad */}
+                                        <div className="dt-overlay-right">
+                                            <div className="dt-instructions-grid bg-black/40 p-5 rounded-2xl border border-white/5">
+                                                <div className="dt-ins-item"><span>&larr; &rarr;</span> Mover</div>
+                                                <div className="dt-ins-item"><span>ESPACIO</span> Clasificar</div>
+                                                <div className="dt-ins-item"><span>&uarr;</span> Rotar</div>
+                                                <div className="dt-ins-item"><span>&darr;</span> Caída Rápida</div>
+                                            </div>
+
+                                            <div className="dt-difficulty-section bg-black/40 p-5 rounded-2xl border border-white/5">
+                                                <div className="flex items-center gap-2 mb-4 justify-center">
+                                                    <Award className="w-4 h-4 text-primary-400" />
+                                                    <span className="text-xs font-black uppercase tracking-widest text-gray-300">Nivel de Dificultad</span>
+                                                </div>
+                                                <div className="grid grid-cols-3 gap-2">
+                                                    {[
+                                                        { id: 'easy', label: 'Básico', mult: '1.0x', color: 'text-emerald-400' },
+                                                        { id: 'medium', label: 'Medio', mult: '1.2x', color: 'text-amber-400' },
+                                                        { id: 'hard', label: 'Avanzado', mult: '1.5x', color: 'text-rose-400' }
+                                                    ].map(level => (
+                                                        <button
+                                                            key={level.id}
+                                                            onClick={() => setDifficulty(level.id)}
+                                                            className={`flex flex-col items-center gap-1 p-3 rounded-xl border transition-all ${difficulty === level.id
+                                                                ? 'bg-primary-500/20 border-primary-500/50 scale-[1.02] ring-1 ring-primary-500/30'
+                                                                : 'bg-white/5 border-white/5 hover:bg-white/10'
+                                                                }`}
+                                                        >
+                                                            <span className={`text-[10px] font-black uppercase ${difficulty === level.id ? level.color : 'text-gray-500'}`}>{level.label}</span>
+                                                            <span className={`text-xs font-bold ${difficulty === level.id ? 'text-white' : 'text-gray-400'}`}>{level.mult}</span>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            <button className="dt-primary-btn group w-full" onClick={startGame}>
+                                                <Zap className="w-5 h-5 group-hover:animate-pulse text-yellow-400" />
+                                                <span>Iniciar</span>
+                                            </button>
                                         </div>
                                     </div>
-                                    <h2 className="text-white"><span className="text-primary-400">Protección de datos</span></h2>
-                                    <p className="text-gray-400 text-sm leading-relaxed">
-                                        Juego clásico de Tetris, pero con un giro de seguridad de la información.
-                                        <br />Clasifica las piezas de datos según su nivel de seguridad antes de que toquen el suelo.
-                                        <br />Usa la tecla <strong>ESPACIO</strong> para cambiar el tipo de dato.
-                                    </p>
-
-                                    <h3 className="text-white"><span className="text-primary-400">Controles</span></h3>
-
-                                    <div className="dt-instructions-grid bg-black/40 p-5 rounded-2xl border border-white/5">
-                                        <div className="dt-ins-item"><span>&larr; &rarr;</span> Mover</div>
-                                        <div className="dt-ins-item"><span>ESPACIO</span> Clasificar</div>
-                                        <div className="dt-ins-item"><span>&uarr;</span> Rotar</div>
-                                        <div className="dt-ins-item"><span>&darr;</span> Caída Rápida</div>
-                                    </div>
-
-                                    <button className="dt-primary-btn group flex items-center justify-center gap-3" onClick={startGame}>
-                                        <Zap className="w-5 h-5 group-hover:animate-pulse" /> Iniciar
-                                    </button>
                                 </div>
                             </div>
                         )}
@@ -813,22 +877,24 @@ function DataTetrisQuestion({ question, isAnswered, onWin }) {
                         {gameState === 'won' && (
                             <div className="dt-overlay">
                                 <div className="dt-overlay-content">
-                                    <div className="flex justify-center mb-2">
-                                        <div className="p-4 bg-emerald-500/10 rounded-3xl border border-emerald-500/20">
-                                            <Trophy className="w-12 h-12 text-emerald-400" />
+                                    <div className="flex justify-center mb-6">
+                                        <div className="p-2 bg-emerald-500/10 rounded-full border border-emerald-500/20 shadow-[0_0_40px_rgba(16,185,129,0.25)]">
+                                            <CyberCat variant="normal" showMedal={true} className="w-32 h-32" />
                                         </div>
                                     </div>
-                                    <h2 className="text-emerald-400">¡Evaluación Superada!</h2>
+                                    <h2 className="text-emerald-400 text-2xl font-black uppercase tracking-tighter mb-2">¡Evaluación Superada!</h2>
                                     <p className="text-gray-400 text-sm">Has demostrado un excelente dominio en la clasificación de datos.</p>
 
                                     <div className="dt-final-stats">
                                         <div className="dt-final-stat">
-                                            <span>Puntaje Obtenido</span>
+                                            <span>Puntaje Final</span>
                                             <strong className="text-white">{score}</strong>
                                         </div>
                                         <div className="dt-final-stat">
-                                            <span>Líneas Limpias</span>
-                                            <strong className="text-primary-400">{lines}</strong>
+                                            <span>Rango Alcanzado</span>
+                                            <strong className="text-primary-400 text-sm">
+                                                {calculateTetrisPoints(score, ensureDataObject(question.data).min_score || 500, question.points || 0, difficulty).rank}
+                                            </strong>
                                         </div>
                                     </div>
 
@@ -842,12 +908,12 @@ function DataTetrisQuestion({ question, isAnswered, onWin }) {
                         {gameState === 'failed' && (
                             <div className="dt-overlay">
                                 <div className="dt-overlay-content">
-                                    <div className="flex justify-center mb-2">
-                                        <div className="p-4 bg-red-500/10 rounded-3xl border border-red-500/20">
-                                            <ShieldAlert className="w-12 h-12 text-red-400" />
+                                    <div className="flex justify-center mb-6">
+                                        <div className="p-2 bg-red-500/10 rounded-full border border-red-500/20 shadow-[0_0_40px_rgba(239,68,68,0.25)]">
+                                            <CyberCat variant="panic" className="w-32 h-32" />
                                         </div>
                                     </div>
-                                    <h2 className="text-red-500">Objetivo no Alcanzado</h2>
+                                    <h2 className="text-red-500 text-2xl font-black uppercase tracking-tighter mb-2">¡Sesión Fallida!</h2>
                                     <p className="text-gray-400 text-sm">Necesitas al menos {minScore} puntos para aprobar esta sección.</p>
 
                                     <div className="dt-final-stats">
@@ -857,7 +923,10 @@ function DataTetrisQuestion({ question, isAnswered, onWin }) {
                                         </div>
                                     </div>
 
-                                    <button className="dt-primary-btn" onClick={() => setGameState('start')}>
+                                    <button className="dt-primary-btn" onClick={() => {
+                                        if (onRetry) onRetry();
+                                        setGameState('start');
+                                    }}>
                                         Reintentar Evaluación
                                     </button>
                                 </div>
@@ -884,6 +953,12 @@ export default function QuizTake({
     sessionSeed,
     onBack
 }) {
+    const [localAttempts, setLocalAttempts] = useState(attemptsMade || 0);
+
+    useEffect(() => {
+        setLocalAttempts(attemptsMade || 0);
+    }, [attemptsMade]);
+
     const currentQuestion = questions[currentQuestionIndex];
     const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
 
@@ -903,7 +978,7 @@ export default function QuizTake({
                 <div className="flex items-center gap-8">
                     <div className="text-right">
                         <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Intento</p>
-                        <p className="text-xl font-black text-white">{(attemptsMade || 0) + 1} <span className="text-gray-600">/ {quiz.max_attempts}</span></p>
+                        <p className="text-xl font-black text-white">{(localAttempts || 0) + 1} <span className="text-gray-600">/ {quiz.max_attempts}</span></p>
                     </div>
                     <div className="text-right">
                         <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Pregunta</p>
@@ -972,6 +1047,13 @@ export default function QuizTake({
                             question={currentQuestion}
                             isAnswered={answers[currentQuestion.id]?.success === true || answers[currentQuestion.id] === 'true' || answers[currentQuestion.id] === true}
                             onWin={(data) => onOptionSelect(currentQuestion.id, data)}
+                            onRetry={() => {
+                                if ((localAttempts + 1) >= quiz.max_attempts) {
+                                    toast.error("Has alcanzado el limite de intentos para esta evaluacion.");
+                                    return;
+                                }
+                                setLocalAttempts(prev => prev + 1);
+                            }}
                         />
                     </div>
                 ) : (
