@@ -1,13 +1,13 @@
 import { Plus, X, HelpCircle } from 'lucide-react';
 import PremiumSelect from '../../PremiumSelect';
 
-export default function LessonModal({ 
-    isOpen, 
-    onClose, 
-    editingLesson, 
-    formData, 
-    setFormData, 
-    onSave 
+export default function LessonModal({
+    isOpen,
+    onClose,
+    editingLesson,
+    formData,
+    setFormData,
+    onSave
 }) {
     if (!isOpen) return null;
 
@@ -23,7 +23,7 @@ export default function LessonModal({
         <div className="fixed inset-0 z-[3000] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in">
             <div className="relative w-full max-w-xl bg-[#0f121d] rounded-3xl border border-white/10 shadow-2xl">
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-600 via-indigo-500 to-blue-600 rounded-t-3xl"></div>
-                
+
                 {/* Header */}
                 <div className="px-8 py-6 border-b border-white/5 bg-slate-950/20">
                     <div className="flex items-center justify-between">
@@ -33,12 +33,12 @@ export default function LessonModal({
                             </div>
                             <div>
                                 <h2 className="text-xl font-bold text-white">
-                                    {editingLesson ? 'Editar Unidad' : 'Nueva Unidad'}
+                                    {editingLesson ? 'Editar Lección' : 'Nueva Lección'}
                                 </h2>
                                 <p className="text-gray-500 text-[10px] uppercase tracking-widest font-medium">Gestión de Contenido Lectivo</p>
                             </div>
                         </div>
-                        <button 
+                        <button
                             onClick={onClose}
                             className="p-2 hover:bg-white/5 rounded-xl text-gray-500 hover:text-white transition-all"
                         >
@@ -62,13 +62,13 @@ export default function LessonModal({
                     </div>
 
                     <div className="grid grid-cols-2 gap-6">
-                        <PremiumSelect 
+                        <PremiumSelect
                             label="Metodología / Tipo"
                             options={lessonTypeOptions}
                             value={formData.lesson_type}
                             onChange={(val) => setFormData({ ...formData, lesson_type: val })}
                         />
-                        
+
                         <div className="space-y-1.5">
                             <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider ml-1">Tiempo Est. (Min)</label>
                             <input
@@ -84,15 +84,15 @@ export default function LessonModal({
                     {/* Toggles Group */}
                     <div className="grid grid-cols-2 gap-4 pb-2">
                         {[
-                            { 
-                                id: 'is_published', 
-                                label: 'Publicado', 
+                            {
+                                id: 'is_published',
+                                label: 'Publicado',
                                 color: 'bg-emerald-500',
                                 tooltip: 'Determina si la unidad es visible para los estudiantes.'
                             },
-                            { 
-                                id: 'is_optional', 
-                                label: 'Progreso Opcional', 
+                            {
+                                id: 'is_optional',
+                                label: 'Progreso Opcional',
                                 color: 'bg-indigo-500',
                                 tooltip: 'Permite completar el módulo sin terminar esta unidad. No bloquea el avance.'
                             }
