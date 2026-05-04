@@ -79,9 +79,15 @@ class LessonService {
 
         // Progress management
         let [progress] = await db.query(
-            `SELECT up.*, ga.points_earned 
+            `SELECT up.*, 
+                (SELECT SUM(points_earned) FROM gamification_activities 
+                 WHERE user_id = up.user_id AND (
+                    (activity_type = 'lesson_completed' AND reference_id = up.lesson_id) OR
+                    (activity_type = 'quiz_passed' AND reference_id IN (SELECT id FROM quizzes WHERE lesson_id = up.lesson_id)) OR
+                    (activity_type = 'task_approved' AND reference_id IN (SELECT id FROM lesson_contents WHERE lesson_id = up.lesson_id AND content_type = 'assignment')) OR
+                    (activity_type = 'survey_completed' AND reference_id IN (SELECT id FROM surveys WHERE lesson_id = up.lesson_id))
+                 )) as points_earned
              FROM user_progress up 
-             LEFT JOIN gamification_activities ga ON up.user_id = ga.user_id AND ga.activity_type = 'lesson_completed' AND ga.reference_id = up.lesson_id
              WHERE up.user_id = ? AND up.lesson_id = ?`,
             [userId, lessonId]
         );
@@ -94,9 +100,15 @@ class LessonService {
                 [userId, lesson.module_id, lessonId]
             );
             [progress] = await db.query(
-                `SELECT up.*, ga.points_earned 
+                `SELECT up.*, 
+                    (SELECT SUM(points_earned) FROM gamification_activities 
+                     WHERE user_id = up.user_id AND (
+                        (activity_type = 'lesson_completed' AND reference_id = up.lesson_id) OR
+                        (activity_type = 'quiz_passed' AND reference_id IN (SELECT id FROM quizzes WHERE lesson_id = up.lesson_id)) OR
+                        (activity_type = 'task_approved' AND reference_id IN (SELECT id FROM lesson_contents WHERE lesson_id = up.lesson_id AND content_type = 'assignment')) OR
+                        (activity_type = 'survey_completed' AND reference_id IN (SELECT id FROM surveys WHERE lesson_id = up.lesson_id))
+                     )) as points_earned
                  FROM user_progress up 
-                 LEFT JOIN gamification_activities ga ON up.user_id = ga.user_id AND ga.activity_type = 'lesson_completed' AND ga.reference_id = up.lesson_id
                  WHERE up.user_id = ? AND up.lesson_id = ?`,
                 [userId, lessonId]
             );
@@ -221,6 +233,7 @@ class LessonService {
         );
 
         let pointsAwarded = 0;
+        let totalPointsInLesson = 0;
 
         for (const content of allContents) {
             let isCompleted = false;
@@ -239,27 +252,28 @@ class LessonService {
 
             if (!isCompleted) continue;
 
-            // EXCLUSIÓN: Quices, Encuestas y Tareas ya otorgan sus puntos por separado 
-            // al momento de ser aprobados/completados. No los sumamos aquí para evitar duplicidad.
-            if (['quiz', 'survey', 'assignment'].includes(content.content_type)) continue;
-
             let itemPoints = parseInt(content.points) || 0;
             const contentData = typeof content.data === 'string' ? JSON.parse(content.data) : (content.data || {});
             const interactionData = typeof content.interaction_data === 'string' ? JSON.parse(content.interaction_data) : (content.interaction_data || {});
             
-            // If it's a hack_neighbor, check for hint penalties
+            // Penalizaciones
             if (content.content_type === 'hack_neighbor' && itemPoints > 0) {
                 const hintsUsed = parseInt(interactionData.hintsUsed) || 0;
                 const penaltyPerHint = parseInt(contentData.hint_penalty) || 0;
                 itemPoints = Math.max(0, itemPoints - (hintsUsed * penaltyPerHint));
             }
 
-            // If it's a mfa_defender, check for fail penalties
             if (content.content_type === 'mfa_defender' && itemPoints > 0) {
                 const mfaFails = parseInt(interactionData.mfaFails) || 0;
                 const failPenalty = parseInt(contentData.fail_penalty) || 0;
                 itemPoints = Math.max(0, itemPoints - (mfaFails * failPenalty));
             }
+
+            // Sumar siempre para el mensaje de la UI
+            totalPointsInLesson += itemPoints;
+
+            // EXCLUSIÓN: No sumar al balance real si ya se otorgó (Quices, Encuestas, Tareas)
+            if (['quiz', 'survey', 'assignment'].includes(content.content_type)) continue;
             
             pointsAwarded += itemPoints;
         }
@@ -287,7 +301,8 @@ class LessonService {
         }
 
         return {
-            pointsAwarded,
+            pointsAwarded: totalPointsInLesson,
+            realPointsAwarded: pointsAwarded,
             newBalance: updatedStats?.points || 0,
             newLevel: updatedStats?.level || 'Novato',
             levelUp: levelSync?.leveledUp || false,
