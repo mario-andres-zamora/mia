@@ -10,6 +10,7 @@ export function useUsers() {
     const [searchTerm, setSearchTerm] = useState('');
     const [departmentFilter, setDepartmentFilter] = useState('ALL');
     const [departments, setDepartments] = useState([]);
+    const [modules, setModules] = useState([]);
 
     // Modals & Action states
     const [editingUser, setEditingUser] = useState(null);
@@ -29,7 +30,19 @@ export function useUsers() {
     useEffect(() => {
         fetchUsers();
         fetchDepartments();
+        fetchModules();
     }, []);
+
+    const fetchModules = async () => {
+        try {
+            const response = await axios.get(`${API_URL}/modules`);
+            if (response.data.success) {
+                setModules(response.data.modules);
+            }
+        } catch (error) {
+            console.error('Error fetching modules:', error);
+        }
+    };
 
     const fetchDepartments = async () => {
         try {
@@ -90,13 +103,13 @@ export function useUsers() {
         }
     };
 
-    const handleConfirmReset = async (onSelfReset) => {
+    const handleConfirmReset = async (moduleId = null, onSelfReset) => {
         if (!userToReset) return;
 
         try {
-            const response = await axios.post(`${API_URL}/users/${userToReset.id}/reset`);
+            const response = await axios.post(`${API_URL}/users/${userToReset.id}/reset`, { moduleId });
             if (response.data.success) {
-                toast.success('El progreso del funcionario ha sido reiniciado');
+                toast.success(moduleId ? 'El progreso del módulo ha sido reiniciado' : 'El progreso total del funcionario ha sido reiniciado');
                 fetchUsers();
                 setResetModalOpen(false);
 
@@ -173,6 +186,7 @@ export function useUsers() {
         departmentFilter,
         setDepartmentFilter,
         departments,
+        modules,
         actions: {
             edit: {
                 user: editingUser,

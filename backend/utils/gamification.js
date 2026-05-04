@@ -177,9 +177,10 @@ const calculateDynamicModuleBonus = async (userId, moduleId) => {
 /**
  * Sincroniza el nivel del usuario en la base de datos
  */
-const syncUserLevel = async (userId) => {
+const syncUserLevel = async (userId, connection = null) => {
     try {
-        const [userData] = await db.query('SELECT points, level FROM user_points WHERE user_id = ?', [userId]);
+        const executor = connection || db;
+        const [userData] = await executor.query('SELECT points, level FROM user_points WHERE user_id = ?', [userId]);
         if (!userData) return null;
 
         const currentPoints = userData.points;
@@ -194,7 +195,7 @@ const syncUserLevel = async (userId) => {
         await updateUserScore(userId, currentPoints);
 
         if (oldLevel !== newLevel) {
-            await db.query('UPDATE user_points SET level = ?, last_updated = NOW() WHERE user_id = ?', [newLevel, userId]);
+            await executor.query('UPDATE user_points SET level = ?, last_updated = NOW() WHERE user_id = ?', [newLevel, userId]);
             return {
                 leveledUp: true,
                 oldLevel: oldLevel,
