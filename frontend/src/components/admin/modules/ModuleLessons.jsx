@@ -97,7 +97,16 @@ export default function ModuleLessons({
                                                 ? 'bg-secondary-500/10 text-secondary-500 border-secondary-500/10 shadow-secondary-500/5'
                                                 : 'bg-primary-500/10 text-primary-400 border-primary-500/10 shadow-primary-500/5'
                                                 }`}>
-                                                {lesson.lesson_type}
+                                                {(() => {
+                                                    const types = {
+                                                        'reading': 'Lectura',
+                                                        'video': 'Video',
+                                                        'quiz': 'Quiz',
+                                                        'interactive': 'Interactivo',
+                                                        'survey': 'Encuesta'
+                                                    };
+                                                    return types[lesson.lesson_type] || lesson.lesson_type;
+                                                })()}
                                                 {lesson.lesson_type === 'quiz' && <Award className="inline w-3 h-3 ml-1 mb-0.5" />}
                                             </span>
                                             <div className="w-1 h-1 bg-white/10 rounded-full"></div>

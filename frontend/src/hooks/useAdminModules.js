@@ -35,7 +35,10 @@ export function useAdminModules() {
     });
 
     // Content (Lessons/Resources) State
-    const [expandedModule, setExpandedModule] = useState(null);
+    const [expandedModule, setExpandedModule] = useState(() => {
+        const saved = localStorage.getItem('cgr_admin_expanded_module');
+        return saved ? parseInt(saved) : null;
+    });
     const [moduleLessons, setModuleLessons] = useState([]);
     const [moduleResources, setModuleResources] = useState([]);
     const [moduleQuizzes, setModuleQuizzes] = useState([]);
@@ -70,10 +73,6 @@ export function useAdminModules() {
         file: null
     });
 
-    useEffect(() => {
-        fetchAdminModules();
-    }, [fetchAdminModules]);
-
     const fetchModuleDetails = useCallback(async (moduleId) => {
         setContentLoading(true);
         try {
@@ -95,12 +94,26 @@ export function useAdminModules() {
         }
     }, []);
 
+    useEffect(() => {
+        fetchAdminModules();
+    }, [fetchAdminModules]);
+
+    // Persist expansion state and fetch details automatically
+    useEffect(() => {
+        if (expandedModule) {
+            localStorage.setItem('cgr_admin_expanded_module', expandedModule);
+            fetchModuleDetails(expandedModule);
+        } else {
+            localStorage.removeItem('cgr_admin_expanded_module');
+        }
+    }, [expandedModule, fetchModuleDetails]);
+
     const toggleModuleExpansion = (moduleId) => {
         if (expandedModule === moduleId) {
             setExpandedModule(null);
         } else {
             setExpandedModule(moduleId);
-            fetchModuleDetails(moduleId);
+            // El useEffect se encarga de llamar a fetchModuleDetails
         }
     };
 
@@ -169,6 +182,7 @@ export function useAdminModules() {
         const res = await deleteModule(id);
         if (res.success) {
             toast.success('Módulo eliminado');
+            if (expandedModule === id) setExpandedModule(null);
         } else {
             toast.error(res.error || 'Error al eliminar');
         }
