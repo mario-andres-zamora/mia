@@ -239,6 +239,29 @@ class LessonContentService {
             }
         }
 
+        // 4. Enviar correo al usuario informando la calificación
+        try {
+            const [user] = await db.query('SELECT first_name, last_name, email FROM users WHERE id = ?', [submission.user_id]);
+            const [content] = await db.query('SELECT title FROM lesson_contents WHERE id = ?', [submission.content_id]);
+            
+            if (user && content) {
+                const emailService = require('./emailService');
+                const userName = `${user.first_name} ${user.last_name}`;
+                await emailService.sendAssignmentGradedNotification(user.email, userName, {
+                    title: content.title,
+                    status: status || submission.old_status,
+                    grade: grade ?? 'N/A',
+                    feedback: feedback || ''
+                });
+            }
+        } catch (emailErr) {
+            if (typeof logger !== 'undefined') {
+                logger.error('Error enviando correo de calificación de tarea:', emailErr);
+            } else {
+                console.error('Error enviando correo de calificación de tarea:', emailErr);
+            }
+        }
+
         return true;
     }
 

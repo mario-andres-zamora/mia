@@ -390,6 +390,101 @@ class EmailService {
             logger.error(`Error enviando notificación de tarea a ${adminEmail}:`, error);
         }
     }
+
+    /**
+     * Notifica al usuario cuando su tarea ha sido calificada
+     */
+    async sendAssignmentGradedNotification(userEmail, userName, assignmentData) {
+        const path = require('path');
+        const assetsPath = path.resolve(__dirname, '../assets/images');
+        const isApproved = assignmentData.status === 'approved';
+        const statusText = isApproved ? 'APROBADA' : 'RECHAZADA';
+        const statusColor = isApproved ? '#22c55e' : '#ef4444';
+        const icon = isApproved ? '✅' : '❌';
+
+        const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <style>
+                body { font-family: 'Segoe UI', sans-serif; background-color: #04060b; margin: 0; padding: 0; color: #ffffff; }
+                .container { max-width: 600px; margin: 20px auto; background-color: #0b0f1c; border-radius: 24px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); }
+                .header { background-color: #0d111d; padding: 40px 20px; text-align: center; border-bottom: 2px solid ${statusColor}; }
+                .logo-institucional { width: 120px; }
+                .content { padding: 40px; }
+                h1 { font-size: 24px; font-weight: 800; color: #ffffff; margin-bottom: 10px; text-align: center; }
+                .status-badge { display: inline-block; padding: 6px 16px; border-radius: 10px; background: ${statusColor}20; color: ${statusColor}; font-weight: 900; font-size: 14px; letter-spacing: 1px; margin-bottom: 30px; border: 1px solid ${statusColor}40; }
+                .info-box { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); padding: 25px; border-radius: 20px; margin-bottom: 30px; }
+                .info-row { margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px; }
+                .info-row:last-child { border-bottom: none; }
+                .label { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: #64748b; font-weight: 800; margin-bottom: 4px; }
+                .value { font-size: 16px; color: #ffffff; font-weight: 600; }
+                .feedback-box { background: #1a1f2e; border-left: 4px solid #EF8843; padding: 20px; border-radius: 0 16px 16px 0; margin-top: 20px; }
+                .button { display: block; text-align: center; background-color: #384A99; color: #ffffff !important; text-decoration: none; padding: 18px; border-radius: 16px; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+                .footer { background-color: rgba(0,0,0,0.2); padding: 30px; text-align: center; font-size: 11px; color: #475569; border-top: 1px solid rgba(255,255,255,0.05); }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <img src="cid:logo_institucional" alt="CGR" class="logo-institucional">
+                    <div style="margin-top: 10px;">
+                        <span style="color: #ffffff; font-size: 30px; font-weight: 900;">CGR</span>
+                        <span style="color: #EF8843; font-size: 30px; font-weight: 900;"> SEGUR@</span>
+                    </div>
+                </div>
+                <div class="content" style="text-align: center;">
+                    <h1>Tu tarea ha sido calificada</h1>
+                    <div class="status-badge">${icon} ${statusText}</div>
+                    
+                    <div class="info-box" style="text-align: left;">
+                        <div class="info-row">
+                            <div class="label">Tarea</div>
+                            <div class="value">${assignmentData.title}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="label">Nota Final</div>
+                            <div class="value" style="color: ${statusColor}; font-size: 24px; font-weight: 900;">${assignmentData.grade}</div>
+                        </div>
+                        ${assignmentData.feedback ? `
+                        <div class="feedback-box">
+                            <div class="label" style="color: #EF8843;">Comentario del Instructor</div>
+                            <div class="value" style="font-weight: 400; font-size: 14px; color: #cbd5e1; margin-top: 5px;">${assignmentData.feedback}</div>
+                        </div>
+                        ` : ''}
+                    </div>
+
+                    <a href="${process.env.FRONTEND_URL}/dashboard" class="button">Ver mi progreso</a>
+                </div>
+                <div class="footer">
+                    &copy; 2026 Contraloría General de la República de Costa Rica<br>
+                    Programa de Concientización en Ciberseguridad
+                </div>
+            </div>
+        </body>
+        </html>
+        `;
+
+        const attachments = [{
+            filename: 'logo-cgr-blanco.png',
+            path: path.join(assetsPath, 'Logotipo-CGR-blanco-transp.png'),
+            cid: 'logo_institucional'
+        }];
+
+        try {
+            await this.transporter.sendMail({
+                from: process.env.EMAIL_FROM,
+                to: userEmail,
+                subject: `${icon} Tu tarea "${assignmentData.title}" ha sido calificada - ${statusText}`,
+                html: htmlContent,
+                attachments: attachments
+            });
+            logger.info(`Notificación de calificación enviada a: ${userEmail}`);
+        } catch (error) {
+            logger.error(`Error enviando notificación de calificación a ${userEmail}:`, error);
+        }
+    }
 }
 
 module.exports = new EmailService();
