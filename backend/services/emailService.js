@@ -98,7 +98,7 @@ class EmailService {
                     
                     <p>Tu dedicación en el programa de concientización está fortaleciendo la seguridad de nuestra institución.</p>
                     
-                    <a href="https://cgrsegura.cgr.go.cr/dashboard" class="button">Ir a la plataforma</a>
+                    <a href="${process.env.FRONTEND_URL || 'https://cgrsegura.cgr.go.cr'}/dashboard" class="button">Ir a la plataforma</a>
                 </div>
                 <div class="footer">
                     &copy; 2026 Contraloría General de la República de Costa Rica<br>
@@ -189,7 +189,7 @@ class EmailService {
                         </table>
                     </div>
 
-                    <a href="https://cgrsegura.cgr.go.cr" class="button">Ingresar a la Plataforma</a>
+                    <a href="${process.env.FRONTEND_URL || 'https://cgrsegura.cgr.go.cr'}" class="button">Ingresar a la Plataforma</a>
                 </div>
                 <div class="footer">
                     &copy; 2026 Contraloría General de la República de Costa Rica<br>
@@ -268,7 +268,7 @@ class EmailService {
 
                     <p>La ciberseguridad es responsabilidad de todos y el cumplimiento de este programa es de carácter <strong>obligatorio</strong>.</p>
                     <p>Recuerda que <strong>cada mes se libera un nuevo módulo</strong> de capacitación. Te invitamos a retomar el curso y completar los contenidos pendientes para fortalecer nuestras defensas institucionales.</p>
-                    <a href="https://cgrsegura.cgr.go.cr/dashboard" class="button">Continuar mi Capacitación</a>
+                    <a href="${process.env.FRONTEND_URL || 'https://cgrsegura.cgr.go.cr'}/dashboard" class="button">Continuar mi Capacitación</a>
                 </div>
                 <div class="footer">
                     &copy; 2026 Contraloría General de la República de Costa Rica<br>
@@ -360,7 +360,7 @@ class EmailService {
                         </div>
                     </div>
 
-                    <a href="https://cgrsegura.cgr.go.cr/admin/assignments" class="button">Ir a Revisar Entregas</a>
+                    <a href="${process.env.FRONTEND_URL || 'https://cgrsegura.cgr.go.cr'}/admin/assignments" class="button">Ir a Revisar Entregas</a>
                 </div>
                 <div class="footer">
                     &copy; 2026 Contraloría General de la República de Costa Rica<br>
