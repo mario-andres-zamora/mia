@@ -5,7 +5,7 @@ import {
     BookOpen,
     User,
     Calendar,
-    ChevronLeft,
+    ArrowLeft,
     ChevronDown,
     Inbox,
     Quote,
@@ -174,12 +174,12 @@ export default function AdminInteractions() {
                 <div className="relative flex flex-col gap-8">
                     {/* Top Row: Back, Title, Mode, Export */}
                     <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-                        <div className="flex items-center gap-6 text-center md:text-left">
+                        <div className="flex flex-col items-start gap-2">
                             <button
                                 onClick={() => navigate('/admin')}
-                                className="w-14 h-14 bg-white/5 hover:bg-white/10 rounded-2xl border border-white/10 flex items-center justify-center transition-all group/back active:scale-90"
+                                className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-[10px] font-black uppercase tracking-widest"
                             >
-                                <ChevronLeft className="w-6 h-6 text-white group-hover/back:-translate-x-1 transition-transform" />
+                                <ArrowLeft className="w-4 h-4" /> Volver al Panel Admin
                             </button>
                             <div>
                                 <div className="flex items-center gap-3 mb-1 justify-center md:justify-start">

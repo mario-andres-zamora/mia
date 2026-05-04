@@ -316,14 +316,14 @@ export default function AdminSurveyDetail() {
                 <div className="absolute top-0 right-0 w-64 h-64 bg-teal-500/5 blur-[100px] rounded-full -mr-20 -mt-20 group-hover:bg-teal-500/10 transition-all duration-1000"></div>
                 
                 <div className="relative flex flex-col md:flex-row justify-between items-center gap-6">
-                    <div className="flex items-center gap-6 text-center md:text-left">
-                        <button 
-                            onClick={() => navigate('/admin/surveys')}
-                            className="w-14 h-14 bg-white/5 hover:bg-white/10 rounded-2xl border border-white/10 flex items-center justify-center transition-all group/back active:scale-90"
-                        >
-                            <ChevronLeft className="w-6 h-6 text-white group-hover/back:-translate-x-1 transition-transform" />
-                        </button>
-                        <div>
+                        <div className="flex flex-col items-start gap-2">
+                            <button 
+                                onClick={() => navigate('/admin')}
+                                className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-[10px] font-black uppercase tracking-widest"
+                            >
+                                <ArrowLeft className="w-4 h-4" /> Volver al Panel Admin
+                            </button>
+                            <div>
                             <div className="flex items-center gap-3 mb-1 justify-center md:justify-start">
                                 <span className="px-3 py-1 bg-teal-500/20 text-teal-400 text-[10px] font-black uppercase tracking-[0.2em] rounded-lg border border-teal-500/20">Detalle de Analíticas</span>
                                 <span className="w-1.5 h-1.5 rounded-full bg-white/20"></span>

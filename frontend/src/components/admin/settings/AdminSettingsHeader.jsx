@@ -7,19 +7,20 @@ export default function AdminSettingsHeader({ tabs, activeTab, onTabChange, onSa
     return (
         <div className="space-y-10 mb-12 animate-fade-in text-left">
             {/* Header simple similar al Dashboard principal */}
-            <div className="flex items-center gap-6">
+            <div className="flex flex-col items-start gap-4">
                 <button
                     onClick={() => navigate('/admin')}
-                    className="p-3.5 bg-slate-900 border border-white/10 rounded-2xl transition-all text-gray-400 hover:text-white hover:bg-white/5 active:scale-95"
-                    title="Volver al Panel"
+                    className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-[10px] font-black uppercase tracking-widest"
                 >
-                    <ArrowLeft className="w-5 h-5" />
+                    <ArrowLeft className="w-4 h-4" /> Volver al Panel Admin
                 </button>
-                <div className="space-y-1">
-                    <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight uppercase italic">
-                        Configuración del Sistema
-                    </h1>
-                    <p className="text-white/40 font-medium">Módulo de configuración del sistema</p>
+                <div className="flex items-center gap-6">
+                    <div className="space-y-1">
+                        <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight uppercase italic">
+                            Configuración del Sistema
+                        </h1>
+                        <p className="text-white/40 font-medium text-sm">Módulo de configuración del sistema</p>
+                    </div>
                 </div>
             </div>
 
