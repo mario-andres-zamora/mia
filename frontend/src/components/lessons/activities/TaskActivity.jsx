@@ -54,7 +54,7 @@ export default function TaskActivity({ item, data, navigate, handleAssignmentUpl
                     {item.content_type === 'assignment' && (
                         <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-900 rounded-lg text-xs font-bold text-gray-300 border border-white/10">
                             <FileText className="w-3 h-3 text-blue-400" />
-                            <span>Formatos: <span className="text-white">PDF, Word, Imagen, Video, Zip</span></span>
+                            <span>Formatos permitidos: <span className="text-white">PDF, Imagen, Video, Zip</span></span>
                         </div>
                     )}
                 </div>
