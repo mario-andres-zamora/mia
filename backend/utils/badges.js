@@ -406,7 +406,7 @@ async function checkEliteTeamBadge(userId, moduleId) {
 
             if (badge) {
                 // 6. Asignación masiva a todo el departamento
-                const [usersToAward] = await db.query('SELECT id FROM users WHERE department = ? AND is_active = TRUE', [area]);
+                const usersToAward = await db.query('SELECT id FROM users WHERE department = ? AND is_active = TRUE', [area]);
                 
                 const awardedBadges = [];
                 for (const u of usersToAward) {
