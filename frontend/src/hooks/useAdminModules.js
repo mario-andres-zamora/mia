@@ -261,23 +261,6 @@ export function useAdminModules() {
         }
     };
 
-    const toggleLessonOptional = async (lesson) => {
-        try {
-            const response = await axios.put(`${API_URL}/lessons/${lesson.id}`, {
-                ...lesson,
-                is_optional: !lesson.is_optional
-            });
-
-            if (response.data.success) {
-                setModuleLessons(prev => prev.map(l => l.id === lesson.id ? { ...l, is_optional: !l.is_optional } : l));
-                toast.success('Estado de lección actualizado');
-                fetchAdminModules();
-            }
-        } catch (error) {
-            toast.error('Error al actualizar lección');
-        }
-    };
-
     const toggleLessonPublish = async (lesson) => {
         try {
             const response = await axios.put(`${API_URL}/lessons/${lesson.id}`, {
@@ -455,7 +438,6 @@ export function useAdminModules() {
         handleOpenLessonModal,
         handleSaveLesson,
         confirmDeleteLesson,
-        toggleLessonOptional,
         toggleLessonPublish,
 
         // Resource UI

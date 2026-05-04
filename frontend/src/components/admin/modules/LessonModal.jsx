@@ -1,4 +1,4 @@
-import { Plus, X } from 'lucide-react';
+import { Plus, X, HelpCircle } from 'lucide-react';
 import PremiumSelect from '../../PremiumSelect';
 
 export default function LessonModal({ 
@@ -84,11 +84,30 @@ export default function LessonModal({
                     {/* Toggles Group */}
                     <div className="grid grid-cols-2 gap-4 pb-2">
                         {[
-                            { id: 'is_published', label: 'Publicado', color: 'bg-emerald-500' },
-                            { id: 'is_optional', label: 'Opcional', color: 'bg-indigo-500' }
+                            { 
+                                id: 'is_published', 
+                                label: 'Publicado', 
+                                color: 'bg-emerald-500',
+                                tooltip: 'Determina si la unidad es visible para los estudiantes.'
+                            },
+                            { 
+                                id: 'is_optional', 
+                                label: 'Progreso Opcional', 
+                                color: 'bg-indigo-500',
+                                tooltip: 'Permite completar el módulo sin terminar esta unidad. No bloquea el avance.'
+                            }
                         ].map(toggle => (
-                            <div key={toggle.id} className="flex items-center justify-between p-3 bg-slate-950/30 rounded-xl border border-white/5">
-                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tight">{toggle.label}</span>
+                            <div key={toggle.id} className="group/toggle flex items-center justify-between p-3 bg-slate-950/30 rounded-xl border border-white/5 relative">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tight">{toggle.label}</span>
+                                    <div className="relative group/help">
+                                        <HelpCircle className="w-3 h-3 text-gray-600 cursor-help" />
+                                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-slate-900 text-[9px] text-gray-400 rounded-lg border border-white/10 shadow-2xl opacity-0 invisible group-hover/help:opacity-100 group-hover/help:visible transition-all z-50 pointer-events-none">
+                                            {toggle.tooltip}
+                                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-slate-900"></div>
+                                        </div>
+                                    </div>
+                                </div>
                                 <button
                                     type="button"
                                     onClick={() => setFormData({ ...formData, [toggle.id]: !formData[toggle.id] })}

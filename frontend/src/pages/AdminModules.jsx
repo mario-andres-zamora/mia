@@ -115,7 +115,6 @@ export default function AdminModules() {
                             onNewLesson={handleOpenLessonModal}
                             onEditLesson={(mid, l) => handleOpenLessonModal(mid, l)}
                             onDeleteLesson={(l) => handleDeleteClick(l, 'lesson')}
-                            onToggleLessonOptional={toggleLessonOptional}
                             onToggleLessonPublish={toggleLessonPublish}
                             onOpenLessonEditor={(id) => navigate(`/admin/lessons/${id}/editor`)}
                             onReorderLessons={handleReorderLessons}
