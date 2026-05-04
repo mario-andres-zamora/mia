@@ -300,6 +300,96 @@ class EmailService {
             logger.error(`Error enviando email de alerta a ${userEmail}:`, error);
         }
     }
+    /**
+     * Notifica al instructor cuando un usuario envía una tarea
+     */
+    async sendAssignmentSubmissionNotification(adminEmail, userData, assignmentData) {
+        const path = require('path');
+        const assetsPath = path.resolve(__dirname, '../assets/images');
+
+        const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <style>
+                body { font-family: 'Segoe UI', sans-serif; background-color: #04060b; margin: 0; padding: 0; color: #ffffff; }
+                .container { max-width: 600px; margin: 20px auto; background-color: #0b0f1c; border-radius: 24px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); }
+                .header { background-color: #0d111d; padding: 40px 20px; text-align: center; border-bottom: 2px solid #384A99; }
+                .logo-institucional { width: 120px; }
+                .content { padding: 40px; }
+                h1 { font-size: 22px; font-weight: 800; color: #ffffff; margin-bottom: 20px; text-align: center; }
+                .info-box { background: rgba(56, 74, 153, 0.1); border: 1px solid rgba(56, 74, 153, 0.2); padding: 25px; border-radius: 20px; margin-bottom: 30px; }
+                .info-row { margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px; }
+                .info-row:last-child { border-bottom: none; }
+                .label { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: #64748b; font-weight: 800; margin-bottom: 4px; }
+                .value { font-size: 16px; color: #ffffff; font-weight: 600; }
+                .button { display: block; text-align: center; background-color: #384A99; color: #ffffff !important; text-decoration: none; padding: 18px; border-radius: 16px; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+                .footer { background-color: rgba(0,0,0,0.2); padding: 30px; text-align: center; font-size: 11px; color: #475569; border-top: 1px solid rgba(255,255,255,0.05); }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <img src="cid:logo_institucional" alt="CGR" class="logo-institucional">
+                    <div style="margin-top: 10px;">
+                        <span style="color: #ffffff; font-size: 30px; font-weight: 900;">CGR</span>
+                        <span style="color: #EF8843; font-size: 30px; font-weight: 900;"> SEGUR@</span>
+                    </div>
+                </div>
+                <div class="content">
+                    <h1>Nueva Tarea Recibida</h1>
+                    <p style="color: #94a3b8; text-align: center; margin-bottom: 30px;">Se ha registrado una nueva entrega en la plataforma de capacitación.</p>
+                    
+                    <div class="info-box">
+                        <div class="info-row">
+                            <div class="label">Funcionario</div>
+                            <div class="value">${userData.name}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="label">Correo</div>
+                            <div class="value">${userData.email}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="label">Módulo / Lección</div>
+                            <div class="value">${assignmentData.module} / ${assignmentData.lesson}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="label">Tarea</div>
+                            <div class="value">${assignmentData.title}</div>
+                        </div>
+                    </div>
+
+                    <a href="https://cgrsegura.cgr.go.cr/admin/assignments" class="button">Ir a Revisar Entregas</a>
+                </div>
+                <div class="footer">
+                    &copy; 2026 Contraloría General de la República de Costa Rica<br>
+                    Sistema de Notificaciones Automáticas CGR Segur@
+                </div>
+            </div>
+        </body>
+        </html>
+        `;
+
+        const attachments = [{
+            filename: 'logo-cgr-blanco.png',
+            path: path.join(assetsPath, 'Logotipo-CGR-blanco-transp.png'),
+            cid: 'logo_institucional'
+        }];
+
+        try {
+            await this.transporter.sendMail({
+                from: process.env.EMAIL_FROM,
+                to: adminEmail,
+                subject: `📝 Nueva entrega: ${userData.name} - ${assignmentData.title}`,
+                html: htmlContent,
+                attachments: attachments
+            });
+            logger.info(`Notificación de tarea enviada al instructor: ${adminEmail}`);
+        } catch (error) {
+            logger.error(`Error enviando notificación de tarea a ${adminEmail}:`, error);
+        }
+    }
 }
 
 module.exports = new EmailService();

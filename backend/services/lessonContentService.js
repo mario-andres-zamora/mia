@@ -106,6 +106,41 @@ class LessonContentService {
         } else {
             await db.query(`INSERT INTO assignment_submissions (content_id, user_id, file_url, status) VALUES (?, ?, ?, 'pending')`, [contentId, userId, fileUrl]);
         }
+
+        // --- NOTIFICACIÓN POR CORREO AL INSTRUCTOR ---
+        try {
+            const [details] = await db.query(`
+                SELECT u.first_name, u.last_name, u.email,
+                       lc.title as assignment_title,
+                       l.title as lesson_title,
+                       m.title as module_title
+                FROM users u
+                JOIN lesson_contents lc ON lc.id = ?
+                JOIN lessons l ON lc.lesson_id = l.id
+                JOIN modules m ON l.module_id = m.id
+                WHERE u.id = ?
+            `, [contentId, userId]);
+
+            if (details && process.env.DEFAULT_ADMIN_EMAIL) {
+                const emailService = require('./emailService');
+                await emailService.sendAssignmentSubmissionNotification(
+                    process.env.DEFAULT_ADMIN_EMAIL,
+                    {
+                        name: `${details.first_name} ${details.last_name}`,
+                        email: details.email
+                    },
+                    {
+                        title: details.assignment_title,
+                        lesson: details.lesson_title,
+                        module: details.module_title
+                    }
+                );
+            }
+        } catch (mailErr) {
+            const logger = require('../config/logger');
+            logger.error('Error enviando notificación de tarea enviada:', mailErr);
+        }
+
         return fileUrl;
     }
 
