@@ -135,7 +135,8 @@ export function useLessonEditor(lessonId) {
                 postPoints: item.content_type === 'forum' ? (item.data?.postPoints || 0) : 0,
                 replyPoints: item.content_type === 'forum' ? (item.data?.replyPoints || 0) : 0,
                 maxAwardedPosts: item.content_type === 'forum' ? (item.data?.maxAwardedPosts || 0) : 0,
-                maxAwardedReplies: item.content_type === 'forum' ? (item.data?.maxAwardedReplies || 0) : 0
+                maxAwardedReplies: item.content_type === 'forum' ? (item.data?.maxAwardedReplies || 0) : 0,
+                description: item.data?.description || item.data?.text || ''
             });
         } else {
             setEditingItem(null);
@@ -213,7 +214,7 @@ export function useLessonEditor(lessonId) {
                     description: formData.data,
                     options: formData.options || []
                 };
-            } else if (['note', 'heading', 'password_tester'].includes(formData.content_type)) {
+            } else if (['note', 'heading', 'password_tester', 'terms_trap'].includes(formData.content_type)) {
                 finalData = { text: formData.data };
             } else if (formData.content_type === 'categorization') {
                 finalData = {

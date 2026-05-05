@@ -16,7 +16,8 @@ import {
     Smartphone,
     LayoutGrid,
     Activity,
-    MessageSquare
+    MessageSquare,
+    ShieldAlert
 } from 'lucide-react';
 
 export const CONTENT_TYPES = [
@@ -39,6 +40,7 @@ export const CONTENT_TYPES = [
     { type: 'categorization', label: 'Categorizar', icon: LayoutGrid, color: 'text-emerald-400' },
     { type: 'data_tetris', label: 'Data Tetris', icon: Activity, color: 'text-primary-400' },
     { type: 'forum', label: 'Foro', icon: MessageSquare, color: 'text-teal-400' },
+    { type: 'terms_trap', label: 'Términos', icon: ShieldAlert, color: 'text-red-500' },
 ];
 
 export default function ContentTypeSelector({ onSelect }) {

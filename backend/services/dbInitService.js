@@ -87,12 +87,12 @@ const initializeDatabase = async () => {
             ALTER TABLE badges ADD COLUMN IF NOT EXISTS points INT DEFAULT 10;
         `);
 
-        // Asegurar que 'categorization' y 'forum' existan en el ENUM de content_type
+        // Asegurar que 'categorization', 'forum' y 'terms_trap' existan en el ENUM de content_type
         await db.query(`
             ALTER TABLE lesson_contents MODIFY COLUMN content_type ENUM(
                 'text','video','image','file','link','quiz','survey','assignment','note',
                 'heading','bullets','confirmation','interactive_input','password_tester',
-                'multiple_choice','mfa_defender','hack_neighbor','dork_search','categorization','data_tetris','forum'
+                'multiple_choice','mfa_defender','hack_neighbor','dork_search','categorization','data_tetris','forum','terms_trap'
             ) NOT NULL;
         `);
 

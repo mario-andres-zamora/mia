@@ -21,6 +21,7 @@ import HackNeighborGame from './activities/HackNeighborGame';
 import CategorizationActivity from './activities/CategorizationActivity';
 import DataTetrisActivity from './activities/DataTetrisActivity';
 import ForumActivity from './activities/ForumActivity/ForumActivity';
+import TermsTrapActivity from './activities/TermsTrapActivity';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -142,6 +143,9 @@ export default function LessonContentItem({
             
         case 'data_tetris':
             return <DataTetrisActivity {...commonProps} />;
+
+        case 'terms_trap':
+            return <TermsTrapActivity {...commonProps} />;
 
         case 'forum':
             return (

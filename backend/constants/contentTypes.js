@@ -9,7 +9,9 @@ const TRACEABLE_CONTENT_TYPES = [
     'categorization',
     'hack_neighbor',
     'dork_search',
-    'data_tetris'
+    'data_tetris',
+    'terms_trap',
+    'forum'
 ];
 
 module.exports = {

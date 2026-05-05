@@ -144,7 +144,7 @@ CREATE TABLE IF NOT EXISTS lesson_contents (
     id INT AUTO_INCREMENT PRIMARY KEY,
     lesson_id INT NOT NULL,
     title VARCHAR(255),
-    content_type ENUM('text', 'video', 'image', 'file', 'link', 'quiz', 'survey', 'assignment', 'note', 'heading', 'bullets', 'confirmation', 'interactive_input', 'password_tester', 'multiple_choice', 'mfa_defender', 'hack_neighbor', 'dork_search', 'categorization', 'data_tetris') NOT NULL,
+    content_type ENUM('text', 'video', 'image', 'file', 'link', 'quiz', 'survey', 'assignment', 'note', 'heading', 'bullets', 'confirmation', 'interactive_input', 'password_tester', 'multiple_choice', 'mfa_defender', 'hack_neighbor', 'dork_search', 'categorization', 'data_tetris', 'forum', 'terms_trap') NOT NULL,
     data JSON COMMENT 'Almacena contenido HTML, URLs, ID de quiz, config de archivo, etc.',
     order_index INT NOT NULL,
     points INT DEFAULT 0,
@@ -292,7 +292,7 @@ CREATE TABLE IF NOT EXISTS user_badges (
 CREATE TABLE IF NOT EXISTS gamification_activities (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
-    activity_type ENUM('lesson_completed', 'quiz_passed', 'module_completed', 'phishing_reported', 'perfect_score', 'early_completion') NOT NULL,
+    activity_type ENUM('lesson_completed', 'quiz_passed', 'module_completed', 'phishing_reported', 'perfect_score', 'early_completion', 'task_approved', 'badge_earned', 'forum_post', 'forum_reply', 'terms_trap_accepted') NOT NULL,
     points_earned INT NOT NULL,
     reference_id INT,
     description VARCHAR(255),

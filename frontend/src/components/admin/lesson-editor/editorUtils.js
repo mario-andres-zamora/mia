@@ -16,7 +16,8 @@ import {
     Smartphone,
     LayoutGrid,
     Activity,
-    MessageSquare
+    MessageSquare,
+    ShieldAlert
 } from 'lucide-react';
 
 export const CONTENT_TYPES_CONFIG = [
@@ -39,6 +40,7 @@ export const CONTENT_TYPES_CONFIG = [
     { type: 'categorization', label: 'Categorización', icon: LayoutGrid, color: 'text-emerald-400' },
     { type: 'data_tetris', label: 'Data Tetris', icon: Activity, color: 'text-primary-400' },
     { type: 'forum', label: 'Foro', icon: MessageSquare, color: 'text-teal-400' },
+    { type: 'terms_trap', label: 'Términos Trampa', icon: ShieldAlert, color: 'text-red-500' },
 ];
 
 export const getIconForType = (type) => {
@@ -71,7 +73,8 @@ export const getTypeLabel = (type) => {
         mfa_defender: 'Simulador de MFA',
         categorization: 'Actividad de Categorización',
         data_tetris: 'Juego Data Tetris',
-        forum: 'Foro de Discusión'
+        forum: 'Foro de Discusión',
+        terms_trap: 'Trampa de Términos (Concientización)'
     };
     return labels[type] || type;
 };
