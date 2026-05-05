@@ -20,11 +20,13 @@ import MfaDefenderActivity from './activities/MfaDefenderActivity';
 import HackNeighborGame from './activities/HackNeighborGame';
 import CategorizationActivity from './activities/CategorizationActivity';
 import DataTetrisActivity from './activities/DataTetrisActivity';
+import ForumActivity from './activities/ForumActivity/ForumActivity';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
 export default function LessonContentItem({
     item,
+    user,
     ytApiLoaded,
     markVideoAsWatched,
     markLinkAsVisited,
@@ -140,6 +142,19 @@ export default function LessonContentItem({
             
         case 'data_tetris':
             return <DataTetrisActivity {...commonProps} />;
+
+        case 'forum':
+            return (
+                <ForumActivity 
+                    item={item} 
+                    user={user} 
+                    onComplete={(id) => {
+                        // Solo llamamos handleComplete si no está en modo estudiante / no admin
+                        // Para simplificar, la lógica de LessonView ya maneja qué pasa al completar
+                        if (onEndedRef.current) onEndedRef.current(id);
+                    }} 
+                />
+            );
 
         default:
             return (

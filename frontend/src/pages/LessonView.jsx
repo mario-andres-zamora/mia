@@ -105,6 +105,7 @@ export default function LessonView() {
                                 <div key={item.id} className="animate-fade-in-up" style={{ animationDelay: `${index * 100}ms` }}>
                                     <LessonContentItem
                                         item={item}
+                                        user={user}
                                         ytApiLoaded={ytApiLoaded}
                                         watchedVideos={watchedVideos}
                                         visitedLinks={visitedLinks}
