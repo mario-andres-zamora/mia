@@ -127,6 +127,12 @@ export default function ForumActivity({ item, user, onComplete }) {
                             </div>
                         </div>
 
+                        {posts.length === 0 ? (
+                            <div className="text-center py-12 bg-slate-900/20 rounded-2xl border border-white/5 border-dashed">
+                                <MessageSquare className="w-12 h-12 text-gray-700 mx-auto mb-3" />
+                                <h5 className="text-gray-400 font-bold mb-1">Aún no hay mensajes</h5>
+                                <p className="text-gray-600 text-xs uppercase tracking-wider font-medium max-w-xs mx-auto">Sé el primero en iniciar la conversación en este foro.</p>
+                            </div>
                         ) : (
                             <div className="space-y-6">
                                 <div className="space-y-6">
