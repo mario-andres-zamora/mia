@@ -43,7 +43,11 @@ export function useLessonEditor(lessonId) {
         categories: [],
         items: [],
         feedbackSuccess: '',
-        feedbackError: ''
+        feedbackError: '',
+        postPoints: 0,
+        replyPoints: 0,
+        maxAwardedPosts: 0,
+        maxAwardedReplies: 0
     });
 
     const fetchLessonAndContents = useCallback(async () => {
@@ -127,7 +131,11 @@ export function useLessonEditor(lessonId) {
                 categories: item.content_type === 'categorization' ? (item.data?.categories || []) : [],
                 items: item.content_type === 'categorization' ? (item.data?.items || []) : [],
                 feedbackSuccess: item.content_type === 'categorization' ? (item.data?.feedbackSuccess || '') : '',
-                feedbackError: item.content_type === 'categorization' ? (item.data?.feedbackError || '') : ''
+                feedbackError: item.content_type === 'categorization' ? (item.data?.feedbackError || '') : '',
+                postPoints: item.content_type === 'forum' ? (item.data?.postPoints || 0) : 0,
+                replyPoints: item.content_type === 'forum' ? (item.data?.replyPoints || 0) : 0,
+                maxAwardedPosts: item.content_type === 'forum' ? (item.data?.maxAwardedPosts || 0) : 0,
+                maxAwardedReplies: item.content_type === 'forum' ? (item.data?.maxAwardedReplies || 0) : 0
             });
         } else {
             setEditingItem(null);
@@ -151,7 +159,11 @@ export function useLessonEditor(lessonId) {
                 categories: [],
                 items: [],
                 feedbackSuccess: '',
-                feedbackError: ''
+                feedbackError: '',
+                postPoints: type === 'forum' ? 10 : 0,
+                replyPoints: type === 'forum' ? 5 : 0,
+                maxAwardedPosts: type === 'forum' ? 3 : 0,
+                maxAwardedReplies: type === 'forum' ? 5 : 0
             });
         }
         setIsModalOpen(true);
@@ -213,6 +225,14 @@ export function useLessonEditor(lessonId) {
                 };
             } else if (formData.content_type === 'mfa_defender') {
                 finalData = typeof formData.data === 'string' ? { description: formData.data } : formData.data;
+            } else if (formData.content_type === 'forum') {
+                finalData = {
+                    description: formData.data,
+                    postPoints: formData.postPoints || 0,
+                    replyPoints: formData.replyPoints || 0,
+                    maxAwardedPosts: formData.maxAwardedPosts || 0,
+                    maxAwardedReplies: formData.maxAwardedReplies || 0
+                };
             } else {
                 const currentData = typeof editingItem?.data === 'string' ? JSON.parse(editingItem.data) : (editingItem?.data || {});
                 finalData = { ...currentData, description: formData.data };

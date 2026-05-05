@@ -13,6 +13,7 @@ import MultipleChoiceEditor from './editors/MultipleChoiceEditor.jsx';
 import MfaDefenderEditor from './editors/MfaDefenderEditor.jsx';
 import CategorizationEditor from './editors/CategorizationEditor.jsx';
 import DataTetrisEditor from './editors/DataTetrisEditor.jsx';
+import ForumEditor from './editors/ForumEditor.jsx';
 
 export default function ContentEditorModal({
     isOpen,
@@ -134,6 +135,21 @@ export default function ContentEditorModal({
                         setFormData={setFormData}
                     />
                 );
+            case 'forum':
+                return (
+                    <ForumEditor
+                        description={formData.data}
+                        onChangeDescription={(val) => setFormData({ ...formData, data: val })}
+                        postPoints={formData.postPoints}
+                        onChangePostPoints={(val) => setFormData({ ...formData, postPoints: val })}
+                        replyPoints={formData.replyPoints}
+                        onChangeReplyPoints={(val) => setFormData({ ...formData, replyPoints: val })}
+                        maxAwardedPosts={formData.maxAwardedPosts}
+                        onChangeMaxAwardedPosts={(val) => setFormData({ ...formData, maxAwardedPosts: val })}
+                        maxAwardedReplies={formData.maxAwardedReplies}
+                        onChangeMaxAwardedReplies={(val) => setFormData({ ...formData, maxAwardedReplies: val })}
+                    />
+                );
             default:
                 return null;
         }
@@ -207,8 +223,12 @@ export default function ContentEditorModal({
                                 <Shield className="w-4 h-4" /> Obligatoriedad
                             </label>
                             <div
-                                onClick={() => setFormData({ ...formData, is_required: !formData.is_required })}
-                                className="flex items-center justify-between p-3.5 bg-[#0a0d18] rounded-xl border border-white/5 cursor-pointer hover:bg-slate-900 transition-all select-none group"
+                                onClick={() => {
+                                    if (!['text', 'note', 'heading', 'bullets'].includes(formData.content_type)) {
+                                        setFormData({ ...formData, is_required: !formData.is_required });
+                                    }
+                                }}
+                                className={`flex items-center justify-between p-3.5 bg-[#0a0d18] rounded-xl border border-white/5 select-none group ${['text', 'note', 'heading', 'bullets'].includes(formData.content_type) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-slate-900 transition-all'}`}
                             >
                                 <span className={`text-[10px] font-bold uppercase transition-colors ${formData.is_required ? 'text-red-400' : 'text-gray-500'}`}>Es obligatorio</span>
                                 <div className={`relative w-9 h-5 rounded-full transition-colors duration-200 outline-none ${formData.is_required ? 'bg-red-500' : 'bg-slate-800'}`}>
