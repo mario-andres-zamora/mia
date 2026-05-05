@@ -6,6 +6,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useAuthStore } from '../../../../store/authStore';
 import { useSoundStore } from '../../../../store/soundStore';
+import { linkify } from '../../../../utils/textUtils';
 import CyberCat from '../../../CyberCat';
 
 export default function ForumPost({
@@ -113,7 +114,7 @@ export default function ForumPost({
 
                 {/* Message Body */}
                 <div className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap break-words">
-                    {post.message?.trim()}
+                    {linkify(post.message?.trim())}
                 </div>
 
                 {/* Footer / Reply Button */}
