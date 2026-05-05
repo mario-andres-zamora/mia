@@ -185,7 +185,7 @@ class UserService {
 
         const statsWithRank = {
             points: currentPoints,
-            level: `Nivel ${currentLevelIdx + 1}: ${stats?.level || currentLevel.name}`,
+            level: `Nivel ${currentLevelIdx + 1}: ${currentLevel.name}`,
             next_level_name: nextLevel ? `Nivel ${currentLevelIdx + 2}: ${nextLevel.name}` : 'Nivel Máximo',
             next_level_min_points: nextLevel ? Number(nextLevel.minPoints ?? nextLevel.min_points ?? 0) : null,
             points_for_next: pointsForNext,

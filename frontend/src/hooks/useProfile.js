@@ -33,8 +33,8 @@ export function useProfile() {
                 // para que el Navbar y otros componentes reflejen los puntos reales
                 if (!userId || parseInt(userId) === authUser?.id) {
                     useAuthStore.getState().updateUser({
-                        points: response.data.user?.points || response.data.points,
-                        level: response.data.user?.level || response.data.level
+                        points: response.data.stats?.points ?? response.data.user?.points,
+                        level: response.data.stats?.level ?? response.data.user?.level
                     });
                 }
             }

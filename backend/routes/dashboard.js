@@ -194,11 +194,15 @@ router.get('/', authMiddleware, cacheMiddleware(300, true), async (req, res) => 
             [userId]
         );
 
+        // 5. Formatear nivel para consistencia UI
+        const { calculateLevel } = require('../utils/gamification');
+        const levelInfo = await calculateLevel(userPoints?.points || 0);
+
         const stats = {
             completedModules: completedModulesCount,
             totalModules: totalModulesCount,
             points: userPoints?.points || 0,
-            level: userPoints?.level || 'Novato',
+            level: `Nivel ${levelInfo.rank}: ${levelInfo.name}`,
             rank: institutionalRank,
             departmentRank: departmentalRank,
             totalInDepartment,
@@ -210,6 +214,7 @@ router.get('/', authMiddleware, cacheMiddleware(300, true), async (req, res) => 
                 : 0
         };
 
+        res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
         res.json({
             success: true,
             stats,

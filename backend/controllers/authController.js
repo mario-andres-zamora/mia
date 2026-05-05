@@ -22,6 +22,8 @@ exports.googleAuth = catchAsync(async (req, res, next) => {
 
     // Obtener estadísticas complementarias
     const stats = await authService.getUserStats(user.id);
+    const { calculateLevel } = require('../utils/gamification');
+    const levelInfo = await calculateLevel(stats?.points || 0);
 
     res.json({
         success: true,
@@ -37,7 +39,7 @@ exports.googleAuth = catchAsync(async (req, res, next) => {
             is_active: !!user.is_active,
             profilePicture: user.profile_picture,
             points: stats?.points || 0,
-            level: stats?.level || 'Novato',
+            level: `Nivel ${levelInfo.rank}: ${levelInfo.name}`,
             stats: stats || { completed_lessons: 0 }
         }
     });
@@ -71,6 +73,11 @@ exports.verifySession = catchAsync(async (req, res, next) => {
         return next(new AppError('Usuario no válido o desactivado', 401));
     }
 
+    // Calcular nivel formateado para consistencia con el perfil
+    const { calculateLevel } = require('../utils/gamification');
+    const levelInfo = await calculateLevel(user.points || 0);
+
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     res.json({
         valid: true,
         user: {
@@ -82,7 +89,7 @@ exports.verifySession = catchAsync(async (req, res, next) => {
             role: user.role,
             is_active: !!user.is_active,
             points: user.points || 0,
-            level: user.level || 'Novato'
+            level: `Nivel ${levelInfo.rank}: ${levelInfo.name}`
         }
     });
 });
