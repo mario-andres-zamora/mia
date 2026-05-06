@@ -3,7 +3,7 @@ const router = express.Router();
 
 const logger = require('../config/logger');
 const db = require('../config/database');
-const { authMiddleware, adminMiddleware } = require('../middleware/auth');
+const { authMiddleware, adminMiddleware, analystMiddleware } = require('../middleware/auth');
 const { syncUserLevel, getSystemSettings } = require('../utils/gamification');
 const { clearCache } = require('../middleware/cache');
 
@@ -180,7 +180,7 @@ router.post('/:id/submit', authMiddleware, async (req, res) => {
  * @desc    Obtener todas las encuestas con estadísticas de respuestas
  * @access  Private/Admin
  */
-router.get('/', authMiddleware, adminMiddleware, async (req, res) => {
+router.get('/', authMiddleware, analystMiddleware, async (req, res) => {
     try {
         const surveys = await db.query(`
             SELECT 
@@ -342,7 +342,7 @@ router.delete('/questions/:questionId', authMiddleware, adminMiddleware, async (
  * @desc    Obtener respuestas de texto paginadas para una pregunta específica con búsqueda
  * @access  Private/Admin
  */
-router.get('/questions/:questionId/text-answers', authMiddleware, adminMiddleware, async (req, res) => {
+router.get('/questions/:questionId/text-answers', authMiddleware, analystMiddleware, async (req, res) => {
     try {
         const { questionId } = req.params;
         const page = parseInt(req.query.page) || 1;
@@ -549,7 +549,7 @@ async function handleExport(req, res) {
 /**
  * @route   GET /api/surveys/lesson/:lessonId/analytics
  */
-router.get('/lesson/:lessonId/analytics', authMiddleware, adminMiddleware, async (req, res) => {
+router.get('/lesson/:lessonId/analytics', authMiddleware, analystMiddleware, async (req, res) => {
     try {
         const lessonId = req.params.lessonId;
         const [survey] = await db.query('SELECT id FROM surveys WHERE lesson_id = ? LIMIT 1', [lessonId]);
@@ -577,7 +577,7 @@ router.get('/lesson/:lessonId/analytics', authMiddleware, adminMiddleware, async
 /**
  * @route   GET /api/surveys/lesson/:lessonId/export
  */
-router.get('/lesson/:lessonId/export', authMiddleware, adminMiddleware, async (req, res) => {
+router.get('/lesson/:lessonId/export', authMiddleware, analystMiddleware, async (req, res) => {
     try {
         const lessonId = req.params.lessonId;
         const [survey] = await db.query('SELECT id FROM surveys WHERE lesson_id = ? LIMIT 1', [lessonId]);
@@ -602,7 +602,7 @@ router.get('/lesson/:lessonId/export', authMiddleware, adminMiddleware, async (r
 /**
  * @route   GET /api/surveys/:id/analytics
  */
-router.get('/:id/analytics', authMiddleware, adminMiddleware, async (req, res) => {
+router.get('/:id/analytics', authMiddleware, analystMiddleware, async (req, res) => {
     try {
         await handleAnalytics(req, res);
     } catch (error) {
@@ -613,7 +613,7 @@ router.get('/:id/analytics', authMiddleware, adminMiddleware, async (req, res) =
 /**
  * @route   GET /api/surveys/:id/export
  */
-router.get('/:id/export', authMiddleware, adminMiddleware, async (req, res) => {
+router.get('/:id/export', authMiddleware, analystMiddleware, async (req, res) => {
     try {
         await handleExport(req, res);
     } catch (error) {

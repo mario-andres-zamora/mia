@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const lessonContentController = require('../controllers/lessonContentController');
-const { authMiddleware, adminMiddleware } = require('../middleware/auth');
+const { authMiddleware, adminMiddleware, analystMiddleware } = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -61,9 +61,9 @@ router.get('/assignments/all-submissions', authMiddleware, adminMiddleware, less
 /**
  * @route   GET /api/content/interactions/all
  * @desc    Get all interactive responses from lessons
- * @access  Private/Admin
+ * @access  Private/Analyst
  */
-router.get('/interactions/all', authMiddleware, adminMiddleware, lessonContentController.getAllInteractions);
+router.get('/interactions/all', authMiddleware, analystMiddleware, lessonContentController.getAllInteractions);
 
 /**
  * @route   GET /api/content/assignment/:contentId/submissions
@@ -110,8 +110,9 @@ router.post('/reorder', authMiddleware, adminMiddleware, lessonContentController
 /**
  * @route   GET /api/content/interactions/stats
  * @desc    Get aggregated statistics for multiple choice questions
- * @access  Private/Admin
+ * @access  Private/Analyst
  */
-router.get('/interactions/stats', authMiddleware, adminMiddleware, lessonContentController.getInteractionStats);
+router.get('/interactions/stats', authMiddleware, analystMiddleware, lessonContentController.getInteractionStats);
+
 
 module.exports = router;

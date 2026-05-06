@@ -3,7 +3,7 @@ const router = express.Router();
 
 const logger = require('../config/logger');
 const db = require('../config/database');
-const { authMiddleware, adminMiddleware } = require('../middleware/auth');
+const { authMiddleware, adminMiddleware, analystMiddleware } = require('../middleware/auth');
 const { cacheMiddleware } = require('../middleware/cache');
 const badgeService = require('../services/badgeService');
 
@@ -231,7 +231,7 @@ router.get('/', authMiddleware, cacheMiddleware(300, true), async (req, res) => 
  * @desc    Obtener estadísticas globales para el panel de administración
  * @access  Private/Admin
  */
-router.get('/admin-stats', authMiddleware, adminMiddleware, async (req, res) => {
+router.get('/admin-stats', authMiddleware, analystMiddleware, async (req, res) => {
     try {
         const [userStats] = await db.query('SELECT COUNT(*) as count FROM users');
         const [activeUserStats] = await db.query('SELECT COUNT(*) as count FROM users WHERE is_active = TRUE');

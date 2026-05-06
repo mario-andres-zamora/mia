@@ -3,7 +3,7 @@ const router = express.Router();
 
 const logger = require('../config/logger');
 const db = require('../config/database');
-const { authMiddleware, adminMiddleware } = require('../middleware/auth');
+const { authMiddleware, adminMiddleware, analystMiddleware } = require('../middleware/auth');
 const redisClient = require('../config/redis');
 
 /**
@@ -231,7 +231,7 @@ setInterval(refreshReportsCache, 2 * 60 * 60 * 1000);
  * @desc    Forzar actualización del caché de reportes
  * @access  Private/Admin
  */
-router.post('/compliance/refresh', authMiddleware, adminMiddleware, async (req, res) => {
+router.post('/compliance/refresh', authMiddleware, analystMiddleware, async (req, res) => {
     try {
         const reportData = await refreshReportsCache();
         if (!reportData) {
@@ -253,7 +253,7 @@ setInterval(refreshReportsCache, 2 * 60 * 60 * 1000);
  * @desc    Obtener reporte de cumplimiento (Desde caché de Redis)
  * @access  Private/Admin
  */
-router.get('/compliance', authMiddleware, adminMiddleware, async (req, res) => {
+router.get('/compliance', authMiddleware, analystMiddleware, async (req, res) => {
     try {
         let reportData = null;
 
@@ -290,7 +290,7 @@ router.get('/compliance', authMiddleware, adminMiddleware, async (req, res) => {
  * @desc    Obtener tendencia de finalizaciones por tiempo
  * @access  Private/Admin
  */
-router.get('/completion-trend', authMiddleware, adminMiddleware, async (req, res) => {
+router.get('/completion-trend', authMiddleware, analystMiddleware, async (req, res) => {
     try {
         const { module_id, interval = 'weekly', startDate, endDate } = req.query;
 
@@ -352,7 +352,7 @@ router.get('/completion-trend', authMiddleware, adminMiddleware, async (req, res
  * @desc    Obtener cumplimiento por departamento para un módulo específico
  * @access  Private/Admin
  */
-router.get('/department-compliance', authMiddleware, adminMiddleware, async (req, res) => {
+router.get('/department-compliance', authMiddleware, analystMiddleware, async (req, res) => {
     try {
         const { module_id } = req.query;
 
@@ -390,7 +390,7 @@ router.get('/department-compliance', authMiddleware, adminMiddleware, async (req
  * @desc    Obtener listado detallado de personas que terminaron un módulo
  * @access  Private/Admin
  */
-router.get('/module-completions-detail', authMiddleware, adminMiddleware, async (req, res) => {
+router.get('/module-completions-detail', authMiddleware, analystMiddleware, async (req, res) => {
     try {
         const { module_id } = req.query;
 
@@ -427,7 +427,7 @@ router.get('/module-completions-detail', authMiddleware, adminMiddleware, async 
  * @desc    Enviar correos de invitación a funcionarios que no han ingresado a la plataforma
  * @access  Private/Admin
  */
-router.post('/remind-unregistered', authMiddleware, adminMiddleware, async (req, res) => {
+router.post('/remind-unregistered', authMiddleware, analystMiddleware, async (req, res) => {
     try {
         const { department } = req.body;
 
@@ -483,7 +483,7 @@ router.post('/remind-unregistered', authMiddleware, adminMiddleware, async (req,
  * @desc    Enviar correos de recordatorio a todos los funcionarios con avance < 20%
  * @access  Private/Admin
  */
-router.post('/remind-at-risk', authMiddleware, adminMiddleware, async (req, res) => {
+router.post('/remind-at-risk', authMiddleware, analystMiddleware, async (req, res) => {
     try {
         const { users } = req.body;
 
@@ -523,7 +523,7 @@ router.post('/remind-at-risk', authMiddleware, adminMiddleware, async (req, res)
  * @desc    Enviar correo de recordatorio individual a un funcionario con avance < 20%
  * @access  Private/Admin
  */
-router.post('/remind-individual-at-risk', authMiddleware, adminMiddleware, async (req, res) => {
+router.post('/remind-individual-at-risk', authMiddleware, analystMiddleware, async (req, res) => {
     try {
         const { email, first_name, last_name, progress } = req.body;
 
