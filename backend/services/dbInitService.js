@@ -109,6 +109,12 @@ const initializeDatabase = async () => {
             ALTER TABLE gamification_activities MODIFY COLUMN activity_type VARCHAR(50);
         `);
 
+        // Asegurar que el rol 'analyst' exista en el ENUM de roles de usuario
+        await db.query(`
+            ALTER TABLE users MODIFY COLUMN role ENUM('student', 'instructor', 'admin', 'analyst') DEFAULT 'student';
+        `);
+
+
         // Tabla de upvotes para foros
         await db.query(`
             CREATE TABLE IF NOT EXISTS forum_post_upvotes (

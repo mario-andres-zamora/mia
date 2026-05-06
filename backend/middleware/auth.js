@@ -75,8 +75,23 @@ const instructorMiddleware = (req, res, next) => {
     next();
 };
 
+/**
+ * Middleware para verificar rol de analista o admin (reportes)
+ */
+const analystMiddleware = (req, res, next) => {
+    if (!req.user || (req.user.role !== 'analyst' && req.user.role !== 'admin')) {
+        return res.status(403).json({ 
+            error: 'Acceso denegado',
+            message: 'Se requieren permisos de analista o administrador.'
+        });
+    }
+    next();
+};
+
 module.exports = {
     authMiddleware,
     adminMiddleware,
-    instructorMiddleware
+    instructorMiddleware,
+    analystMiddleware
 };
+

@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS users (
     profile_picture TEXT COMMENT 'URL de foto de perfil de Google',
     department VARCHAR(100),
     position VARCHAR(100),
-    role ENUM('student', 'instructor', 'admin') DEFAULT 'student',
+    role ENUM('student', 'instructor', 'admin', 'analyst') DEFAULT 'student',
     is_active BOOLEAN DEFAULT TRUE,
     last_login DATETIME,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
