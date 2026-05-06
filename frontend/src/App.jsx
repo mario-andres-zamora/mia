@@ -70,11 +70,19 @@ function App() {
               <Route path="/profile" element={<Profile />} />
               <Route path="/leaderboard" element={<Leaderboard />} />
 
-              {/* Rutas de administrador protegidas */}
-              <Route element={<AdminRoute />}>
+              {/* Rutas de administrador compartidas con Analista */}
+              <Route element={<AdminRoute roles={['admin', 'analyst']} />}>
                 <Route path="/admin" element={<AdminPanel />} />
-                <Route path="/admin/modules" element={<AdminModules />} />
                 <Route path="/admin/reports" element={<Reports />} />
+                <Route path="/admin/surveys" element={<AdminSurveys />} />
+                <Route path="/admin/surveys/:id" element={<AdminSurveyDetail />} />
+                <Route path="/admin/interactions" element={<AdminInteractions />} />
+              </Route>
+
+
+              {/* Rutas exclusivas de administrador */}
+              <Route element={<AdminRoute roles={['admin']} />}>
+                <Route path="/admin/modules" element={<AdminModules />} />
                 <Route path="/admin/users" element={<AdminUsers />} />
                 <Route path="/admin/users/:userId/profile" element={<Profile />} />
                 <Route path="/admin/directory" element={<AdminDirectory />} />
@@ -83,12 +91,11 @@ function App() {
                 <Route path="/admin/settings" element={<AdminSettings />} />
                 <Route path="/admin/assignments" element={<AdminAssignments />} />
                 <Route path="/admin/phishing" element={<AdminPhishing />} />
-                <Route path="/admin/interactions" element={<AdminInteractions />} />
-                <Route path="/admin/surveys" element={<AdminSurveys />} />
-                 <Route path="/admin/surveys/:id" element={<AdminSurveyDetail />} />
-                 <Route path="/admin/announcements" element={<AdminAnnouncements />} />
-                 <Route path="/admin/lessons/:id/editor" element={<AdminLessonEditor />} />
+                <Route path="/admin/announcements" element={<AdminAnnouncements />} />
+                <Route path="/admin/lessons/:id/editor" element={<AdminLessonEditor />} />
               </Route>
+
+
             </Route>
 
             {/* Rutas protegidas a pantalla completa (sin Layout) */}
