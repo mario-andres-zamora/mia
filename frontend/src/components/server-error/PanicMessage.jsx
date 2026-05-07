@@ -14,11 +14,6 @@ export default function PanicMessage({ onBack }) {
                 />
             </div>
 
-            {/* Big 500 with Glitch Effect */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[60%] opacity-10 pointer-events-none">
-                <span className="text-[15rem] font-black text-white tracking-widest leading-none">500</span>
-            </div>
-
             <div className="space-y-4">
                 <h1 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter">
                     ¡Houston... <span className="text-red-500 font-black">tenemos un lío!</span>

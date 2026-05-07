@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS users (
     profile_picture TEXT COMMENT 'URL de foto de perfil de Google',
     department VARCHAR(100),
     position VARCHAR(100),
-    role ENUM('student', 'instructor', 'admin') DEFAULT 'student',
+    role ENUM('student', 'instructor', 'admin', 'analyst') DEFAULT 'student',
     is_active BOOLEAN DEFAULT TRUE,
     last_login DATETIME,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -116,7 +116,7 @@ CREATE TABLE IF NOT EXISTS quiz_questions (
     id INT AUTO_INCREMENT PRIMARY KEY,
     quiz_id INT NOT NULL,
     question_text TEXT NOT NULL,
-    question_type ENUM('multiple_choice', 'true_false', 'multiple_select', 'mfa_defender') DEFAULT 'multiple_choice',
+    question_type ENUM('multiple_choice', 'true_false', 'multiple_select', 'mfa_defender', 'hack_neighbor', 'data_tetris') DEFAULT 'multiple_choice',
     image_url TEXT,
     points INT DEFAULT 1,
     order_index INT NOT NULL,
@@ -144,7 +144,7 @@ CREATE TABLE IF NOT EXISTS lesson_contents (
     id INT AUTO_INCREMENT PRIMARY KEY,
     lesson_id INT NOT NULL,
     title VARCHAR(255),
-    content_type ENUM('text', 'video', 'image', 'file', 'link', 'quiz', 'survey', 'assignment', 'note', 'heading', 'bullets', 'confirmation', 'interactive_input', 'password_tester', 'multiple_choice', 'mfa_defender') NOT NULL,
+    content_type ENUM('text', 'video', 'image', 'file', 'link', 'quiz', 'survey', 'assignment', 'note', 'heading', 'bullets', 'confirmation', 'interactive_input', 'password_tester', 'multiple_choice', 'mfa_defender', 'hack_neighbor', 'dork_search', 'categorization', 'data_tetris', 'forum', 'terms_trap') NOT NULL,
     data JSON COMMENT 'Almacena contenido HTML, URLs, ID de quiz, config de archivo, etc.',
     order_index INT NOT NULL,
     points INT DEFAULT 0,
@@ -292,7 +292,7 @@ CREATE TABLE IF NOT EXISTS user_badges (
 CREATE TABLE IF NOT EXISTS gamification_activities (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
-    activity_type ENUM('lesson_completed', 'quiz_passed', 'module_completed', 'phishing_reported', 'perfect_score', 'early_completion') NOT NULL,
+    activity_type ENUM('lesson_completed', 'quiz_passed', 'module_completed', 'phishing_reported', 'perfect_score', 'early_completion', 'task_approved', 'badge_earned', 'forum_post', 'forum_reply', 'terms_trap_accepted') NOT NULL,
     points_earned INT NOT NULL,
     reference_id INT,
     description VARCHAR(255),
@@ -353,6 +353,29 @@ CREATE TABLE IF NOT EXISTS notifications (
     INDEX idx_user_id (user_id),
     INDEX idx_is_read (is_read),
     INDEX idx_created_at (created_at DESC)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tabla de anuncios del sistema
+CREATE TABLE IF NOT EXISTS system_announcements (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    target_module_id INT DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (target_module_id) REFERENCES modules(id) ON DELETE SET NULL,
+    INDEX idx_is_active (is_active)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tabla de descartes de anuncios por usuario
+CREATE TABLE IF NOT EXISTS user_announcements_dismissed (
+    user_id INT NOT NULL,
+    announcement_id INT NOT NULL,
+    dismissed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (user_id, announcement_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (announcement_id) REFERENCES system_announcements(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Tabla de directorio maestro de funcionarios

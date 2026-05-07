@@ -1,14 +1,23 @@
 import React from 'react';
-import { Plus, BookOpen, CheckCircle2, EyeOff, Search, Filter } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, BookOpen, CheckCircle2, EyeOff, Search, Filter, ArrowLeft } from 'lucide-react';
 
 export default function AdminModulesHeader({ totalModules, publishedModules, draftModules, onNewModule, searchTerm, onSearchChange }) {
+    const navigate = useNavigate();
+
     return (
         <div className="space-y-8 animate-fade-in">
             {/* Title and Top Action Row */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
-                <div className="space-y-2">
+                <div className="space-y-2 text-left">
+                    <button
+                        onClick={() => navigate('/admin')}
+                        className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-[10px] font-black uppercase tracking-widest mb-2"
+                    >
+                        <ArrowLeft className="w-4 h-4" /> Volver al Panel Admin
+                    </button>
                     <h1 className="text-4xl font-bold text-white tracking-tight">Gestión de Módulos</h1>
-                    <p className="text-gray-400 text-sm font-medium">Administra el contenido educativo de CGR Segur@</p>
+                    <p className="text-gray-400 text-sm font-medium">Administra los Módulos del curso</p>
                 </div>
                 <button
                     onClick={onNewModule}

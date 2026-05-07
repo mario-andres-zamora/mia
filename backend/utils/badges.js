@@ -63,15 +63,12 @@ async function awardBadge(userId, badgeId, shouldNotify = false) {
                 }
             }
 
-            // Sincronizar con Redis para ranking (obtener puntos totales primero)
+            // Sincronizar Nivel y Ranking (CRITICAL: Asegura que el nombre del nivel en DB esté actualizado)
             try {
-                const [newPoints] = await db.query('SELECT points FROM user_points WHERE user_id = ?', [userId]);
-                if (newPoints) {
-                    const { updateUserScore } = require('./gamification');
-                    await updateUserScore(userId, newPoints.points);
-                }
+                const { syncUserLevel } = require('./gamification');
+                await syncUserLevel(userId);
             } catch (syncError) {
-                logger.error('Error sincronizando puntos tras insignia:', syncError);
+                logger.error('Error sincronizando nivel tras insignia:', syncError);
             }
 
             // --- INVALIDAR CACHÉ ---
@@ -269,6 +266,166 @@ async function checkModuleOneBadge(userId, moduleId) {
 }
 
 /**
+ * Lógica para la insignia "Arcade Replay"
+ * (Se gana al completar un repaso con éxito)
+ */
+async function checkReplayBadge(userId) {
+    try {
+        const [badge] = await db.query("SELECT id FROM badges WHERE name = 'Arcade Replay' LIMIT 1");
+        if (badge) {
+            return await awardBadge(userId, badge.id);
+        }
+        return null;
+    } catch (error) {
+        logger.error(`Error en checkReplayBadge para usuario ${userId}:`, error);
+        return null;
+    }
+}
+
+/**
+ * Lógica para la insignia "Combo x5"
+ * (5 días seguidos entrando)
+ */
+async function checkComboX5Badge(userId) {
+    try {
+        // 1. Obtener datos de racha del usuario
+        const [user] = await db.query('SELECT login_streak, last_streak_date FROM users WHERE id = ?', [userId]);
+        if (!user) return null;
+
+        const today = new Date().toISOString().split('T')[0];
+        
+        // Manejar el caso de last_streak_date que viene de la DB
+        let lastDate = null;
+        if (user.last_streak_date) {
+            const d = new Date(user.last_streak_date);
+            lastDate = d.toISOString().split('T')[0];
+        }
+
+        if (lastDate === today) {
+            // Ya contó la racha para hoy
+            return null;
+        }
+
+        let newStreak = 1;
+        if (lastDate) {
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+            if (lastDate === yesterdayStr) {
+                newStreak = (user.login_streak || 0) + 1;
+            }
+        }
+
+        // 2. Actualizar racha en DB
+        await db.query('UPDATE users SET login_streak = ?, last_streak_date = ? WHERE id = ?', [newStreak, today, userId]);
+
+        // 3. Evaluar insignia
+        if (newStreak >= 5) {
+            const [badge] = await db.query("SELECT id FROM badges WHERE name = 'Combo x5' LIMIT 1");
+            if (badge) {
+                return await awardBadge(userId, badge.id);
+            }
+        }
+        return null;
+    } catch (error) {
+        logger.error(`Error en checkComboX5Badge para usuario ${userId}:`, error);
+        return null;
+    }
+}
+
+/**
+ * Lógica para la insignia "Equipo Élite: Módulo X"
+ * Se otorga masivamente a un área cuando TODOS sus integrantes completan un módulo con certificado.
+ */
+async function checkEliteTeamBadge(userId, moduleId) {
+    try {
+        // 1. Obtener el área (departamento) del usuario actual
+        const [user] = await db.query('SELECT department FROM users WHERE id = ?', [userId]);
+        if (!user || !user.department) return null;
+        
+        const area = user.department;
+
+        // 2. Obtener el número del módulo
+        const [moduleData] = await db.query('SELECT module_number FROM modules WHERE id = ?', [moduleId]);
+        if (!moduleData) return null;
+        
+        const modNum = moduleData.module_number;
+
+        // 3. Contar usuarios activos en el área
+        const [areaUsers] = await db.query(
+            'SELECT COUNT(*) as total FROM users WHERE department = ? AND is_active = TRUE',
+            [area]
+        );
+        
+        if (areaUsers.total === 0) return null;
+
+        // 4. Contar cuántos han completado este módulo en el área
+        const [completions] = await db.query(
+            `SELECT COUNT(DISTINCT ga.user_id) as completed_count 
+             FROM gamification_activities ga
+             JOIN users u ON ga.user_id = u.id
+             WHERE ga.activity_type = 'module_completed' 
+             AND ga.reference_id = ? 
+             AND u.department = ?
+             AND u.is_active = TRUE`,
+            [moduleId, area]
+        );
+
+        // 5. Verificar si el equipo está completo (100%)
+        if (completions.completed_count >= areaUsers.total) {
+            logger.info(`¡Sincronización de Equipo Élite! Área: ${area}, Módulo: ${modNum}`);
+            
+            const badgeName = `Equipo Élite: Módulo ${modNum}`;
+            
+            // Buscar si ya existe la versión específica
+            let [badge] = await db.query('SELECT id FROM badges WHERE name = ?', [badgeName]);
+            
+            if (!badge) {
+                // Crear desde la plantilla
+                const [template] = await db.query("SELECT * FROM badges WHERE name = 'Equipo Élite: Módulo X' LIMIT 1");
+                if (template) {
+                    const result = await db.query(
+                        'INSERT INTO badges (name, description, icon_name, image_url, criteria_type, criteria_value, points) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                        [
+                            badgeName, 
+                            template.description.replace('módulo con éxito', `módulo ${modNum} con éxito`), 
+                            template.icon_name, 
+                            template.image_url, 
+                            'manual', 
+                            moduleId, 
+                            template.points || 15
+                        ]
+                    );
+                    badge = { id: result.insertId };
+                }
+            }
+
+            if (badge) {
+                // 6. Asignación masiva a todo el departamento
+                const usersToAward = await db.query('SELECT id FROM users WHERE department = ? AND is_active = TRUE', [area]);
+                
+                const awardedBadges = [];
+                for (const u of usersToAward) {
+                    const res = await awardBadge(u.id, badge.id, true);
+                    if (res && res.awarded) {
+                        awardedBadges.push(res.badge);
+                    }
+                }
+                
+                // Retornar información para el feedback del usuario actual
+                return { awarded: awardedBadges.length > 0, badges: awardedBadges };
+            }
+        }
+        
+        return null;
+    } catch (error) {
+        logger.error(`Error en checkEliteTeamBadge para usuario ${userId}:`, error);
+        return null;
+    }
+}
+
+/**
  * Revisa todas las insignias automáticas para un usuario.
  * @returns Un objeto con 'awarded' (boolean) y 'badges' (array de insignias otorgadas)
  */
@@ -296,12 +453,29 @@ async function checkAllBadges(userId, extraData = {}) {
             // Módulo 1: Un gran poder...
             const mod1 = await checkModuleOneBadge(userId, extraData.moduleId);
             if (mod1 && mod1.awarded) awardedBadges.push(mod1.badge);
+
+            // Equipo Élite (Grupal)
+            const elite = await checkEliteTeamBadge(userId, extraData.moduleId);
+            if (elite && elite.awarded) {
+                elite.badges.forEach(b => {
+                    // Solo añadir a la lista de retorno si no está ya (evitar duplicados visuales)
+                    if (!awardedBadges.find(existing => existing.id === b.id)) {
+                        awardedBadges.push(b);
+                    }
+                });
+            }
         }
 
         // 4. Inicio de seguridad (al entrar a un módulo > 0)
         if (extraData.moduleId) {
             const start = await checkFirstModuleBadge(userId, extraData.moduleId);
             if (start && start.awarded) awardedBadges.push(start.badge);
+        }
+
+        // 5. Replay (solo si se pasa un repaso)
+        if (extraData.isReplay && extraData.passed) {
+            const replay = await checkReplayBadge(userId);
+            if (replay && replay.awarded) awardedBadges.push(replay.badge);
         }
 
         return {
@@ -323,5 +497,8 @@ module.exports = {
     checkFirstModuleBadge,
     checkSabanaBadge,
     checkModuleOneBadge,
+    checkReplayBadge,
+    checkComboX5Badge,
+    checkEliteTeamBadge,
     checkAllBadges
 };

@@ -118,6 +118,7 @@ async function seedBadges() {
                 icon_name: 'Shield',
                 image_url: 'enfrentamiento-seguridad.svg',
                 criteria_type: 'manual',
+                criteria_value: null
             },
             {
                 name: 'Enlace con el Operador',
@@ -136,13 +137,40 @@ async function seedBadges() {
                 criteria_type: 'manual',
                 criteria_value: null,
                 points: 50
+            },
+            {
+                name: 'Arcade Replay',
+                description: 'El conocimiento es un músculo que se entrena. Ganada por rejugar los niveles finales de CGR Segura hasta dominar cada mecánica y lograr una ejecución libre de riesgos.',
+                icon_name: 'RotateCcw',
+                image_url: 'arcade-replay.svg',
+                criteria_type: 'manual',
+                criteria_value: null,
+                points: 20
+            },
+            {
+                name: 'Combo x5',
+                description: "Has ingresado a la plataforma durante 5 días consecutivos. Bonus de 'Combo x5' aplicado. Tu compromiso con la misión es total!!!",
+                icon_name: 'Zap',
+                image_url: 'combo-x5.svg',
+                criteria_type: 'manual',
+                criteria_value: null,
+                points: 10
+            },
+            {
+                name: 'Equipo Élite: Módulo X',
+                description: '¡Misión de equipo completada! Cada integrante ha superado el módulo con éxito. Han demostrado que el trabajo en equipo es el mejor "power-up".',
+                icon_name: 'Users',
+                image_url: 'equipo-elite.svg',
+                criteria_type: 'manual',
+                criteria_value: null,
+                points: 15
             }
         ];
 
         for (const badge of badges) {
             // Asignamos 10 puntos por defecto si no está definido en el objeto
             const badgePoints = badge.points || 10;
-            
+
             const existing = await db.query('SELECT id FROM badges WHERE name = ?', [badge.name]);
             if (existing && existing.length > 0) {
                 logger.info(`Actualizando insignia: ${badge.name}`);

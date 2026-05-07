@@ -3,7 +3,7 @@ const router = express.Router();
 
 const logger = require('../config/logger');
 const db = require('../config/database');
-const { authMiddleware, adminMiddleware } = require('../middleware/auth');
+const { authMiddleware, adminMiddleware, analystMiddleware } = require('../middleware/auth');
 const { syncUserLevel, getSystemSettings } = require('../utils/gamification');
 const { clearCache } = require('../middleware/cache');
 
@@ -150,6 +150,8 @@ router.post('/:id/submit', authMiddleware, async (req, res) => {
         // Limpiar caché
         await clearCache(`cache:/api/lessons/*u${userId}*`);
         await clearCache(`cache:/api/dashboard*u${userId}*`);
+        await clearCache(`cache:/api/modules*u${userId}*`);
+        await clearCache('cache:/api/gamification/leaderboard*');
 
         // Sincronizar nivel
         const levelSync = await syncUserLevel(userId);
@@ -178,7 +180,7 @@ router.post('/:id/submit', authMiddleware, async (req, res) => {
  * @desc    Obtener todas las encuestas con estadísticas de respuestas
  * @access  Private/Admin
  */
-router.get('/', authMiddleware, adminMiddleware, async (req, res) => {
+router.get('/', authMiddleware, analystMiddleware, async (req, res) => {
     try {
         const surveys = await db.query(`
             SELECT 
@@ -337,26 +339,32 @@ router.delete('/questions/:questionId', authMiddleware, adminMiddleware, async (
 
 /**
  * @route   GET /api/surveys/questions/:questionId/text-answers
- * @desc    Obtener respuestas de texto paginadas para una pregunta específica
+ * @desc    Obtener respuestas de texto paginadas para una pregunta específica con búsqueda
  * @access  Private/Admin
  */
-router.get('/questions/:questionId/text-answers', authMiddleware, adminMiddleware, async (req, res) => {
+router.get('/questions/:questionId/text-answers', authMiddleware, analystMiddleware, async (req, res) => {
     try {
         const { questionId } = req.params;
         const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 5; // Por defecto 5 para el modal
+        const limit = parseInt(req.query.limit) || 10;
+        const search = req.query.search || '';
         const offset = (page - 1) * limit;
 
-        const [countResult] = await db.query(
-            'SELECT COUNT(*) as total FROM survey_answers WHERE question_id = ? AND answer_text IS NOT NULL AND answer_text != ""',
-            [questionId]
-        );
+        let queryStr = 'SELECT answer_text as text FROM survey_answers WHERE question_id = ? AND answer_text IS NOT NULL AND answer_text != ""';
+        let countQueryStr = 'SELECT COUNT(*) as total FROM survey_answers WHERE question_id = ? AND answer_text IS NOT NULL AND answer_text != ""';
+        const params = [questionId];
+
+        if (search) {
+            queryStr += ' AND answer_text LIKE ?';
+            countQueryStr += ' AND answer_text LIKE ?';
+            params.push(`%${search}%`);
+        }
+
+        const [countResult] = await db.query(countQueryStr, params);
         const total = countResult.total;
 
-        const answers = await db.query(
-            'SELECT answer_text as text FROM survey_answers WHERE question_id = ? AND answer_text IS NOT NULL AND answer_text != "" ORDER BY id DESC LIMIT ? OFFSET ?',
-            [questionId, limit, offset]
-        );
+        queryStr += ' ORDER BY id DESC LIMIT ? OFFSET ?';
+        const answers = await db.query(queryStr, [...params, limit, offset]);
 
         res.json({
             success: true,
@@ -541,7 +549,7 @@ async function handleExport(req, res) {
 /**
  * @route   GET /api/surveys/lesson/:lessonId/analytics
  */
-router.get('/lesson/:lessonId/analytics', authMiddleware, adminMiddleware, async (req, res) => {
+router.get('/lesson/:lessonId/analytics', authMiddleware, analystMiddleware, async (req, res) => {
     try {
         const lessonId = req.params.lessonId;
         const [survey] = await db.query('SELECT id FROM surveys WHERE lesson_id = ? LIMIT 1', [lessonId]);
@@ -569,7 +577,7 @@ router.get('/lesson/:lessonId/analytics', authMiddleware, adminMiddleware, async
 /**
  * @route   GET /api/surveys/lesson/:lessonId/export
  */
-router.get('/lesson/:lessonId/export', authMiddleware, adminMiddleware, async (req, res) => {
+router.get('/lesson/:lessonId/export', authMiddleware, analystMiddleware, async (req, res) => {
     try {
         const lessonId = req.params.lessonId;
         const [survey] = await db.query('SELECT id FROM surveys WHERE lesson_id = ? LIMIT 1', [lessonId]);
@@ -594,7 +602,7 @@ router.get('/lesson/:lessonId/export', authMiddleware, adminMiddleware, async (r
 /**
  * @route   GET /api/surveys/:id/analytics
  */
-router.get('/:id/analytics', authMiddleware, adminMiddleware, async (req, res) => {
+router.get('/:id/analytics', authMiddleware, analystMiddleware, async (req, res) => {
     try {
         await handleAnalytics(req, res);
     } catch (error) {
@@ -605,7 +613,7 @@ router.get('/:id/analytics', authMiddleware, adminMiddleware, async (req, res) =
 /**
  * @route   GET /api/surveys/:id/export
  */
-router.get('/:id/export', authMiddleware, adminMiddleware, async (req, res) => {
+router.get('/:id/export', authMiddleware, analystMiddleware, async (req, res) => {
     try {
         await handleExport(req, res);
     } catch (error) {

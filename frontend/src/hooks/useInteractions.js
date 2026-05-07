@@ -11,7 +11,8 @@ export function useInteractions() {
     const [filters, setFilters] = useState({
         searchTerm: '',
         moduleId: '',
-        lessonId: ''
+        lessonId: '',
+        contentId: ''
     });
 
     const fetchInteractions = async () => {
@@ -35,7 +36,17 @@ export function useInteractions() {
     }, [token]);
 
     const updateFilter = (key, value) => {
-        setFilters(prev => ({ ...prev, [key]: value }));
+        setFilters(prev => {
+            const next = { ...prev, [key]: value };
+            // Reset dependent filters
+            if (key === 'moduleId') {
+                next.lessonId = '';
+                next.contentId = '';
+            } else if (key === 'lessonId') {
+                next.contentId = '';
+            }
+            return next;
+        });
     };
 
     const filteredInteractions = useMemo(() => {
@@ -48,8 +59,9 @@ export function useInteractions() {
             
             const matchesModule = !filters.moduleId || item.module_id === parseInt(filters.moduleId);
             const matchesLesson = !filters.lessonId || item.lesson_id === parseInt(filters.lessonId);
+            const matchesContent = !filters.contentId || item.content_id === parseInt(filters.contentId);
 
-            return matchesSearch && matchesModule && matchesLesson;
+            return matchesSearch && matchesModule && matchesLesson && matchesContent;
         });
     }, [interactions, filters]);
 
@@ -71,6 +83,18 @@ export function useInteractions() {
         return Object.entries(lessons).map(([id, title]) => ({ id, title }));
     }, [interactions, filters.moduleId]);
 
+    const uniqueContents = useMemo(() => {
+        const contents = {};
+        interactions.forEach(item => {
+            if (!filters.lessonId || item.lesson_id === parseInt(filters.lessonId)) {
+                if (!filters.moduleId || item.module_id === parseInt(filters.moduleId)) {
+                    contents[item.content_id] = item.content_title;
+                }
+            }
+        });
+        return Object.entries(contents).map(([id, title]) => ({ id, title }));
+    }, [interactions, filters.moduleId, filters.lessonId]);
+
     return {
         interactions: filteredInteractions,
         loading,
@@ -78,6 +102,7 @@ export function useInteractions() {
         updateFilter,
         uniqueModules,
         uniqueLessons,
+        uniqueContents,
         refresh: fetchInteractions
     };
 }

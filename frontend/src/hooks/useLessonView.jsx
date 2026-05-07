@@ -59,7 +59,9 @@ export function useLessonView() {
                 fetchedContents.forEach(item => {
                     if (item.isCompleted) {
                         if (item.content_type === 'video') watched.add(item.id);
-                        if (TRACEABLE_CONTENT_TYPES.includes(item.content_type) && item.content_type !== 'video') visited.add(item.id);
+                        if ((TRACEABLE_CONTENT_TYPES.includes(item.content_type) || item.content_type === 'terms_trap') && item.content_type !== 'video') {
+                            visited.add(item.id);
+                        }
                     }
                 });
                 setWatchedVideos(watched);

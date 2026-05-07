@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import PremiumSelect from '../components/PremiumSelect';
 import ConfirmModal from '../components/ConfirmModal';
 import { TableSkeleton } from '../components/skeletons/TableSkeleton';
 import Skeleton from '../components/Skeleton';
@@ -94,7 +95,8 @@ export default function AdminDirectory() {
                 sortConfig={sortConfig}
                 onSort={actions.sort}
                 onEdit={(person) => { setEditingRecord({ ...person }); modals.edit.setOpen(true); }}
-                onDelete={(email) => { modals.delete.setRecord(email); modals.delete.setOpen(true); }}
+                onDelete={(person) => { modals.delete.setRecord(person); modals.delete.setOpen(true); }}
+                onSendInvite={actions.sendInvite}
             />
 
             {/* Pagination Controls */}
@@ -112,7 +114,7 @@ export default function AdminDirectory() {
             {/* Add Record Modal */}
             {modals.add.isOpen && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in">
-                    <div className="card w-full max-w-lg !p-0 overflow-hidden border-white/10 shadow-[0_0_100px_rgba(249,115,22,0.15)] text-left">
+                    <div className="card w-full max-w-2xl !p-0 overflow-hidden border-white/10 shadow-[0_0_100px_rgba(249,115,22,0.15)] text-left">
                         <div className="p-10 border-b border-white/5 bg-white/5">
                             <h2 className="text-xl font-black text-white uppercase tracking-tight">Agregar Funcionario</h2>
                             <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest mt-2 px-1">Ingresa los datos del nuevo funcionario autorizado.</p>
@@ -128,11 +130,13 @@ export default function AdminDirectory() {
                             </div>
                             <div className="grid grid-cols-2 gap-6">
                                 <div className="space-y-3">
-                                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-1 block">Unidad Administrativa</label>
-                                    <select value={newRecord.department} onChange={(e) => setNewRecord({ ...newRecord, department: e.target.value })} className="w-full bg-slate-950 border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-secondary-500 transition-all font-bold appearance-none">
-                                        <option value="">Seleccionar...</option>
-                                        {departments.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
-                                    </select>
+                                    <PremiumSelect
+                                        label="Unidad Administrativa"
+                                        options={departments.map(d => ({ value: d.name, label: d.name }))}
+                                        value={newRecord.department}
+                                        onChange={(val) => setNewRecord({ ...newRecord, department: val })}
+                                        placeholder="Seleccionar..."
+                                    />
                                 </div>
                                 <div className="space-y-3">
                                     <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-1 block">Cargo</label>
@@ -151,23 +155,29 @@ export default function AdminDirectory() {
             {/* Edit Record Modal */}
             {modals.edit.isOpen && editingRecord && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in text-left">
-                    <div className="card w-full max-w-lg !p-0 overflow-hidden border-white/10 shadow-[0_0_100px_rgba(56,74,153,0.15)]">
+                    <div className="card w-full max-w-2xl !p-0 overflow-hidden border-white/10 shadow-[0_0_100px_rgba(56,74,153,0.15)]">
                         <div className="p-10 border-b border-white/5 bg-white/5">
                             <h2 className="text-xl font-black text-white uppercase tracking-tight">Editar Registro</h2>
                             <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest mt-2 px-1">Actualizando datos de <span className="text-primary-400">{editingRecord.email}</span></p>
                         </div>
                         <div className="p-10 space-y-8">
                             <div className="space-y-3">
+                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-1 block">Email Institucional</label>
+                                <input type="email" value={editingRecord.email} onChange={(e) => setEditingRecord({ ...editingRecord, email: e.target.value })} className="w-full bg-slate-950 border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-primary-500 transition-all font-bold" />
+                            </div>
+                            <div className="space-y-3">
                                 <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-1 block">Nombre Completo</label>
                                 <input type="text" value={editingRecord.full_name} onChange={(e) => setEditingRecord({ ...editingRecord, full_name: e.target.value })} className="w-full bg-slate-950 border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-primary-500 transition-all font-bold" />
                             </div>
                             <div className="grid grid-cols-2 gap-6">
                                 <div className="space-y-3">
-                                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-1 block">Unidad Administrativa</label>
-                                    <select value={editingRecord.department} onChange={(e) => setEditingRecord({ ...editingRecord, department: e.target.value })} className="w-full bg-slate-950 border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-primary-500 transition-all font-bold appearance-none">
-                                        <option value="">Seleccionar...</option>
-                                        {departments.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
-                                    </select>
+                                    <PremiumSelect
+                                        label="Unidad Administrativa"
+                                        options={departments.map(d => ({ value: d.name, label: d.name }))}
+                                        value={editingRecord.department}
+                                        onChange={(val) => setEditingRecord({ ...editingRecord, department: val })}
+                                        placeholder="Seleccionar..."
+                                    />
                                 </div>
                                 <div className="space-y-3">
                                     <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-1 block">Cargo</label>
@@ -189,7 +199,7 @@ export default function AdminDirectory() {
                 onClose={() => modals.delete.setOpen(false)}
                 onConfirm={actions.delete}
                 title="Eliminar Registro"
-                message={`¿Seguro que deseas eliminar a ${modals.delete.record || 'este usuario'} del directorio maestro?`}
+                message={`¿Seguro que deseas eliminar a ${modals.delete.record?.full_name || 'este usuario'} del directorio maestro?`}
                 confirmText="Eliminar permanentemente"
                 isDestructive={true}
             />

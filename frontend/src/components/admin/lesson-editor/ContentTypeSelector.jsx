@@ -13,7 +13,11 @@ import {
     CheckCircle2,
     Lock,
     CheckSquare,
-    Smartphone
+    Smartphone,
+    LayoutGrid,
+    Activity,
+    MessageSquare,
+    ShieldAlert
 } from 'lucide-react';
 
 export const CONTENT_TYPES = [
@@ -33,6 +37,10 @@ export const CONTENT_TYPES = [
     { type: 'password_tester', label: 'Password', icon: Lock, color: 'text-pink-400' },
     { type: 'multiple_choice', label: 'Opciones', icon: CheckSquare, color: 'text-orange-400' },
     { type: 'mfa_defender', label: 'MFA', icon: Smartphone, color: 'text-indigo-500' },
+    { type: 'categorization', label: 'Categorizar', icon: LayoutGrid, color: 'text-emerald-400' },
+    { type: 'data_tetris', label: 'Data Tetris', icon: Activity, color: 'text-primary-400' },
+    { type: 'forum', label: 'Foro', icon: MessageSquare, color: 'text-teal-400' },
+    { type: 'terms_trap', label: 'Términos', icon: ShieldAlert, color: 'text-red-500' },
 ];
 
 export default function ContentTypeSelector({ onSelect }) {

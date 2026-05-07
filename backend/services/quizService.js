@@ -3,6 +3,8 @@ const logger = require('../config/logger');
 const { syncUserLevel, getSystemSettings, checkAndRecordModuleCompletion } = require('../utils/gamification');
 const { checkAllBadges } = require('../utils/badges');
 
+const GAME_QUESTION_TYPES = ['mfa_defender', 'hack_neighbor', 'data_tetris'];
+
 class QuizService {
     async getQuizById(quizId, userId) {
         const [quiz] = await db.query(
@@ -55,41 +57,59 @@ class QuizService {
         let earnedPoints = 0;
         let penaltyApplied = 0;
 
-        if (q.question_type === 'mfa_defender' || q.question_type === 'hack_neighbor') {
+        if (GAME_QUESTION_TYPES.includes(q.question_type)) {
             console.log(`[QuizScore] Scrutinizing ${q.question_type} Q#${q.id}:`, { userAnswer });
+            
             if (typeof userAnswer === 'object' && userAnswer !== null) {
                 isCorrect = userAnswer.success === true || userAnswer.success === 'true';
-                earnedPoints = q.points;
+                
+                let qData = {};
+                try {
+                    qData = typeof q.data === 'string' ? JSON.parse(q.data) : (q.data || {});
+                } catch (e) {
+                    console.error(`[QuizScore] Error parsing question data for Q#${q.id}:`, e);
+                }
 
-                if (isCorrect) {
-                    let qData = {};
-                    try {
-                        qData = typeof q.data === 'string' ? JSON.parse(q.data) : (q.data || {});
-                    } catch (e) {}
-
-                    if (q.question_type === 'hack_neighbor') {
-                        const hintsUsed = parseInt(userAnswer.hintsUsed) || 0;
-                        const penaltyPerHint = parseInt(qData.hint_penalty) || 0;
-                        penaltyApplied = hintsUsed * penaltyPerHint;
-                    } else if (q.question_type === 'mfa_defender') {
-                        const mfaFails = parseInt(userAnswer.mfaFails) || 0;
-                        const failPenalty = parseInt(qData.fail_penalty) || 0;
-                        penaltyApplied = mfaFails * failPenalty;
-                        console.log(`[QuizScore] MFA Penalization: ${mfaFails} fails * ${failPenalty} pts = -${penaltyApplied}`);
-                    }
+                if (q.question_type === 'hack_neighbor') {
+                    const hintsUsed = parseInt(userAnswer.hintsUsed) || 0;
+                    const penaltyPerHint = parseInt(qData.hint_penalty) || 0;
+                    penaltyApplied = hintsUsed * penaltyPerHint;
                     earnedPoints = Math.max(0, q.points - penaltyApplied);
-                    console.log(`[QuizScore] Final Score for Q#${q.id}: ${earnedPoints}/${q.points}`);
+                } else if (q.question_type === 'mfa_defender') {
+                    const mfaFails = parseInt(userAnswer.mfaFails) || 0;
+                    const failPenalty = parseInt(qData.fail_penalty) || 10;
+                    
+                    // Calculamos puntos basados en fallos acumulados
+                    earnedPoints = Math.max(0, q.points - (mfaFails * failPenalty));
+                    
+                    // Si el usuario "perdió" (timeout), aún le damos los puntos que logró salvar 
+                    // ya que ahora no permitimos reintentar en quices.
+                    // Pero isCorrect sigue reflejando si la defensa fue exitosa.
+                } else if (q.question_type === 'data_tetris') {
+                    if (isCorrect) {
+                        const finalScore = parseInt(userAnswer.score) || 0;
+                        const minScore = parseInt(qData.min_score) || 500;
+                        const difficulty = userAnswer.difficulty || qData.difficulty || 'easy';
+                        
+                        let bonusMultiplier = 0;
+                        if (finalScore >= minScore * 3) bonusMultiplier = 1.0; // Leyenda
+                        else if (finalScore >= minScore * 2) bonusMultiplier = 0.5; // Maestro
+                        else if (finalScore >= minScore * 1.5) bonusMultiplier = 0.25; // Experto
+                        
+                        let diffMultiplier = 1.0;
+                        if (difficulty === 'medium') diffMultiplier = 1.2;
+                        else if (difficulty === 'hard') diffMultiplier = 1.5;
+                        
+                        earnedPoints = Math.round((q.points * (1 + bonusMultiplier)) * diffMultiplier);
+                    }
+                } else {
+                    if (isCorrect) earnedPoints = q.points;
                 }
             } else {
                 console.log(`[QuizScore] Answer for Q#${q.id} is NOT an object:`, userAnswer);
                 isCorrect = userAnswer === true || userAnswer === 'true';
                 if (isCorrect) earnedPoints = q.points;
             }
-        }
- else {
-            // Logic handled outside for options as it needs correct_option_id
-            // This helper is mainly for the special types.
-            // But let's make it general if possible.
         }
 
         return { isCorrect, earnedPoints, penaltyApplied };
@@ -124,7 +144,7 @@ class QuizService {
             let earnedPoints = 0;
             let penaltyApplied = 0;
 
-            if (q.question_type === 'mfa_defender' || q.question_type === 'hack_neighbor') {
+            if (GAME_QUESTION_TYPES.includes(q.question_type)) {
                 const scoring = this._calculateQuestionScore(q, userAnswer);
                 isCorrect = scoring.isCorrect;
                 earnedPoints = scoring.earnedPoints;
@@ -134,7 +154,7 @@ class QuizService {
                 if (isCorrect) earnedPoints = q.points;
             }
 
-            if (isCorrect) earnedPointsTotal += earnedPoints;
+            earnedPointsTotal += earnedPoints;
             
             feedback.push({
                 questionId: q.id,
@@ -160,7 +180,7 @@ class QuizService {
     }
 
     async submitQuiz(quizId, userId, data, isAdminView) {
-        const { answers, timeSpent } = data;
+        const { answers, timeSpent, is_replay } = data;
 
         const [quiz] = await db.query('SELECT * FROM quizzes WHERE id = ?', [quizId]);
         if (!quiz) throw new Error('Evaluación no encontrada');
@@ -175,11 +195,13 @@ class QuizService {
             [userId, quizId]
         );
 
-        if (lastAttempt?.passed) {
+        // If it's not a replay and already passed, we return that status
+        if (!is_replay && lastAttempt?.passed) {
             return { alreadyPassed: true, passed: true };
         }
 
-        if (attempts.count >= quiz.max_attempts) {
+        // Only check max attempts if not replaying
+        if (!is_replay && attempts.count >= quiz.max_attempts) {
             throw new Error('Máximo de intentos alcanzado');
         }
 
@@ -203,7 +225,7 @@ class QuizService {
             let earnedPointsForThisQ = 0;
             let penaltyApplied = 0;
 
-            if (q.question_type === 'mfa_defender' || q.question_type === 'hack_neighbor') {
+            if (GAME_QUESTION_TYPES.includes(q.question_type)) {
                 const scoring = this._calculateQuestionScore(q, userAnswer);
                 isCorrect = scoring.isCorrect;
                 earnedPointsForThisQ = scoring.earnedPoints;
@@ -213,7 +235,7 @@ class QuizService {
                 if (isCorrect) earnedPointsForThisQ = q.points;
             }
 
-            if (isCorrect) earnedPoints += earnedPointsForThisQ;
+            earnedPoints += earnedPointsForThisQ;
 
             feedback.push({
                 questionId: q.id,
@@ -228,6 +250,33 @@ class QuizService {
 
         const score = (earnedPoints / totalPoints) * 100;
         const passed = score >= quiz.passing_score;
+
+        // If it's a replay, return results but don't save anything
+        if (is_replay) {
+            let badgeAwarded = null;
+            if (passed) {
+                const badgeCheck = await checkAllBadges(userId, { isReplay: true, passed: true });
+                if (badgeCheck.awarded) {
+                    badgeAwarded = badgeCheck.badge;
+                }
+            }
+
+            return {
+                score,
+                passed,
+                earnedPoints,
+                totalPoints,
+                pointsAwarded: 0,
+                penaltyApplied: 0,
+                feedback,
+                isReplay: true,
+                attemptNumber: attempts.count, // Just informative
+                newBalance: undefined,
+                newLevel: undefined,
+                moduleCompleted: false,
+                badgeAwarded
+            };
+        }
 
         await db.query(
             `INSERT INTO quiz_attempts (user_id, quiz_id, attempt_number, score, passed, time_spent_minutes, started_at, completed_at, answers) 

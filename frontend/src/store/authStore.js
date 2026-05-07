@@ -79,7 +79,7 @@ export const useAuthStore = create(
             verifyToken: async () => {
                 set({ isLoading: true });
                 try {
-                    const response = await axios.get(`${API_URL}/auth/verify`);
+                    const response = await axios.get(`${API_URL}/auth/verify?t=${Date.now()}`);
 
                     if (response.data.valid) {
                         set({

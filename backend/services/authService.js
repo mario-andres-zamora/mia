@@ -78,8 +78,9 @@ class AuthService {
             const result = await db.query(
                 `INSERT INTO users (
                     email, google_id, first_name, last_name, 
-                    profile_picture, role, department, position, is_active, last_login
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, TRUE, NOW())`,
+                    profile_picture, role, department, position, is_active, last_login,
+                    login_streak, last_streak_date
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, TRUE, NOW(), 1, CURDATE())`,
                 [
                     email,
                     googleId,
@@ -115,6 +116,14 @@ class AuthService {
                 'UPDATE users SET last_login = NOW(), profile_picture = ? WHERE id = ?',
                 [picture || user.profile_picture, user.id]
             );
+
+            // Gestionar racha de login
+            try {
+                const { checkComboX5Badge } = require('../utils/badges');
+                await checkComboX5Badge(user.id);
+            } catch (streakError) {
+                logger.error('Error procesando racha de login:', streakError);
+            }
 
             // Recargar datos actualizados
             const updatedUserResults = await db.query('SELECT * FROM users WHERE id = ?', [user.id]);

@@ -9,7 +9,7 @@ class UserService {
      */
     async getAllUsers() {
         return await db.query(
-            `SELECT u.id, u.first_name, u.last_name, u.email, u.role, u.department, u.position, u.is_active, u.created_at, u.last_login,
+            `SELECT u.id, u.first_name, u.last_name, u.email, u.role, u.department, u.position, u.is_active, u.created_at, u.last_login, u.login_streak,
                     up.points, up.level
              FROM users u
              LEFT JOIN user_points up ON u.id = up.user_id
@@ -22,7 +22,7 @@ class UserService {
      */
     async getUserById(userId) {
         const [user] = await db.query(
-            'SELECT id, first_name, last_name, email, role, department, position, is_active FROM users WHERE id = ?',
+            'SELECT id, first_name, last_name, email, role, department, position, is_active, login_streak FROM users WHERE id = ?',
             [userId]
         );
         return user;
@@ -75,7 +75,7 @@ class UserService {
     async getUserProfileData(userId) {
         // 1. Datos básicos
         const [user] = await db.query(
-            `SELECT id, first_name, last_name, email, profile_picture, role, department, position, created_at, is_active 
+            `SELECT id, first_name, last_name, email, profile_picture, role, department, position, created_at, is_active, login_streak 
              FROM users WHERE id = ?`,
             [userId]
         );
@@ -185,7 +185,7 @@ class UserService {
 
         const statsWithRank = {
             points: currentPoints,
-            level: `Nivel ${currentLevelIdx + 1}: ${stats?.level || currentLevel.name}`,
+            level: `Nivel ${currentLevelIdx + 1}: ${currentLevel.name}`,
             next_level_name: nextLevel ? `Nivel ${currentLevelIdx + 2}: ${nextLevel.name}` : 'Nivel Máximo',
             next_level_min_points: nextLevel ? Number(nextLevel.minPoints ?? nextLevel.min_points ?? 0) : null,
             points_for_next: pointsForNext,
@@ -206,6 +206,7 @@ class UserService {
                     WHEN ga.activity_type = 'module_completed' THEN CONCAT('¡Completaste el módulo: ', (SELECT title FROM modules WHERE id = ga.reference_id), '!')
                     WHEN ga.activity_type = 'badge_earned' THEN CONCAT('🏆 ¡Ganaste la insignia: ', (SELECT name FROM badges WHERE id = ga.reference_id), '!')
                     WHEN ga.activity_type = 'resource_downloaded' THEN CONCAT('📥 Descargaste: ', (SELECT title FROM resources WHERE id = ga.reference_id))
+                    WHEN ga.activity_type = 'task_approved' THEN CONCAT('✅ Tarea aprobada: ', (SELECT title FROM lesson_contents WHERE id = ga.reference_id))
                     ELSE 'Actividad general'
                 END as reference_title,
                 CASE 
@@ -287,38 +288,115 @@ class UserService {
     }
 
     /**
-     * Reinicia el progreso completo de un usuario
+     * Reinicia el progreso de un usuario (todo o un módulo específico)
      */
-    async resetUserProgress(userId) {
+    async resetUserProgress(userId, moduleId = null) {
         const connection = await db.pool.getConnection();
         try {
             await connection.beginTransaction();
 
-            await connection.query('DELETE FROM user_progress WHERE user_id = ?', [userId]);
-            await connection.query('DELETE FROM user_content_progress WHERE user_id = ?', [userId]);
-            await connection.query('DELETE FROM gamification_activities WHERE user_id = ?', [userId]);
-            await connection.query('DELETE FROM quiz_attempts WHERE user_id = ?', [userId]);
-            await connection.query(
-                'DELETE FROM survey_answers WHERE response_id IN (SELECT id FROM survey_responses WHERE user_id = ?)',
+            if (moduleId) {
+                // REINICIO SELECTIVO POR MÓDULO
+                // 1. Obtener IDs de lecciones del módulo
+                const [lessons] = await connection.query('SELECT id FROM lessons WHERE module_id = ?', [moduleId]);
+                const lessonIds = lessons.map(l => l.id);
+
+                if (lessonIds.length > 0) {
+                    // 2. Eliminar progreso de contenido
+                    await connection.query(`
+                        DELETE FROM user_content_progress 
+                        WHERE user_id = ? AND content_id IN (
+                            SELECT id FROM lesson_contents WHERE lesson_id IN (?)
+                        )`, [userId, lessonIds]);
+                    
+                    // 3. Eliminar intentos de quices
+                    await connection.query(`
+                        DELETE FROM quiz_attempts 
+                        WHERE user_id = ? AND quiz_id IN (
+                            SELECT JSON_VALUE(data, '$.quiz_id') 
+                            FROM lesson_contents 
+                            WHERE lesson_id IN (?) AND content_type = 'quiz'
+                        )`, [userId, lessonIds]);
+
+                    // 4. Eliminar tareas enviadas
+                    await connection.query(`
+                        DELETE FROM assignment_submissions 
+                        WHERE user_id = ? AND content_id IN (
+                            SELECT id FROM lesson_contents WHERE lesson_id IN (?)
+                        )`, [userId, lessonIds]);
+
+                    // 5. Eliminar respuestas de encuestas
+                    await connection.query(`
+                        DELETE FROM survey_answers 
+                        WHERE response_id IN (
+                            SELECT id FROM survey_responses 
+                            WHERE user_id = ? AND survey_id IN (
+                                SELECT id FROM surveys WHERE lesson_id IN (?)
+                            )
+                        )`, [userId, lessonIds]);
+
+                    await connection.query(`
+                        DELETE FROM survey_responses 
+                        WHERE user_id = ? AND survey_id IN (
+                            SELECT id FROM surveys WHERE lesson_id IN (?)
+                        )`, [userId, lessonIds]);
+                }
+
+                // 6. Eliminar progreso de lecciones
+                await connection.query('DELETE FROM user_progress WHERE user_id = ? AND module_id = ?', [userId, moduleId]);
+
+                // 7. Eliminar certificados y insignias del módulo
+                await connection.query('DELETE FROM certificates WHERE user_id = ? AND module_id = ?', [userId, moduleId]);
+                
+                // 8. Eliminar actividades de gamificación relacionadas al módulo o sus lecciones
+                await connection.query(`
+                    DELETE FROM gamification_activities 
+                    WHERE user_id = ? AND (
+                        (activity_type = 'module_completed' AND reference_id = ?) OR
+                        (activity_type = 'lesson_completed' AND reference_id IN (?)) OR
+                        (activity_type = 'quiz_passed' AND reference_id IN (SELECT id FROM quizzes WHERE lesson_id IN (?))) OR
+                        (activity_type = 'task_approved' AND reference_id IN (SELECT id FROM lesson_contents WHERE lesson_id IN (?)))
+                    )`, [userId, moduleId, lessonIds.length > 0 ? lessonIds : [0], lessonIds.length > 0 ? lessonIds : [0], lessonIds.length > 0 ? lessonIds : [0]]);
+
+            } else {
+                // REINICIO TOTAL (Existente)
+                await connection.query('DELETE FROM user_progress WHERE user_id = ?', [userId]);
+                await connection.query('DELETE FROM user_content_progress WHERE user_id = ?', [userId]);
+                await connection.query('DELETE FROM gamification_activities WHERE user_id = ?', [userId]);
+                await connection.query('DELETE FROM quiz_attempts WHERE user_id = ?', [userId]);
+                await connection.query(
+                    'DELETE FROM survey_answers WHERE response_id IN (SELECT id FROM survey_responses WHERE user_id = ?)',
+                    [userId]
+                );
+                await connection.query('DELETE FROM survey_responses WHERE user_id = ?', [userId]);
+                await connection.query('DELETE FROM assignment_submissions WHERE user_id = ?', [userId]);
+                await connection.query('DELETE FROM certificates WHERE user_id = ?', [userId]);
+                await connection.query('DELETE FROM user_badges WHERE user_id = ?', [userId]);
+            }
+
+            // RECALCULAR PUNTOS TOTALES basándose en lo que quedó en gamification_activities
+            const [totalPointsRows] = await connection.query(
+                'SELECT SUM(points_earned) as total FROM gamification_activities WHERE user_id = ?',
                 [userId]
             );
-            await connection.query('DELETE FROM survey_responses WHERE user_id = ?', [userId]);
-            await connection.query('DELETE FROM assignment_submissions WHERE user_id = ?', [userId]);
-            await connection.query('DELETE FROM certificates WHERE user_id = ?', [userId]);
-            await connection.query('DELETE FROM user_badges WHERE user_id = ?', [userId]);
+            const newTotalPoints = totalPointsRows[0]?.total || 0;
 
-            const levels = await getLevels();
-            const initialLevel = levels[0]?.name || 'Novato';
-
+            // Actualizar el balance oficial en la tabla de puntos
             await connection.query(
-                `INSERT INTO user_points (user_id, points, level) 
-                 VALUES (?, 0, ?) 
-                 ON DUPLICATE KEY UPDATE points = 0, level = ?`,
-                [userId, initialLevel, initialLevel]
+                `INSERT INTO user_points (user_id, points) VALUES (?, ?) 
+                 ON DUPLICATE KEY UPDATE points = ?, last_updated = NOW()`,
+                [userId, newTotalPoints, newTotalPoints]
             );
 
+            const { syncUserLevel } = require('../utils/gamification');
+            // Ahora sí, sincronizamos el nivel basándonos en los puntos ya actualizados
+            const levelData = await syncUserLevel(userId, connection);
+
             await connection.commit();
-            return { initialLevel };
+            return { 
+                newPoints: newTotalPoints,
+                newLevel: levelData?.newLevel || 'Novato'
+            };
         } catch (error) {
             await connection.rollback();
             throw error;

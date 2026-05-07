@@ -11,9 +11,9 @@ export default function AdminPhishing() {
                 <div className="space-y-1">
                     <button
                         onClick={() => navigate('/admin')}
-                        className="flex items-center gap-2 text-gray-500 hover:text-white transition-colors text-[10px] font-black uppercase tracking-[0.2em] mb-2"
+                        className="flex items-center gap-2 text-gray-500 hover:text-white transition-colors text-[10px] font-black uppercase tracking-widest mb-2"
                     >
-                        <ArrowLeft className="w-4 h-4" /> VOLVER AL PANEL MAESTRO
+                        <ArrowLeft className="w-4 h-4" /> Volver al Panel Admin
                     </button>
                     <h1 className="text-3xl font-black text-white italic uppercase tracking-tighter leading-none">
                         SIMULACROS <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-500">DE PHISHING</span>

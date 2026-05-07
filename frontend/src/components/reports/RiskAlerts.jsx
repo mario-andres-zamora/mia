@@ -1,35 +1,53 @@
-import React, { useState } from 'react';
-import { AlertTriangle, CheckCircle2, Mail, ChevronLeft, ChevronRight, Send } from 'lucide-react';
-import toast from 'react-hot-toast';
+import React, { useState, useMemo, useEffect } from 'react';
+import { AlertTriangle, CheckCircle2, Mail, ChevronLeft, ChevronRight, Send, Search } from 'lucide-react';
 
-export default function RiskAlerts({ atRisk, departments = [], onSendReminders }) {
+export default function RiskAlerts({ 
+    atRisk = [], 
+    departments = [], 
+    onSendReminders, 
+    onSendRiskReminders, 
+    onSendIndividualRiskReminder 
+}) {
     const [currentPage, setCurrentPage] = useState(1);
+    const [searchTerm, setSearchTerm] = useState('');
     const [selectedDept, setSelectedDept] = useState('');
-    const itemsPerPage = 5;
+    const itemsPerPage = 6;
 
-    const totalPages = Math.ceil(atRisk.length / itemsPerPage);
+    // Filtered items based on search
+    const filteredAtRisk = useMemo(() => {
+        const search = searchTerm.toLowerCase();
+        return atRisk.filter(user => 
+            `${user.first_name || ''} ${user.last_name || ''}`.toLowerCase().includes(search) ||
+            (user.department || '').toLowerCase().includes(search) ||
+            (user.email || '').toLowerCase().includes(search)
+        );
+    }, [atRisk, searchTerm]);
+
+    const totalPages = Math.ceil(filteredAtRisk.length / itemsPerPage);
     const startIndex = (currentPage - 1) * itemsPerPage;
-    const paginatedItems = atRisk.slice(startIndex, startIndex + itemsPerPage);
+    const paginatedItems = filteredAtRisk.slice(startIndex, startIndex + itemsPerPage);
 
-    const handleIndividualReminder = (username) => {
-        toast.success(`Recordatorio enviado individualmente a: ${username}`, {
-            icon: '📩',
-            style: {
-                borderRadius: '10px',
-                background: '#0f172a',
-                color: '#fff',
-                border: '1px solid #ef444430',
-                fontSize: '11px',
-                fontWeight: 'bold'
-            },
-        });
+    // Reset to first page when search changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm]);
+
+    // Ensure current page is valid when data changes
+    useEffect(() => {
+        if (currentPage > totalPages && totalPages > 0) {
+            setCurrentPage(totalPages);
+        }
+    }, [totalPages, currentPage]);
+
+    const handleSearch = (e) => {
+        setSearchTerm(e.target.value);
     };
 
     return (
         <div className="card bg-red-500/5 border-red-500/20 p-8 space-y-6 relative overflow-hidden group text-left">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/10 rounded-bl-full blur-[80px] group-hover:bg-red-500/20 transition-all"></div>
+            <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/10 rounded-bl-full blur-[80px] group-hover:bg-red-500/20 transition-all pointer-events-none"></div>
 
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6">
                 <div className="space-y-1">
                     <h3 className="text-lg font-black text-red-400 uppercase tracking-tight flex items-center gap-3">
                         <AlertTriangle className="w-6 h-6 animate-pulse" />
@@ -40,25 +58,67 @@ export default function RiskAlerts({ atRisk, departments = [], onSendReminders }
                     </p>
                 </div>
 
-                {totalPages > 1 && (
-                    <div className="flex items-center gap-3 bg-slate-950/50 p-1.5 rounded-xl border border-white/5">
-                        <button
-                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                            disabled={currentPage === 1}
-                            className={`p-1 rounded-lg transition-all ${currentPage === 1 ? 'opacity-20 cursor-not-allowed' : 'hover:bg-red-500/20 text-red-400'}`}
-                        >
-                            <ChevronLeft className="w-3.5 h-3.5" />
-                        </button>
-                        <span className="text-[9px] font-black text-white uppercase tracking-tighter">Pág {currentPage} / {totalPages}</span>
-                        <button
-                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                            disabled={currentPage === totalPages}
-                            className={`p-1 rounded-lg transition-all ${currentPage === totalPages ? 'opacity-20 cursor-not-allowed' : 'hover:bg-red-500/20 text-red-400'}`}
-                        >
-                            <ChevronRight className="w-3.5 h-3.5" />
-                        </button>
+                <div className="flex flex-wrap items-center gap-4">
+                    {/* Search Bar */}
+                    <div className="relative group/search">
+                        <Search className="w-3.5 h-3.5 text-gray-500 absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors group-focus-within/search:text-red-400" />
+                        <input
+                            type="text"
+                            placeholder="Buscar en riesgo..."
+                            value={searchTerm}
+                            onChange={handleSearch}
+                            className="bg-slate-950/50 border border-white/5 rounded-xl py-2.5 pl-10 pr-4 text-[10px] font-bold text-white w-full md:w-64 focus:outline-none focus:border-red-500/30 transition-all"
+                        />
                     </div>
-                )}
+
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                        <div className="flex items-center gap-3 bg-slate-950/50 p-2 rounded-xl border border-white/5 shadow-inner">
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setCurrentPage(prev => Math.max(prev - 1, 1));
+                                }}
+                                disabled={currentPage === 1}
+                                className={`p-2 rounded-lg transition-all duration-200 ${
+                                    currentPage === 1 
+                                        ? 'opacity-10 cursor-not-allowed text-gray-600' 
+                                        : 'hover:bg-red-500/20 text-red-400 active:scale-90 cursor-pointer'
+                                }`}
+                                aria-label="Página anterior"
+                            >
+                                <ChevronLeft className="w-4 h-4" />
+                            </button>
+                            <div className="flex flex-col items-center min-w-[70px]">
+                                <span className="text-[10px] font-black text-white uppercase tracking-tighter">
+                                    Pág {currentPage}
+                                </span>
+                                <span className="text-[8px] font-bold text-gray-500 uppercase tracking-widest mt-[-2px]">
+                                    de {totalPages}
+                                </span>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setCurrentPage(prev => Math.min(prev + 1, totalPages));
+                                }}
+                                disabled={currentPage === totalPages}
+                                className={`p-2 rounded-lg transition-all duration-200 ${
+                                    currentPage === totalPages 
+                                        ? 'opacity-10 cursor-not-allowed text-gray-600' 
+                                        : 'hover:bg-red-500/20 text-red-400 active:scale-90 cursor-pointer'
+                                }`}
+                                aria-label="Siguiente página"
+                            >
+                                <ChevronRight className="w-4 h-4" />
+                            </button>
+                        </div>
+                    )}
+                </div>
             </div>
 
             <div className="overflow-hidden rounded-2xl border border-white/5 bg-slate-950/30">
@@ -71,24 +131,24 @@ export default function RiskAlerts({ atRisk, departments = [], onSendReminders }
                             <th className="px-4 py-3 text-[8px] font-black text-gray-400 uppercase tracking-widest text-right">Acción</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-white/5 block sm:table-row-group w-full max-h-[300px] overflow-y-auto">
+                    <tbody className="divide-y divide-white/5">
                         {paginatedItems.length > 0 ? paginatedItems.map((user, idx) => (
-                            <tr key={idx} className="hover:bg-red-500/5 transition-colors block sm:table-row w-full">
-                                <td className="px-4 py-3 block sm:table-cell">
+                            <tr key={idx} className="hover:bg-red-500/5 transition-colors">
+                                <td className="px-4 py-3">
                                     <p className="text-[10px] font-black text-white uppercase">{user.first_name} {user.last_name}</p>
                                     <p className="text-[8px] text-gray-500 font-bold uppercase sm:hidden">{user.department}</p>
                                 </td>
                                 <td className="px-4 py-3 hidden sm:table-cell">
                                     <p className="text-[9px] text-gray-400 font-black uppercase italic">{user.department}</p>
                                 </td>
-                                <td className="px-4 py-3 text-center block sm:table-cell">
+                                <td className="px-4 py-3 text-center">
                                     <span className="text-[11px] font-black text-red-500">{Math.round(user.progress)}%</span>
                                 </td>
-                                <td className="px-4 py-3 text-right block sm:table-cell">
+                                <td className="px-4 py-3 text-right">
                                     <button
-                                        onClick={() => handleIndividualReminder(`${user.first_name} ${user.last_name}`)}
+                                        onClick={() => onSendIndividualRiskReminder(user)}
                                         className="p-2 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-lg transition-all duration-300 group/btn shadow-lg shadow-red-500/0 hover:shadow-red-500/20"
-                                        title="Enviar recordatorio individual"
+                                        title="Enviar alerta de riesgo individual"
                                     >
                                         <Send className="w-3.5 h-3.5 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform" />
                                     </button>
@@ -108,34 +168,57 @@ export default function RiskAlerts({ atRisk, departments = [], onSendReminders }
                 </table>
             </div>
 
-            <div className="space-y-4">
-                <div className="flex flex-col gap-2">
-                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest px-1">Seleccionar Unidad para Invitaciones</label>
-                    <select
-                        value={selectedDept}
-                        onChange={(e) => setSelectedDept(e.target.value)}
-                        className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-[10px] font-bold text-white focus:outline-none focus:border-red-500/50 transition-all appearance-none cursor-pointer"
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* At Risk Mass Reminder */}
+                <div className="space-y-4 p-5 bg-white/5 rounded-2xl border border-white/5">
+                    <div className="flex items-center gap-3 mb-2">
+                        <AlertTriangle className="w-4 h-4 text-red-400" />
+                        <h4 className="text-[10px] font-black text-white uppercase tracking-widest">Recordatorios de Riesgo</h4>
+                    </div>
+                    <p className="text-[9px] text-gray-500 font-bold italic leading-relaxed">
+                        Enviar alerta a todos los funcionarios que tienen <span className="text-red-400">menos del 20%</span> de avance y que ya están registrados.
+                    </p>
+                    <button
+                        onClick={() => onSendRiskReminders(filteredAtRisk)}
+                        disabled={filteredAtRisk.length === 0}
+                        className={`w-full py-4 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-xl flex items-center justify-center gap-3 active:scale-95 ${filteredAtRisk.length > 0
+                                ? 'bg-red-500 text-white hover:bg-red-400 shadow-red-500/20'
+                                : 'bg-white/5 text-gray-500 cursor-not-allowed opacity-50'
+                            }`}
                     >
-                        <option value="">-- Seleccionar Área --</option>
-                        {departments.map((dept, idx) => (
-                            <option key={idx} value={dept.department}>{dept.department}</option>
-                        ))}
-                    </select>
+                        <Mail className="w-4 h-4" /> Notificar a los {filteredAtRisk.length} en riesgo
+                    </button>
                 </div>
 
-                <button
-                    onClick={() => onSendReminders(selectedDept)}
-                    disabled={!selectedDept}
-                    className={`w-full py-5 text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all shadow-xl flex items-center justify-center gap-3 active:scale-95 ${selectedDept
-                            ? 'bg-red-500 text-white hover:bg-red-400 shadow-red-500/20'
-                            : 'bg-white/5 text-gray-500 cursor-not-allowed opacity-50'
-                        }`}
-                >
-                    <Mail className="w-4 h-4" /> Enviar Invitación a No Registrados
-                </button>
-                <p className="text-[9px] text-gray-500 text-center font-bold italic">
-                    * Se enviará un correo a todos los funcionarios del área que aún no han ingresado a la plataforma.
-                </p>
+                {/* Unregistered Invitations */}
+                <div className="space-y-4 p-5 bg-white/5 rounded-2xl border border-white/5">
+                    <div className="flex items-center gap-3 mb-2">
+                        <Mail className="w-4 h-4 text-primary-400" />
+                        <h4 className="text-[10px] font-black text-white uppercase tracking-widest">Invitaciones Pendientes</h4>
+                    </div>
+                    <div className="relative">
+                        <select
+                            value={selectedDept}
+                            onChange={(e) => setSelectedDept(e.target.value)}
+                            className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-[10px] font-bold text-white focus:outline-none focus:border-primary-500/50 transition-all appearance-none cursor-pointer"
+                        >
+                            <option value="">-- Seleccionar Área --</option>
+                            {departments.map((dept, idx) => (
+                                <option key={idx} value={dept.department}>{dept.department}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <button
+                        onClick={() => onSendReminders(selectedDept)}
+                        disabled={!selectedDept}
+                        className={`w-full py-4 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-xl flex items-center justify-center gap-3 active:scale-95 ${selectedDept
+                                ? 'bg-primary-500 text-white hover:bg-primary-400 shadow-primary-500/20'
+                                : 'bg-white/5 text-gray-500 cursor-not-allowed opacity-50'
+                            }`}
+                    >
+                        <Mail className="w-4 h-4" /> Invitar No Registrados
+                    </button>
+                </div>
             </div>
         </div>
     );

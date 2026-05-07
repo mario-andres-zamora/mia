@@ -90,7 +90,7 @@ export function useDirectory() {
     const handleConfirmDelete = async () => {
         if (!recordToDelete) return;
         try {
-            await axios.delete(`${API_URL}/directory/${recordToDelete}`);
+            await axios.delete(`${API_URL}/directory/${recordToDelete.id}`);
             toast.success('Registro eliminado');
             fetchDirectory();
             setDeleteModalOpen(false);
@@ -104,7 +104,7 @@ export function useDirectory() {
 
     const handleUpdateRecord = async () => {
         try {
-            const response = await axios.put(`${API_URL}/directory/${editingRecord.email}`, editingRecord);
+            const response = await axios.put(`${API_URL}/directory/${editingRecord.id}`, editingRecord);
             if (response.data.success) {
                 toast.success('Registro actualizado');
                 setIsEditModalOpen(false);
@@ -149,6 +149,20 @@ export function useDirectory() {
             link.remove();
         } catch (error) {
             toast.error('Error al descargar la plantilla');
+        }
+    };
+
+    const handleSendInvite = async (person) => {
+        try {
+            const response = await axios.post(`${API_URL}/directory/invite`, {
+                email: person.email,
+                full_name: person.full_name
+            });
+            if (response.data.success) {
+                toast.success(response.data.message);
+            }
+        } catch (error) {
+            toast.error('Error al enviar la invitación');
         }
     };
 
@@ -236,6 +250,7 @@ export function useDirectory() {
             delete: handleConfirmDelete,
             update: handleUpdateRecord,
             create: handleCreateRecord,
+            sendInvite: handleSendInvite,
             downloadTemplate: handleDownloadTemplate,
             refresh: fetchDirectory,
             sort: (key) => {

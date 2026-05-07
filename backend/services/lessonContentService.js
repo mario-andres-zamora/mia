@@ -1,6 +1,7 @@
 const db = require('../config/database');
 const xss = require('xss');
 const path = require('path');
+const logger = require('../config/logger');
 const { TRACEABLE_CONTENT_TYPES } = require('../constants/contentTypes');
 
 class LessonContentService {
@@ -106,6 +107,54 @@ class LessonContentService {
         } else {
             await db.query(`INSERT INTO assignment_submissions (content_id, user_id, file_url, status) VALUES (?, ?, ?, 'pending')`, [contentId, userId, fileUrl]);
         }
+
+        // --- NOTIFICACIÓN POR CORREO A TODOS LOS ADMINISTRADORES ---
+        try {
+            const [details] = await db.query(`
+                SELECT u.first_name, u.last_name, u.email,
+                       lc.title as assignment_title,
+                       l.title as lesson_title,
+                       m.title as module_title
+                FROM users u
+                JOIN lesson_contents lc ON lc.id = ?
+                JOIN lessons l ON lc.lesson_id = l.id
+                JOIN modules m ON l.module_id = m.id
+                WHERE u.id = ?
+            `, [contentId, userId]);
+
+            if (details) {
+                // Obtener todos los administradores registrados
+                const admins = await db.query("SELECT email FROM users WHERE role = 'admin' AND is_active = 1");
+                
+                if (admins.length > 0) {
+                    const emailService = require('./emailService');
+                    
+                    // Enviar a cada administrador (de forma asíncrona para no bloquear)
+                    for (const admin of admins) {
+                        try {
+                            await emailService.sendAssignmentSubmissionNotification(
+                                admin.email,
+                                {
+                                    name: `${details.first_name} ${details.last_name}`,
+                                    email: details.email
+                                },
+                                {
+                                    title: details.assignment_title,
+                                    lesson: details.lesson_title,
+                                    module: details.module_title
+                                }
+                            );
+                        } catch (err) {
+                            console.error(`Error enviando notificación a admin ${admin.email}:`, err);
+                        }
+                    }
+                }
+            }
+        } catch (mailErr) {
+            const logger = require('../config/logger');
+            logger.error('Error enviando notificación de tarea enviada:', mailErr);
+        }
+
         return fileUrl;
     }
 
@@ -138,7 +187,17 @@ class LessonContentService {
 
     async gradeSubmission(submissionId, data) {
         const { status, grade, feedback } = data;
-        return await db.query(
+        
+        // 1. Obtener datos de la entrega antes de actualizar para saber a quién notificar
+        const [submission] = await db.query(
+            'SELECT user_id, content_id, status as old_status FROM assignment_submissions WHERE id = ?', 
+            [submissionId]
+        );
+        
+        if (!submission) throw new Error('Entrega no encontrada');
+
+        // 2. Actualizar la entrega
+        await db.query(
             `UPDATE assignment_submissions SET 
                 status = COALESCE(?, status), 
                 grade = COALESCE(?, grade), 
@@ -146,6 +205,75 @@ class LessonContentService {
              WHERE id = ?`,
             [status ?? null, grade ?? null, feedback ?? null, submissionId]
         );
+
+        // 3. Registrar en el historial de actividad si se aprueba
+        if (status === 'approved') {
+            try {
+                // Verificar si ya existe la actividad para evitar duplicados
+                const [existingActivity] = await db.query(
+                    "SELECT id FROM gamification_activities WHERE user_id = ? AND activity_type = 'task_approved' AND reference_id = ?",
+                    [submission.user_id, submission.content_id]
+                );
+
+                if (!existingActivity) {
+                    // Obtener puntos de la tarea para el historial
+                    const [content] = await db.query('SELECT points FROM lesson_contents WHERE id = ?', [submission.content_id]);
+                    const points = content ? content.points : 0;
+
+                    await db.query(
+                        `INSERT INTO gamification_activities (user_id, activity_type, points_earned, reference_id) 
+                         VALUES (?, 'task_approved', ?, ?)`,
+                        [submission.user_id, points, submission.content_id]
+                    );
+
+                    // SUMAR PUNTOS AL TOTAL DEL USUARIO
+                    if (points > 0) {
+                        await db.query(
+                            `INSERT INTO user_points (user_id, points) VALUES (?, ?) ON DUPLICATE KEY UPDATE points = points + ?`,
+                            [submission.user_id, points, points]
+                        );
+                        // Sincronizar nivel después de sumar puntos
+                        const { syncUserLevel } = require('../utils/gamification');
+                        await syncUserLevel(submission.user_id);
+                    }
+
+                    // Invalidar caché del perfil del usuario
+                    const { clearCache } = require('../middleware/cache');
+                    await clearCache(`cache:/api/users/profile*u${submission.user_id}*`);
+                }
+            } catch (activityErr) {
+                if (typeof logger !== 'undefined') {
+                    logger.error('Error registrando actividad de tarea aprobada:', activityErr);
+                } else {
+                    console.error('Error registrando actividad de tarea aprobada:', activityErr);
+                }
+            }
+        }
+
+        // 4. Enviar correo al usuario informando la calificación
+        try {
+            const [user] = await db.query('SELECT first_name, last_name, email FROM users WHERE id = ?', [submission.user_id]);
+            const [content] = await db.query('SELECT title FROM lesson_contents WHERE id = ?', [submission.content_id]);
+            
+            if (user && content) {
+                const emailService = require('./emailService');
+                const userName = `${user.first_name} ${user.last_name}`;
+                await emailService.sendAssignmentGradedNotification(user.email, userName, {
+                    title: content.title,
+                    status: status || submission.old_status,
+                    grade: grade ?? 'N/A',
+                    feedback: feedback || ''
+                });
+            }
+        } catch (emailErr) {
+            if (typeof logger !== 'undefined') {
+                logger.error('Error enviando correo de calificación de tarea:', emailErr);
+            } else {
+                console.error('Error enviando correo de calificación de tarea:', emailErr);
+            }
+        }
+
+        return true;
     }
 
     async getAllInteractions() {
@@ -161,7 +289,7 @@ class LessonContentService {
             JOIN lessons l ON lc.lesson_id = l.id
             JOIN modules m ON l.module_id = m.id
             WHERE ucp.response_data IS NOT NULL
-            AND lc.content_type IN ('interactive_input', 'confirmation', 'multiple_choice', 'password_tester', 'mfa_defender')
+            AND lc.content_type IN ('interactive_input', 'confirmation', 'multiple_choice', 'password_tester', 'mfa_defender', 'categorization')
             ORDER BY ucp.completed_at DESC
         `);
     }
@@ -239,9 +367,10 @@ class LessonContentService {
 
     async getInteractionStats() {
         const interactiveContents = await db.query(`
-            SELECT id, title, data, content_type 
-            FROM lesson_contents 
-            WHERE content_type IN ('multiple_choice', 'confirmation')
+            SELECT lc.id, lc.title, lc.data, lc.content_type, lc.lesson_id, l.module_id 
+            FROM lesson_contents lc
+            JOIN lessons l ON lc.lesson_id = l.id
+            WHERE lc.content_type IN ('multiple_choice', 'confirmation')
         `);
 
         const responses = await db.query(`
@@ -285,6 +414,8 @@ class LessonContentService {
 
             return {
                 id: content.id,
+                lesson_id: content.lesson_id,
+                module_id: content.module_id,
                 title: content.title,
                 type: content.content_type,
                 data: optionCounts,

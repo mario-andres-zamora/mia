@@ -39,7 +39,15 @@ export function useLessonEditor(lessonId) {
         validation_type: 'free',
         correct_answer: '',
         regex_pattern: '',
-        placeholder: 'Escribe tu respuesta aquí...'
+        placeholder: 'Escribe tu respuesta aquí...',
+        categories: [],
+        items: [],
+        feedbackSuccess: '',
+        feedbackError: '',
+        postPoints: 0,
+        replyPoints: 0,
+        maxAwardedPosts: 0,
+        maxAwardedReplies: 0
     });
 
     const fetchLessonAndContents = useCallback(async () => {
@@ -119,7 +127,16 @@ export function useLessonEditor(lessonId) {
                 correct_answer: item.content_type === 'interactive_input' ? (item.data?.correct_answer || '') : '',
                 regex_pattern: item.content_type === 'interactive_input' ? (item.data?.regex_pattern || '') : '',
                 placeholder: item.content_type === 'interactive_input' ? (item.data?.placeholder || 'Escribe tu respuesta aquí...') : 'Escribe tu respuesta aquí...',
-                options: item.content_type === 'multiple_choice' ? (item.data?.options || []) : []
+                options: item.content_type === 'multiple_choice' ? (item.data?.options || []) : [],
+                categories: item.content_type === 'categorization' ? (item.data?.categories || []) : [],
+                items: item.content_type === 'categorization' ? (item.data?.items || []) : [],
+                feedbackSuccess: item.content_type === 'categorization' ? (item.data?.feedbackSuccess || '') : '',
+                feedbackError: item.content_type === 'categorization' ? (item.data?.feedbackError || '') : '',
+                postPoints: item.content_type === 'forum' ? (item.data?.postPoints || 0) : 0,
+                replyPoints: item.content_type === 'forum' ? (item.data?.replyPoints || 0) : 0,
+                maxAwardedPosts: item.content_type === 'forum' ? (item.data?.maxAwardedPosts || 0) : 0,
+                maxAwardedReplies: item.content_type === 'forum' ? (item.data?.maxAwardedReplies || 0) : 0,
+                description: item.data?.description || item.data?.text || ''
             });
         } else {
             setEditingItem(null);
@@ -139,7 +156,15 @@ export function useLessonEditor(lessonId) {
                 correct_answer: '',
                 regex_pattern: '',
                 placeholder: 'Escribe tu respuesta aquí...',
-                options: []
+                options: [],
+                categories: [],
+                items: [],
+                feedbackSuccess: '',
+                feedbackError: '',
+                postPoints: type === 'forum' ? 10 : 0,
+                replyPoints: type === 'forum' ? 5 : 0,
+                maxAwardedPosts: type === 'forum' ? 3 : 0,
+                maxAwardedReplies: type === 'forum' ? 5 : 0
             });
         }
         setIsModalOpen(true);
@@ -189,10 +214,26 @@ export function useLessonEditor(lessonId) {
                     description: formData.data,
                     options: formData.options || []
                 };
-            } else if (['note', 'heading', 'password_tester'].includes(formData.content_type)) {
+            } else if (['note', 'heading', 'password_tester', 'terms_trap'].includes(formData.content_type)) {
                 finalData = { text: formData.data };
+            } else if (formData.content_type === 'categorization') {
+                finalData = {
+                    description: formData.data,
+                    categories: formData.categories || [],
+                    items: formData.items || [],
+                    feedbackSuccess: formData.feedbackSuccess,
+                    feedbackError: formData.feedbackError
+                };
             } else if (formData.content_type === 'mfa_defender') {
                 finalData = typeof formData.data === 'string' ? { description: formData.data } : formData.data;
+            } else if (formData.content_type === 'forum') {
+                finalData = {
+                    description: formData.data,
+                    postPoints: formData.postPoints || 0,
+                    replyPoints: formData.replyPoints || 0,
+                    maxAwardedPosts: formData.maxAwardedPosts || 0,
+                    maxAwardedReplies: formData.maxAwardedReplies || 0
+                };
             } else {
                 const currentData = typeof editingItem?.data === 'string' ? JSON.parse(editingItem.data) : (editingItem?.data || {});
                 finalData = { ...currentData, description: formData.data };

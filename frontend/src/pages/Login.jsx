@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useLogin } from '../hooks/useLogin';
 import LoginBackground from '../components/login/LoginBackground';
@@ -8,6 +8,32 @@ import LoginFooter from '../components/login/LoginFooter';
 
 export default function Login() {
     const { googleLogin, isLoading } = useLogin();
+    const audioRef = useRef(new Audio('/sounds/login.mp3'));
+
+    useEffect(() => {
+        const audio = audioRef.current;
+        audio.loop = true;
+        audio.volume = 0.4;
+        
+        // Attempt to play
+        const playAudio = () => {
+            audio.play().catch(e => {
+                // If blocked, we wait for the first user interaction
+                console.log('Autoplay blocked, waiting for interaction...');
+            });
+        };
+
+        playAudio();
+
+        // Also try to play on any click if it was blocked
+        window.addEventListener('click', playAudio, { once: true });
+
+        return () => {
+            window.removeEventListener('click', playAudio);
+            audio.pause();
+            audio.currentTime = 0;
+        };
+    }, []);
 
     return (
         <div className="min-h-screen flex flex-col bg-[#1e2648] relative overflow-hidden">

@@ -25,7 +25,7 @@ export default function DashboardSidebar({ user, stats, onShowBadges, onShowCert
                     POSICIÓN<br />GLOBAL
                 </h3>
                 <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-8">
-                    DE {stats?.totalUsers || 695} FUNCIONARIOS
+                    DE {stats?.totalUsers || 0} FUNCIONARIOS
                 </p>
 
                 {/* Inner Stats Card */}
@@ -37,8 +37,8 @@ export default function DashboardSidebar({ user, stats, onShowBadges, onShowCert
                     </div>
                     <div className="flex-1 flex flex-col items-center justify-center">
                         <span className="text-[8px] text-gray-500 font-bold uppercase tracking-widest mb-1">EN SU ÁREA</span>
-                        <span className="text-2xl font-bold text-[#6D71F9] mb-0.5 leading-none">#{stats?.departmentRank || 6}</span>
-                        <span className="text-[8px] text-gray-600 font-bold uppercase tracking-widest">DE 6 PERS.</span>
+                        <span className="text-2xl font-bold text-[#6D71F9] mb-0.5 leading-none">#{stats?.departmentRank || 1}</span>
+                        <span className="text-[8px] text-gray-600 font-bold uppercase tracking-widest">DE {stats?.totalInDepartment || 0} PERS.</span>
                     </div>
                 </div>
 

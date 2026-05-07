@@ -98,7 +98,7 @@ class EmailService {
                     
                     <p>Tu dedicación en el programa de concientización está fortaleciendo la seguridad de nuestra institución.</p>
                     
-                    <a href="https://cgrsegura.cgr.go.cr/dashboard" class="button">Ir a la plataforma</a>
+                    <a href="${process.env.FRONTEND_URL}/dashboard" class="button">Ir a la plataforma</a>
                 </div>
                 <div class="footer">
                     &copy; 2026 Contraloría General de la República de Costa Rica<br>
@@ -175,8 +175,21 @@ class EmailService {
                 <div class="content">
                     <h1>¡Hola, ${userName}!</h1>
                     <p>Te invitamos a formar parte del <strong>Programa de Concientización en Ciberseguridad</strong> de la Contraloría General de la República.</p>
-                    <p>Tu participación es fundamental para fortalecer la seguridad digital de nuestra institución. Ingresa hoy mismo y comienza tu camino de aprendizaje.</p>
-                    <a href="https://cgrsegura.cgr.go.cr" class="button">Ingresar a la Plataforma</a>
+                    <p>Te informamos que este programa es de carácter <strong>obligatorio</strong> y fundamental para fortalecer la seguridad digital de nuestra institución.</p>
+                    
+                    <div style="background: rgba(56, 74, 153, 0.1); border: 1px solid rgba(56, 74, 153, 0.2); padding: 20px; border-radius: 16px; margin-bottom: 30px; text-align: left;">
+                        <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                            <tr>
+                                <td style="vertical-align: top; width: 30px; font-size: 20px;">📅</td>
+                                <td style="font-size: 14px; color: #94a3b8; line-height: 1.4;">
+                                    <strong style="color: #ffffff;">Cronograma de Aprendizaje:</strong><br>
+                                    El curso se imparte de forma progresiva. <strong>Cada mes se habilitará un nuevo módulo</strong> con contenidos clave para tu protección y la de la CGR.
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <a href="${process.env.FRONTEND_URL}" class="button">Ingresar a la Plataforma</a>
                 </div>
                 <div class="footer">
                     &copy; 2026 Contraloría General de la República de Costa Rica<br>
@@ -199,13 +212,277 @@ class EmailService {
             await this.transporter.sendMail({
                 from: process.env.EMAIL_FROM,
                 to: userEmail,
-                subject: '🛡️ Invitación: Programa de Concientización en Ciberseguridad CGR Segur@',
+                subject: '🛡️ [OBLIGATORIO] Invitación: Programa de Concientización en Ciberseguridad CGR Segur@',
                 html: htmlContent,
                 attachments: attachments
             });
             logger.info(`Email de invitación enviado a: ${userEmail}`);
         } catch (error) {
             logger.error(`Error enviando email de invitación a ${userEmail}:`, error);
+        }
+    }
+
+    /**
+     * Envía un correo de recordatorio a usuarios con avance crítico
+     */
+    async sendRiskReminder(userEmail, userName, progress) {
+        const path = require('path');
+        const assetsPath = path.resolve(__dirname, '../assets/images');
+
+        const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <style>
+                body { font-family: 'Segoe UI', sans-serif; background-color: #04060b; margin: 0; padding: 0; color: #ffffff; }
+                .container { max-width: 600px; margin: 20px auto; background-color: #0b0f1c; border-radius: 24px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); }
+                .header { background-color: #0d111d; padding: 40px 20px; text-align: center; border-bottom: 2px solid #ef4444; }
+                .logo-institucional { width: 120px; }
+                .content { padding: 40px; text-align: center; }
+                h1 { font-size: 26px; font-weight: 800; color: #ffffff; margin-bottom: 20px; }
+                p { color: #94a3b8; line-height: 1.6; font-size: 16px; margin-bottom: 30px; }
+                .progress-box { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); padding: 20px; border-radius: 16px; margin-bottom: 30px; }
+                .progress-value { color: #ef4444; font-size: 32px; font-weight: 900; }
+                .button { display: inline-block; background-color: #ef4444; color: #ffffff !important; text-decoration: none; padding: 16px 40px; border-radius: 16px; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+                .footer { background-color: rgba(0,0,0,0.2); padding: 30px; text-align: center; font-size: 11px; color: #475569; border-top: 1px solid rgba(255,255,255,0.05); }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <img src="cid:logo_institucional" alt="CGR" class="logo-institucional">
+                    <div style="margin-top: 10px;">
+                        <span style="color: #ffffff; font-size: 38px; font-weight: 900;">CGR</span>
+                        <span style="color: #ef4444; font-size: 38px; font-weight: 900;"> SEGUR@</span>
+                    </div>
+                </div>
+                <div class="content">
+                    <h1>¡Atención, ${userName}!</h1>
+                    <p>Hemos notado que tu avance en el <strong>Programa de Concientización CGR Segur@</strong> se encuentra en un nivel crítico.</p>
+                    
+                    <div class="progress-box">
+                        <div style="text-transform: uppercase; font-size: 10px; font-weight: 800; color: #94a3b8; letter-spacing: 1px; margin-bottom: 5px;">Tu avance actual</div>
+                        <div class="progress-value">${progress}%</div>
+                    </div>
+
+                    <p>La ciberseguridad es responsabilidad de todos y el cumplimiento de este programa es de carácter <strong>obligatorio</strong>.</p>
+                    <p>Recuerda que <strong>cada mes se libera un nuevo módulo</strong> de capacitación. Te invitamos a retomar el curso y completar los contenidos pendientes para fortalecer nuestras defensas institucionales.</p>
+                    <a href="${process.env.FRONTEND_URL}/dashboard" class="button">Continuar mi Capacitación</a>
+                </div>
+                <div class="footer">
+                    &copy; 2026 Contraloría General de la República de Costa Rica<br>
+                    Programa de Concientización en Ciberseguridad
+                </div>
+            </div>
+        </body>
+        </html>
+        `;
+
+        const attachments = [
+            {
+                filename: 'logo-cgr-blanco.png',
+                path: path.join(assetsPath, 'Logotipo-CGR-blanco-transp.png'),
+                cid: 'logo_institucional'
+            }
+        ];
+
+        try {
+            await this.transporter.sendMail({
+                from: process.env.EMAIL_FROM,
+                to: userEmail,
+                subject: '⚠️ Recordatorio: Tu avance en CGR Segur@ es crítico',
+                html: htmlContent,
+                attachments: attachments
+            });
+            logger.info(`Email de alerta de riesgo enviado a: ${userEmail}`);
+        } catch (error) {
+            logger.error(`Error enviando email de alerta a ${userEmail}:`, error);
+        }
+    }
+    /**
+     * Notifica al instructor cuando un usuario envía una tarea
+     */
+    async sendAssignmentSubmissionNotification(adminEmail, userData, assignmentData) {
+        const path = require('path');
+        const assetsPath = path.resolve(__dirname, '../assets/images');
+
+        const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <style>
+                body { font-family: 'Segoe UI', sans-serif; background-color: #04060b; margin: 0; padding: 0; color: #ffffff; }
+                .container { max-width: 600px; margin: 20px auto; background-color: #0b0f1c; border-radius: 24px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); }
+                .header { background-color: #0d111d; padding: 40px 20px; text-align: center; border-bottom: 2px solid #384A99; }
+                .logo-institucional { width: 120px; }
+                .content { padding: 40px; }
+                h1 { font-size: 22px; font-weight: 800; color: #ffffff; margin-bottom: 20px; text-align: center; }
+                .info-box { background: rgba(56, 74, 153, 0.1); border: 1px solid rgba(56, 74, 153, 0.2); padding: 25px; border-radius: 20px; margin-bottom: 30px; }
+                .info-row { margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px; }
+                .info-row:last-child { border-bottom: none; }
+                .label { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: #64748b; font-weight: 800; margin-bottom: 4px; }
+                .value { font-size: 16px; color: #ffffff; font-weight: 600; }
+                .button { display: block; text-align: center; background-color: #384A99; color: #ffffff !important; text-decoration: none; padding: 18px; border-radius: 16px; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+                .footer { background-color: rgba(0,0,0,0.2); padding: 30px; text-align: center; font-size: 11px; color: #475569; border-top: 1px solid rgba(255,255,255,0.05); }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <img src="cid:logo_institucional" alt="CGR" class="logo-institucional">
+                    <div style="margin-top: 10px;">
+                        <span style="color: #ffffff; font-size: 30px; font-weight: 900;">CGR</span>
+                        <span style="color: #EF8843; font-size: 30px; font-weight: 900;"> SEGUR@</span>
+                    </div>
+                </div>
+                <div class="content">
+                    <h1>Nueva Tarea Recibida</h1>
+                    <p style="color: #94a3b8; text-align: center; margin-bottom: 30px;">Se ha registrado una nueva entrega en la plataforma de capacitación.</p>
+                    
+                    <div class="info-box">
+                        <div class="info-row">
+                            <div class="label">Funcionario</div>
+                            <div class="value">${userData.name}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="label">Correo</div>
+                            <div class="value">${userData.email}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="label">Módulo / Lección</div>
+                            <div class="value">${assignmentData.module} / ${assignmentData.lesson}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="label">Tarea</div>
+                            <div class="value">${assignmentData.title}</div>
+                        </div>
+                    </div>
+
+                    <a href="${process.env.FRONTEND_URL}/admin/assignments" class="button">Ir a Revisar Entregas</a>
+                </div>
+                <div class="footer">
+                    &copy; 2026 Contraloría General de la República de Costa Rica<br>
+                    Sistema de Notificaciones Automáticas CGR Segur@
+                </div>
+            </div>
+        </body>
+        </html>
+        `;
+
+        const attachments = [{
+            filename: 'logo-cgr-blanco.png',
+            path: path.join(assetsPath, 'Logotipo-CGR-blanco-transp.png'),
+            cid: 'logo_institucional'
+        }];
+
+        try {
+            await this.transporter.sendMail({
+                from: process.env.EMAIL_FROM,
+                to: adminEmail,
+                subject: `📝 Nueva entrega: ${userData.name} - ${assignmentData.title}`,
+                html: htmlContent,
+                attachments: attachments
+            });
+            logger.info(`Notificación de tarea enviada al instructor: ${adminEmail}`);
+        } catch (error) {
+            logger.error(`Error enviando notificación de tarea a ${adminEmail}:`, error);
+        }
+    }
+
+    /**
+     * Notifica al usuario cuando su tarea ha sido calificada
+     */
+    async sendAssignmentGradedNotification(userEmail, userName, assignmentData) {
+        const path = require('path');
+        const assetsPath = path.resolve(__dirname, '../assets/images');
+        const isApproved = assignmentData.status === 'approved';
+        const statusText = isApproved ? 'APROBADA' : 'RECHAZADA';
+        const statusColor = isApproved ? '#22c55e' : '#ef4444';
+        const icon = isApproved ? '✅' : '❌';
+
+        const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <style>
+                body { font-family: 'Segoe UI', sans-serif; background-color: #04060b; margin: 0; padding: 0; color: #ffffff; }
+                .container { max-width: 600px; margin: 20px auto; background-color: #0b0f1c; border-radius: 24px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); }
+                .header { background-color: #0d111d; padding: 40px 20px; text-align: center; border-bottom: 2px solid ${statusColor}; }
+                .logo-institucional { width: 120px; }
+                .content { padding: 40px; }
+                h1 { font-size: 24px; font-weight: 800; color: #ffffff; margin-bottom: 10px; text-align: center; }
+                .status-badge { display: inline-block; padding: 6px 16px; border-radius: 10px; background: ${statusColor}20; color: ${statusColor}; font-weight: 900; font-size: 14px; letter-spacing: 1px; margin-bottom: 30px; border: 1px solid ${statusColor}40; }
+                .info-box { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); padding: 25px; border-radius: 20px; margin-bottom: 30px; }
+                .info-row { margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px; }
+                .info-row:last-child { border-bottom: none; }
+                .label { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: #64748b; font-weight: 800; margin-bottom: 4px; }
+                .value { font-size: 16px; color: #ffffff; font-weight: 600; }
+                .feedback-box { background: #1a1f2e; border-left: 4px solid #EF8843; padding: 20px; border-radius: 0 16px 16px 0; margin-top: 20px; }
+                .button { display: block; text-align: center; background-color: #384A99; color: #ffffff !important; text-decoration: none; padding: 18px; border-radius: 16px; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+                .footer { background-color: rgba(0,0,0,0.2); padding: 30px; text-align: center; font-size: 11px; color: #475569; border-top: 1px solid rgba(255,255,255,0.05); }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <img src="cid:logo_institucional" alt="CGR" class="logo-institucional">
+                    <div style="margin-top: 10px;">
+                        <span style="color: #ffffff; font-size: 30px; font-weight: 900;">CGR</span>
+                        <span style="color: #EF8843; font-size: 30px; font-weight: 900;"> SEGUR@</span>
+                    </div>
+                </div>
+                <div class="content" style="text-align: center;">
+                    <h1>Tu tarea ha sido calificada</h1>
+                    <div class="status-badge">${icon} ${statusText}</div>
+                    
+                    <div class="info-box" style="text-align: left;">
+                        <div class="info-row">
+                            <div class="label">Tarea</div>
+                            <div class="value">${assignmentData.title}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="label">Nota Final</div>
+                            <div class="value" style="color: ${statusColor}; font-size: 24px; font-weight: 900;">${assignmentData.grade}</div>
+                        </div>
+                        ${assignmentData.feedback ? `
+                        <div class="feedback-box">
+                            <div class="label" style="color: #EF8843;">Comentario del Instructor</div>
+                            <div class="value" style="font-weight: 400; font-size: 14px; color: #cbd5e1; margin-top: 5px;">${assignmentData.feedback}</div>
+                        </div>
+                        ` : ''}
+                    </div>
+
+                    <a href="${process.env.FRONTEND_URL}/dashboard" class="button">Ver mi progreso</a>
+                </div>
+                <div class="footer">
+                    &copy; 2026 Contraloría General de la República de Costa Rica<br>
+                    Programa de Concientización en Ciberseguridad
+                </div>
+            </div>
+        </body>
+        </html>
+        `;
+
+        const attachments = [{
+            filename: 'logo-cgr-blanco.png',
+            path: path.join(assetsPath, 'Logotipo-CGR-blanco-transp.png'),
+            cid: 'logo_institucional'
+        }];
+
+        try {
+            await this.transporter.sendMail({
+                from: process.env.EMAIL_FROM,
+                to: userEmail,
+                subject: `${icon} Tu tarea "${assignmentData.title}" ha sido calificada - ${statusText}`,
+                html: htmlContent,
+                attachments: attachments
+            });
+            logger.info(`Notificación de calificación enviada a: ${userEmail}`);
+        } catch (error) {
+            logger.error(`Error enviando notificación de calificación a ${userEmail}:`, error);
         }
     }
 }

@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Award, Star, X, Trophy } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useSoundStore } from '../store/soundStore';
 
 /** 
  * Componente Presentacional: BadgeVisual (Pattern Section 1)
@@ -28,14 +29,13 @@ const BadgeVisual = ({ imageUrl, name }) => (
         </div>
     </div>
 );
-
 const BadgeAwardModal = ({ isOpen, onClose, badge }) => {
+    const playSound = useSoundStore(state => state.playSound);
 
     useEffect(() => {
         if (isOpen && badge) {
-            // Suena efecto de insignia
-            const audio = new Audio('/sounds/badge.mp3');
-            audio.play().catch(() => {/* Blocked by browser */ });
+            // Suena efecto de insignia respetando el silencio global
+            playSound('/sounds/badge.mp3');
 
             // Lanzar confeti premium (Pattern Section 6)
             const end = Date.now() + 2000;
@@ -121,7 +121,12 @@ const BadgeAwardModal = ({ isOpen, onClose, badge }) => {
 
                                 <div className="w-16 h-1.5 bg-gradient-to-r from-transparent via-secondary-500 to-transparent mx-auto rounded-full shadow-[0_0_15px_rgba(229,123,60,0.8)]" />
 
-                                <p className="text-gray-400 text-sm font-medium px-4 leading-relaxed line-clamp-3">
+                                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-secondary-500/10 rounded-full border border-secondary-500/20">
+                                    <Star className="w-3 h-3 fill-secondary-500 text-secondary-500" />
+                                    <span className="text-[11px] font-black text-white">+{badge.points || 5} PUNTOS</span>
+                                </div>
+
+                                <p className="text-gray-400 text-sm font-medium px-4 leading-relaxed">
                                     {badge.description}
                                 </p>
                             </div>

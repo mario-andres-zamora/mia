@@ -32,11 +32,11 @@ class LessonService {
         );
 
         if (prevMandatoryIncomplete && !isAdmin) {
-            return { 
-                locked: true, 
-                error: 'Lección bloqueada', 
+            return {
+                locked: true,
+                error: 'Lección bloqueada',
                 message: `Debes completar la lección "${prevMandatoryIncomplete.title}" para continuar.`,
-                moduleId: lesson.module_id 
+                moduleId: lesson.module_id
             };
         }
 
@@ -50,7 +50,7 @@ class LessonService {
 
             if (prevModule) {
                 const [lessonProgress] = await db.query(
-                    'SELECT COUNT(*) as completed_count FROM user_progress WHERE user_id = ? AND module_id = ? AND status = "completed"',
+                    'SELECT COUNT(*) as completed_count FROM user_progress up JOIN lessons l ON up.lesson_id = l.id WHERE up.user_id = ? AND up.module_id = ? AND up.status = "completed" AND l.is_optional = FALSE',
                     [userId, prevModule.id]
                 );
                 const [totalRequired] = await db.query(
@@ -58,20 +58,20 @@ class LessonService {
                     [prevModule.id]
                 );
                 const [quizProgress] = await db.query(
-                    'SELECT COUNT(*) as passed_count FROM quiz_attempts WHERE user_id = ? AND quiz_id IN (SELECT id FROM quizzes WHERE module_id = ?) AND passed = TRUE',
+                    'SELECT COUNT(*) as passed_count FROM quiz_attempts WHERE user_id = ? AND quiz_id IN (SELECT id FROM quizzes WHERE module_id = ? AND lesson_id IS NULL) AND passed = TRUE',
                     [userId, prevModule.id]
                 );
                 const [totalQuizzes] = await db.query(
-                    'SELECT COUNT(*) as total FROM quizzes WHERE module_id = ? AND is_published = TRUE',
+                    'SELECT COUNT(*) as total FROM quizzes WHERE module_id = ? AND is_published = TRUE AND lesson_id IS NULL',
                     [prevModule.id]
                 );
 
                 if ((lessonProgress.completed_count < totalRequired.total) || (quizProgress.passed_count < totalQuizzes.total)) {
-                    return { 
-                        locked: true, 
-                        error: 'Módulo bloqueado', 
+                    return {
+                        locked: true,
+                        error: 'Módulo bloqueado',
                         message: 'Debes completar el módulo anterior antes de acceder a este contenido.',
-                        moduleId: lesson.module_id 
+                        moduleId: lesson.module_id
                     };
                 }
             }
@@ -79,7 +79,16 @@ class LessonService {
 
         // Progress management
         let [progress] = await db.query(
-            'SELECT * FROM user_progress WHERE user_id = ? AND lesson_id = ?',
+            `SELECT up.*, 
+                (SELECT SUM(points_earned) FROM gamification_activities 
+                 WHERE user_id = up.user_id AND (
+                    (activity_type = 'lesson_completed' AND reference_id = up.lesson_id) OR
+                    (activity_type = 'quiz_passed' AND reference_id IN (SELECT id FROM quizzes WHERE lesson_id = up.lesson_id)) OR
+                    (activity_type = 'task_approved' AND reference_id IN (SELECT id FROM lesson_contents WHERE lesson_id = up.lesson_id AND content_type = 'assignment')) OR
+                    (activity_type = 'survey_completed' AND reference_id IN (SELECT id FROM surveys WHERE lesson_id = up.lesson_id))
+                 )) as points_earned
+             FROM user_progress up 
+             WHERE up.user_id = ? AND up.lesson_id = ?`,
             [userId, lessonId]
         );
 
@@ -91,7 +100,16 @@ class LessonService {
                 [userId, lesson.module_id, lessonId]
             );
             [progress] = await db.query(
-                'SELECT * FROM user_progress WHERE user_id = ? AND lesson_id = ?',
+                `SELECT up.*, 
+                    (SELECT SUM(points_earned) FROM gamification_activities 
+                     WHERE user_id = up.user_id AND (
+                        (activity_type = 'lesson_completed' AND reference_id = up.lesson_id) OR
+                        (activity_type = 'quiz_passed' AND reference_id IN (SELECT id FROM quizzes WHERE lesson_id = up.lesson_id)) OR
+                        (activity_type = 'task_approved' AND reference_id IN (SELECT id FROM lesson_contents WHERE lesson_id = up.lesson_id AND content_type = 'assignment')) OR
+                        (activity_type = 'survey_completed' AND reference_id IN (SELECT id FROM surveys WHERE lesson_id = up.lesson_id))
+                     )) as points_earned
+                 FROM user_progress up 
+                 WHERE up.user_id = ? AND up.lesson_id = ?`,
                 [userId, lessonId]
             );
 
@@ -139,7 +157,7 @@ class LessonService {
 
         // Verify requirements
         const assignments = await db.query(
-            `SELECT lc.id, lc.title, asub.status FROM lesson_contents lc LEFT JOIN assignment_submissions asub ON lc.id = asub.content_id AND asub.user_id = ? WHERE lc.lesson_id = ? AND lc.content_type = 'assignment'`,
+            `SELECT lc.id, lc.title, asub.status FROM lesson_contents lc LEFT JOIN assignment_submissions asub ON lc.id = asub.content_id AND asub.user_id = ? WHERE lc.lesson_id = ? AND lc.content_type = 'assignment' AND lc.is_required = 1`,
             [userId, lessonId]
         );
 
@@ -165,6 +183,19 @@ class LessonService {
             }
         }
 
+        const surveys = await db.query(
+            `SELECT lc.title, lc.is_required,
+             (SELECT COUNT(*) FROM survey_responses sr WHERE sr.user_id = ? AND sr.survey_id = JSON_VALUE(lc.data, '$.survey_id')) as is_done
+             FROM lesson_contents lc WHERE lc.lesson_id = ? AND lc.content_type = 'survey' AND lc.is_required = 1`,
+            [userId, lessonId]
+        );
+
+        for (const survey of surveys) {
+            if (survey.is_required && !survey.is_done) {
+                throw new Error(`No puedes finalizar: Debes completar la encuesta "${survey.title}".`);
+            }
+        }
+
         // Verify required videos, links and confirmations
         const contents = await db.query(
             `SELECT lc.id, lc.title, lc.content_type, ucp.completed_at 
@@ -181,44 +212,76 @@ class LessonService {
                 if (item.content_type === 'confirmation' || item.content_type === 'multiple_choice') action = 'responder la pregunta';
                 if (item.content_type === 'interactive_input') action = 'completar la entrada';
                 if (item.content_type === 'password_tester') action = 'probar la contraseña';
-                
+
                 throw new Error(`No puedes finalizar: Te falta ${action} "${item.title}".`);
             }
         }
 
-        // Calculate points with penalties
-        const allContents = await db.query('SELECT id, points, content_type, data FROM lesson_contents WHERE lesson_id = ?', [lessonId]);
+        // Calculate points only for completed items
+        const allContents = await db.query(
+            `SELECT lc.id, lc.points, lc.content_type, lc.data,
+                asub.status as asub_status,
+                ucp.completed_at as ucp_completed_at,
+                ucp.response_data as interaction_data,
+                (SELECT passed FROM quiz_attempts qa WHERE qa.user_id = ? AND qa.quiz_id = JSON_VALUE(lc.data, '$.quiz_id') ORDER BY qa.attempt_number DESC LIMIT 1) as quiz_passed,
+                (SELECT COUNT(*) FROM survey_responses sr WHERE sr.user_id = ? AND sr.survey_id = JSON_VALUE(lc.data, '$.survey_id')) as survey_done
+             FROM lesson_contents lc
+             LEFT JOIN assignment_submissions asub ON asub.content_id = lc.id AND asub.user_id = ?
+             LEFT JOIN user_content_progress ucp ON ucp.content_id = lc.id AND ucp.user_id = ?
+             WHERE lc.lesson_id = ?`,
+            [userId, userId, userId, userId, lessonId]
+        );
+
         let pointsAwarded = 0;
+        let totalPointsInLesson = 0;
 
         for (const content of allContents) {
+            let isCompleted = false;
+            if (content.content_type === 'quiz') {
+                isCompleted = !!content.quiz_passed;
+            } else if (content.content_type === 'survey') {
+                isCompleted = content.survey_done > 0;
+            } else if (content.content_type === 'assignment') {
+                isCompleted = content.asub_status === 'approved';
+            } else if (TRACEABLE_CONTENT_TYPES.includes(content.content_type)) {
+                isCompleted = !!content.ucp_completed_at;
+            } else {
+                // Para tipos informativos sin rastreo (texto, imagen, etc), se consideran completados por defecto
+                isCompleted = true;
+            }
+
+            if (!isCompleted) continue;
+
             let itemPoints = parseInt(content.points) || 0;
-            
-            // If it's a hack_neighbor, check for hint penalties
+            const contentData = typeof content.data === 'string' ? JSON.parse(content.data) : (content.data || {});
+            const interactionData = typeof content.interaction_data === 'string' ? JSON.parse(content.interaction_data) : (content.interaction_data || {});
+
+            // Penalizaciones
             if (content.content_type === 'hack_neighbor' && itemPoints > 0) {
-                const [progress] = await db.query('SELECT response_data FROM user_content_progress WHERE user_id = ? AND content_id = ?', [userId, content.id]);
-                if (progress?.response_data) {
-                    const responseData = typeof progress.response_data === 'string' ? JSON.parse(progress.response_data) : progress.response_data;
-                    const contentData = typeof content.data === 'string' ? JSON.parse(content.data) : (content.data || {});
-                    
-                    const hintsUsed = parseInt(responseData.hintsUsed) || 0;
-                    const penaltyPerHint = parseInt(contentData.hint_penalty) || 0;
-                    itemPoints = Math.max(0, itemPoints - (hintsUsed * penaltyPerHint));
+                const hintsUsed = parseInt(interactionData.hintsUsed) || 0;
+                const penaltyPerHint = parseInt(contentData.hint_penalty) || 0;
+                itemPoints = Math.max(0, itemPoints - (hintsUsed * penaltyPerHint));
+            }
+
+            if (content.content_type === 'mfa_defender' && itemPoints > 0) {
+                const mfaFails = parseInt(interactionData.mfaFails) || 0;
+                const failPenalty = parseInt(contentData.fail_penalty) || 0;
+                itemPoints = Math.max(0, itemPoints - (mfaFails * failPenalty));
+            }
+
+            if (content.content_type === 'terms_trap' && itemPoints > 0) {
+                if (interactionData.status === 'completed_after_failure') {
+                    itemPoints = Math.round(itemPoints * 0.4);
                 }
             }
 
-            // If it's a mfa_defender, check for fail penalties
-            if (content.content_type === 'mfa_defender' && itemPoints > 0) {
-                const [progress] = await db.query('SELECT response_data FROM user_content_progress WHERE user_id = ? AND content_id = ?', [userId, content.id]);
-                if (progress?.response_data) {
-                    const responseData = typeof progress.response_data === 'string' ? JSON.parse(progress.response_data) : progress.response_data;
-                    const contentData = typeof content.data === 'string' ? JSON.parse(content.data) : (content.data || {});
-                    
-                    const mfaFails = parseInt(responseData.mfaFails) || 0;
-                    const failPenalty = parseInt(contentData.fail_penalty) || 0;
-                    itemPoints = Math.max(0, itemPoints - (mfaFails * failPenalty));
-                }
-            }
-            
+
+            // Sumar siempre para el mensaje de la UI
+            totalPointsInLesson += itemPoints;
+
+            // EXCLUSIÓN: No sumar al balance real si ya se otorgó (Quices, Encuestas, Tareas)
+            if (['quiz', 'survey', 'assignment'].includes(content.content_type)) continue;
+
             pointsAwarded += itemPoints;
         }
 
@@ -245,7 +308,8 @@ class LessonService {
         }
 
         return {
-            pointsAwarded,
+            pointsAwarded: totalPointsInLesson,
+            realPointsAwarded: pointsAwarded,
             newBalance: updatedStats?.points || 0,
             newLevel: updatedStats?.level || 'Novato',
             levelUp: levelSync?.leveledUp || false,
@@ -280,14 +344,14 @@ class LessonService {
                 is_optional = COALESCE(?, is_optional)
              WHERE id = ?`,
             [
-                title ?? null, 
-                content ?? null, 
-                lesson_type ?? null, 
-                video_url ?? null, 
-                duration_minutes ?? null, 
-                order_index ?? null, 
-                is_published ?? null, 
-                is_optional ?? null, 
+                title ?? null,
+                content ?? null,
+                lesson_type ?? null,
+                video_url ?? null,
+                duration_minutes ?? null,
+                order_index ?? null,
+                is_published ?? null,
+                is_optional ?? null,
                 lessonId
             ]
         );

@@ -41,6 +41,11 @@ const contentRoutes = require('./routes/lesson_content');
 const resourceRoutes = require('./routes/resources');
 const surveyRoutes = require('./routes/surveys');
 const certificateRoutes = require('./routes/certificates');
+const announcementRoutes = require('./routes/announcements');
+const forumRoutes = require('./routes/forumRoutes');
+const gameRoutes = require('./routes/gameRoutes');
+
+
 const { authMiddleware, adminMiddleware } = require('./middleware/auth');
 const maintenanceMiddleware = require('./middleware/maintenance');
 const errorMiddleware = require('./middleware/errorMiddleware');
@@ -177,6 +182,11 @@ app.use('/api/content', contentRoutes);
 app.use('/api/resources', resourceRoutes);
 app.use('/api/surveys', surveyRoutes);
 app.use('/api/certificates', authMiddleware, maintenanceMiddleware, certificateRoutes);
+app.use('/api/announcements', announcementRoutes);
+app.use('/api/forums', authMiddleware, maintenanceMiddleware, forumRoutes);
+app.use('/api/games', gameRoutes);
+
+
 
 // Ruta para obtener configuraciones globales del sistema (Admin)
 app.get('/api/system/settings', authMiddleware, adminMiddleware, async (req, res) => {

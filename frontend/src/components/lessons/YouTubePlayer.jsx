@@ -1,8 +1,13 @@
 import { useEffect, useRef } from 'react';
 
-export default function YouTubePlayer({ id, videoId, onEnded, ytApiLoaded, isWatched }) {
+export default function YouTubePlayer({ id, videoId, onEnded, ytApiLoaded, isWatched, isRequired }) {
     const playerRef = useRef(null);
     const lastTimeRef = useRef(0);
+    const onEndedRef = useRef(onEnded);
+
+    useEffect(() => {
+        onEndedRef.current = onEnded;
+    }, [onEnded]);
 
     useEffect(() => {
         if (!ytApiLoaded || !videoId) return;
@@ -18,16 +23,16 @@ export default function YouTubePlayer({ id, videoId, onEnded, ytApiLoaded, isWat
                 playerVars: {
                     'rel': 0,
                     'modestbranding': 1,
-                    'controls': isWatched ? 1 : 1 // We keep controls but monitor seeking
+                    'controls': 1 // Controls are always visible now
                 },
                 events: {
                     'onStateChange': (event) => {
                         if (event.data === window.YT.PlayerState.ENDED) {
                             const duration = player.getDuration();
-                            // Only mark as watched if they actually reached the end legitimately (or if it was already watched)
-                            // We allow a small margin (3 seconds) for duration differences
-                            if (isWatched || lastTimeRef.current >= duration - 3) {
-                                onEnded();
+                            // Only mark as watched if they actually reached the end legitimately
+                            // If isRequired is false, we always allow it
+                            if (!isRequired || isWatched || lastTimeRef.current >= duration - 3) {
+                                onEndedRef.current();
                             } else {
                                 // User skipped to the end illegally
                                 player.seekTo(lastTimeRef.current);
@@ -39,8 +44,8 @@ export default function YouTubePlayer({ id, videoId, onEnded, ytApiLoaded, isWat
             });
             playerRef.current = player;
 
-            // Monitor seeking forward
-            if (!isWatched) {
+            // Monitor seeking forward only if it's REQUIRED and not watched
+            if (isRequired && !isWatched) {
                 interval = setInterval(() => {
                     if (player && player.getCurrentTime) {
                         const currentTime = player.getCurrentTime();
@@ -64,7 +69,7 @@ export default function YouTubePlayer({ id, videoId, onEnded, ytApiLoaded, isWat
             if (interval) clearInterval(interval);
             if (player && player.destroy) player.destroy();
         };
-    }, [videoId, ytApiLoaded, id, onEnded, isWatched]);
+    }, [videoId, ytApiLoaded, id, isWatched]);
 
     return (
         <div className="w-full h-full bg-slate-900 flex items-center justify-center">

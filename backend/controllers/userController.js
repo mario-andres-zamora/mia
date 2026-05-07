@@ -134,12 +134,12 @@ class UserController {
     }
 
     /**
-     * @route   POST /api/users/:id/reset
-     * @desc    Reiniciar todo el progreso de un usuario (Admin)
+     * Reinicia el progreso de un usuario (Admin)
      */
     async resetProgress(req, res) {
         try {
             const userId = req.params.id;
+            const { moduleId } = req.body;
 
             // Limpieza extensiva de caché para asegurar que el cambio se vea reflejado inmediatamente
             await clearCache(`cache:/api/dashboard*u${userId}*`);
@@ -154,17 +154,19 @@ class UserController {
             await clearCache(`leaderboard:institutional`);
             await clearCache(`cache:/api/users*`); // Lista de usuarios de admin
 
-            const result = await userService.resetUserProgress(userId);
+            const result = await userService.resetUserProgress(userId, moduleId);
 
-            // Sincronizar el ranking (Sorted Set) en Redis inmediatamente a 0
+            // Sincronizar el ranking (Sorted Set) en Redis inmediatamente con los nuevos puntos
             const { updateUserScore } = require('../utils/gamification');
-            await updateUserScore(userId, 0);
+            await updateUserScore(userId, result.newPoints);
 
             res.json({ 
                 success: true, 
-                message: 'El progreso del usuario ha sido reiniciado completamente',
-                newPoints: 0,
-                newLevel: result.initialLevel 
+                message: moduleId 
+                    ? 'El progreso del módulo ha sido reiniciado correctamente'
+                    : 'Todo el progreso del usuario ha sido reiniciado completamente',
+                newPoints: result.newPoints,
+                newLevel: result.newLevel 
             });
         } catch (error) {
             logger.error('Error al reiniciar usuario:', error);

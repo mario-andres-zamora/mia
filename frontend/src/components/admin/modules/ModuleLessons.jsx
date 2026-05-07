@@ -5,10 +5,8 @@ export default function ModuleLessons({
     onNewLesson,
     onEditLesson,
     onDeleteLesson,
-    onToggleOptional,
     onTogglePublish,
     onOpenEditor,
-    onViewResults,
     onReorderLessons,
     loading
 }) {
@@ -41,7 +39,7 @@ export default function ModuleLessons({
                     className="group w-full sm:w-auto flex items-center justify-center gap-2 bg-primary-500/10 hover:bg-primary-500 text-primary-400 hover:text-white py-2.5 px-6 rounded-xl transition-all border border-primary-500/20 hover:shadow-xl hover:shadow-primary-500/20 active:scale-95"
                 >
                     <Plus className="w-4 h-4 group-hover:rotate-90 transition-transform" />
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">Añadir Unidad</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">Añadir Lección</span>
                 </button>
             </div>
 
@@ -98,7 +96,16 @@ export default function ModuleLessons({
                                                 ? 'bg-secondary-500/10 text-secondary-500 border-secondary-500/10 shadow-secondary-500/5'
                                                 : 'bg-primary-500/10 text-primary-400 border-primary-500/10 shadow-primary-500/5'
                                                 }`}>
-                                                {lesson.lesson_type}
+                                                {(() => {
+                                                    const types = {
+                                                        'reading': 'Lectura',
+                                                        'video': 'Video',
+                                                        'quiz': 'Quiz',
+                                                        'interactive': 'Interactivo',
+                                                        'survey': 'Encuesta'
+                                                    };
+                                                    return types[lesson.lesson_type] || lesson.lesson_type;
+                                                })()}
                                                 {lesson.lesson_type === 'quiz' && <Award className="inline w-3 h-3 ml-1 mb-0.5" />}
                                             </span>
                                             <div className="w-1 h-1 bg-white/10 rounded-full"></div>
@@ -114,15 +121,6 @@ export default function ModuleLessons({
                                 </div>
 
                                 <div className="flex items-center flex-wrap gap-3 w-full lg:w-auto justify-end border-t lg:border-t-0 border-white/5 pt-4 lg:pt-0">
-                                    <div className="flex items-center gap-4 group/toggle bg-slate-950 px-4 py-2 rounded-2xl border border-white/5 shadow-inner">
-                                        <span className="text-[9px] font-black text-gray-600 uppercase tracking-widest group-hover/toggle:text-secondary-400/70 transition-colors">Progreso Opcional</span>
-                                        <button
-                                            onClick={() => onToggleOptional(lesson)}
-                                            className={`w-10 h-5 rounded-full relative transition-all shadow-inner border border-white/5 ${lesson.is_optional ? 'bg-secondary-500 shadow-secondary-500/30' : 'bg-slate-800'}`}
-                                        >
-                                            <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all shadow-xl ${lesson.is_optional ? 'left-5.5' : 'left-0.5'}`}></div>
-                                        </button>
-                                    </div>
                                     <div className="flex items-center flex-wrap gap-1 bg-slate-950 p-1.5 rounded-2xl border border-white/5 justify-end">
                                         <button
                                             onClick={() => onTogglePublish(lesson)}
@@ -146,15 +144,6 @@ export default function ModuleLessons({
                                             <Trash2 className="w-4 h-4 group-hover/btn:scale-110" />
                                         </button>
                                         <div className="w-px h-5 bg-white/10 mx-2"></div>
-                                        {lesson.lesson_type === 'survey' && (
-                                            <button
-                                                onClick={() => onViewResults(lesson.id)}
-                                                className="flex items-center gap-2.5 px-5 py-2.5 bg-secondary-500/10 text-secondary-500 hover:bg-secondary-500 hover:text-white rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-lg hover:shadow-secondary-500/20 active:scale-95 group/results mr-1"
-                                            >
-                                                Resultados
-                                                <BarChart2 className="w-3.5 h-3.5 group-hover/results:scale-110 transition-transform" />
-                                            </button>
-                                        )}
                                         <button
                                             onClick={() => onOpenEditor(lesson.id)}
                                             className="flex items-center gap-2.5 px-5 py-2.5 bg-primary-500/10 text-primary-400 hover:bg-primary-500 hover:text-white rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-lg hover:shadow-primary-500/20 active:scale-95 group/edit"

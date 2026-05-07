@@ -9,11 +9,12 @@ import UserHeader from '../components/admin/users/UserHeader';
 import UserTable from '../components/admin/users/UserTable';
 import UserEditModal from '../components/admin/users/UserEditModal';
 import UserProgressModal from '../components/admin/users/UserProgressModal';
+import UserResetModal from '../components/admin/users/UserResetModal';
 
 export default function AdminUsers() {
     const { user: currentUser, updateUser } = useAuthStore();
     const navigate = useNavigate();
-    const { filteredUsers, loading, searchTerm, setSearchTerm, departmentFilter, setDepartmentFilter, departments, actions } = useUsers();
+    const { filteredUsers, loading, searchTerm, setSearchTerm, departmentFilter, setDepartmentFilter, departments, modules, actions } = useUsers();
 
     if (loading) {
         return (
@@ -76,18 +77,16 @@ export default function AdminUsers() {
             />
 
             {/* Confirm Actions */}
-            <ConfirmModal
+            <UserResetModal
                 isOpen={actions.reset.isOpen}
                 onClose={() => actions.reset.setOpen(false)}
-                onConfirm={() => actions.reset.confirm((points, level) => {
+                user={actions.reset.user}
+                modules={modules || []}
+                onConfirm={(moduleId) => actions.reset.confirm(moduleId, (points, level) => {
                     if (actions.reset.user?.id === currentUser?.id) {
                         updateUser({ points, level });
                     }
                 })}
-                title="Reiniciar Progreso Maestro"
-                message={`¿Estás seguro de que deseas reiniciar todo el progreso de ${actions.reset.user?.first_name} ${actions.reset.user?.last_name}? Esta acción purgará sus puntos, certificados, insignias e historial de lecciones. Esta acción es monitoreada por auditoría institucional.`}
-                confirmText="REINICIAR PROGRESO"
-                isDestructive={true}
             />
 
             <ConfirmModal

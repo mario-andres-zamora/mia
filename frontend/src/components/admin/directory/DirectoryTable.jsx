@@ -1,12 +1,13 @@
 import React from 'react';
-import { Users, Mail, Building2, Briefcase, Clock, ArrowUp, ArrowDown, ArrowUpDown, Edit2, Trash2 } from 'lucide-react';
+import { Users, Mail, Building2, Briefcase, Clock, ArrowUp, ArrowDown, ArrowUpDown, Edit2, Trash2, Send } from 'lucide-react';
 
 export default function DirectoryTable({ 
     items, 
     sortConfig, 
     onSort, 
     onEdit, 
-    onDelete 
+    onDelete,
+    onSendInvite
 }) {
     const renderSortIcon = (key) => {
         if (sortConfig.key !== key) {
@@ -52,7 +53,7 @@ export default function DirectoryTable({
                     </thead>
                     <tbody className="divide-y divide-white/5">
                         {items.map((person) => (
-                            <tr key={person.email} className={`hover:bg-white/[0.02] transition-colors group ${!person.is_registered ? 'opacity-80' : ''}`}>
+                            <tr key={person.id} className={`hover:bg-white/[0.02] transition-colors group ${!person.is_registered ? 'opacity-80' : ''}`}>
                                 <td className="px-6 py-4 pl-10">
                                     <div className="flex items-center gap-4">
                                         <div className={`w-12 h-12 rounded-xl flex items-center justify-center border group-hover:scale-110 transition-transform duration-300 ${person.is_registered ? 'bg-green-500/10 text-green-500 border-green-500/20' : 'bg-slate-800 text-gray-600 border-white/5'}`}>
@@ -91,18 +92,29 @@ export default function DirectoryTable({
                                     )}
                                 </td>
                                 <td className="px-6 py-4 text-right">
-                                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div className="flex items-center justify-end gap-2 transition-opacity">
+                                        {!person.is_registered && onSendInvite && (
+                                            <button
+                                                onClick={() => onSendInvite(person)}
+                                                className="p-2 bg-secondary-500/10 text-secondary-500 hover:bg-secondary-500 hover:text-white rounded-lg transition-all shadow-lg hover:shadow-secondary-500/10"
+                                                title="Enviar invitación por correo"
+                                            >
+                                                <Send className="w-4 h-4" />
+                                            </button>
+                                        )}
                                         <button
                                             onClick={() => onEdit(person)}
-                                            className="p-3 bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white rounded-xl transition-all shadow-lg hover:shadow-blue-500/10"
+                                            className="p-2 bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white rounded-lg transition-all shadow-lg hover:shadow-blue-500/10"
+                                            title="Editar"
                                         >
-                                            <Edit2 className="w-4.5 h-4.5" />
+                                            <Edit2 className="w-4 h-4" />
                                         </button>
                                         <button
-                                            onClick={() => onDelete(person.email)}
-                                            className="p-3 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white rounded-xl transition-all shadow-lg hover:shadow-red-500/10"
+                                            onClick={() => onDelete(person)}
+                                            className="p-2 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white rounded-lg transition-all shadow-lg hover:shadow-red-500/10"
+                                            title="Eliminar"
                                         >
-                                            <Trash2 className="w-4.5 h-4.5" />
+                                            <Trash2 className="w-4 h-4" />
                                         </button>
                                     </div>
                                 </td>

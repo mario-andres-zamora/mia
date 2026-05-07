@@ -13,7 +13,11 @@ import {
     CheckCircle2,
     Lock,
     CheckSquare,
-    Smartphone
+    Smartphone,
+    LayoutGrid,
+    Activity,
+    MessageSquare,
+    ShieldAlert
 } from 'lucide-react';
 
 export const CONTENT_TYPES_CONFIG = [
@@ -33,6 +37,10 @@ export const CONTENT_TYPES_CONFIG = [
     { type: 'password_tester', label: 'Test Password', icon: Lock, color: 'text-pink-400' },
     { type: 'multiple_choice', label: 'Opción Múltiple', icon: CheckSquare, color: 'text-orange-400' },
     { type: 'mfa_defender', label: 'Defensor MFA', icon: Smartphone, color: 'text-indigo-500' },
+    { type: 'categorization', label: 'Categorización', icon: LayoutGrid, color: 'text-emerald-400' },
+    { type: 'data_tetris', label: 'Data Tetris', icon: Activity, color: 'text-primary-400' },
+    { type: 'forum', label: 'Foro', icon: MessageSquare, color: 'text-teal-400' },
+    { type: 'terms_trap', label: 'Términos Trampa', icon: ShieldAlert, color: 'text-red-500' },
 ];
 
 export const getIconForType = (type) => {
@@ -62,7 +70,11 @@ export const getTypeLabel = (type) => {
         interactive_input: 'Input Interactivo (Validación/Reflexión)',
         password_tester: 'Medidor de Contraseña',
         multiple_choice: 'Opciones Múltiples',
-        mfa_defender: 'Simulador de MFA'
+        mfa_defender: 'Simulador de MFA',
+        categorization: 'Actividad de Categorización',
+        data_tetris: 'Juego Data Tetris',
+        forum: 'Foro de Discusión',
+        terms_trap: 'Trampa de Términos (Concientización)'
     };
     return labels[type] || type;
 };
