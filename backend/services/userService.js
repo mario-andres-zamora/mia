@@ -101,9 +101,9 @@ class UserService {
         const { getUserRank } = require('../utils/gamification');
         const rankData = await getUserRank(userId, user.email, user.department);
         
-        rank = rankData.institutionalRank;
-        departmentRank = rankData.departmentalRank;
-        totalUsersCount = rankData.totalUsersCount;
+        const rank = rankData.institutionalRank;
+        const departmentRank = rankData.departmentalRank;
+        const totalUsersCount = rankData.totalUsersCount;
 
         // Gamification levels logic
         const levels = await getLevels(true);
