@@ -62,7 +62,7 @@ export default function CertificatesModal({ isOpen, onClose, certificates }) {
                                             transition={{ delay: i * 0.05 }}
                                             onClick={() => {
                                                 onClose();
-                                                navigate(`/certificates/module/${cert.module_id}`);
+                                                navigate(`/certificates/module/${cert.module_id}`, { state: { from: '/dashboard', openCertificates: true } });
                                             }}
                                             className="p-5 rounded-2xl bg-[var(--bg-color)] border border-[var(--card-border)] hover:border-secondary-500/40 hover:bg-[var(--bg-color)]/80 transition-all cursor-pointer group text-left flex items-center gap-4 shadow-lg hover:shadow-secondary-500/10 hover:-translate-y-1"
                                         >

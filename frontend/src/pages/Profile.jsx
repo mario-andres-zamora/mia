@@ -71,7 +71,7 @@ export default function Profile() {
                         certificates={certificates}
                         badges={stats.badges}
                         stats={stats}
-                        onCertClick={(cert) => navigate(`/certificates/module/${cert.module_id}`)}
+                        onCertClick={(cert) => navigate(`/certificates/module/${cert.module_id}`, { state: { from: '/profile' } })}
                     />
 
                     {/* Theme Settings Card - Mover aquí debajo de insignias */}
