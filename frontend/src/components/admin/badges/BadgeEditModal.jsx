@@ -70,6 +70,22 @@ export default function BadgeEditModal({ isOpen, onClose, editingBadge, formData
                                 min="0"
                             />
                         </div>
+
+                        {/* Visibilidad Toggle */}
+                        <div className="space-y-3">
+                            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1 block text-left">Visibilidad</label>
+                            <div 
+                                onClick={() => setFormData({ ...formData, is_public: !formData.is_public })}
+                                className={`w-full flex items-center justify-between px-5 py-4 bg-slate-900 border border-white/10 rounded-2xl cursor-pointer transition-all ${formData.is_public ? 'border-primary-500/30' : ''}`}
+                            >
+                                <span className={`text-[10px] font-black uppercase tracking-widest ${formData.is_public ? 'text-primary-400' : 'text-gray-500'}`}>
+                                    {formData.is_public ? 'Mostrar en Dashboard' : 'Oculto en Dashboard'}
+                                </span>
+                                <div className={`relative w-10 h-5 rounded-full transition-colors duration-300 ${formData.is_public ? 'bg-primary-600' : 'bg-slate-700'}`}>
+                                    <div className={`absolute top-1 w-3 h-3 bg-white rounded-full shadow-sm transition-transform duration-300 ${formData.is_public ? 'translate-x-6' : 'translate-x-1'}`}></div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div className="space-y-3 text-left">

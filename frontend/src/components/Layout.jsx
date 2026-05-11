@@ -175,9 +175,7 @@ export default function Layout() {
                                             referrerPolicy="no-referrer"
                                         />
                                     </div>
-                                    {hasAdminPanelAccess(user) && (
-                                        <div className="absolute -top-1 -right-1 w-2.5 h-2.5 xl:w-3 xl:h-3 bg-secondary-500 rounded-full border-2 border-[#0d1127] shadow-sm"></div>
-                                    )}
+
                                 </div>
                                 <div className="hidden lg:flex flex-col overflow-hidden min-w-0 flex-1 max-w-[15vw] xl:max-w-[20vw]">
                                     <p className="text-[10px] font-black !text-white uppercase tracking-tight truncate">

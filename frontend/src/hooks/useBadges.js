@@ -17,7 +17,8 @@ export function useBadges() {
         icon_name: 'Award', // kept for safety, but UI will use image_url
         criteria_type: 'manual',
         criteria_value: null,
-        points: 10
+        points: 10,
+        is_public: true
     });
 
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -68,7 +69,8 @@ export function useBadges() {
                 icon_name: 'Award', 
                 criteria_type: 'manual', 
                 criteria_value: null,
-                points: 10
+                points: 10,
+                is_public: true
             });
             fetchBadges();
             return true;
@@ -123,7 +125,8 @@ export function useBadges() {
             icon_name: 'Award', 
             criteria_type: 'manual', 
             criteria_value: null,
-            points: 10
+            points: 10,
+            is_public: true
         });
         setIsModalOpen(true);
     };
