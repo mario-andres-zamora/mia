@@ -1,0 +1,59 @@
+<!--?xml version="1.0" encoding="UTF-8"?-->
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGradient" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#6B3A94"></stop>
+      <stop offset="100%" stop-color="#2D2E5F"></stop>
+    </linearGradient>
+
+    <linearGradient id="phoneGradient" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#40A9FF"></stop>
+      <stop offset="100%" stop-color="#1D3C6A"></stop>
+    </linearGradient>
+
+    <linearGradient id="lockGradient" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFD84D"></stop>
+      <stop offset="100%" stop-color="#F4B400"></stop>
+    </linearGradient>
+
+    <style>
+      .bg { fill: url(#bgGradient); }
+      .phone { fill: url(#phoneGradient); stroke: #ffffff; stroke-width: 5; }
+      .screen { fill: #0A1A33; }
+      .lockBody { fill: url(#lockGradient); }
+      .lockArc { fill: none; stroke: url(#lockGradient); stroke-width: 10; stroke-linecap: round; }
+      .detail { fill: #A873D1; opacity: 0.6; }
+    </style>
+  </defs>
+
+  <!-- Base -->
+  <path class="bg" d="M256 40L446 150V362L256 472L66 362V150Z"></path>
+
+  <!-- Detalles -->
+  <rect class="detail" x="40" y="200" width="16" height="112" rx="8"></rect>
+  <rect class="detail" x="456" y="200" width="16" height="112" rx="8"></rect>
+
+  <!-- Teléfono -->
+  <rect class="phone" x="176" y="110" width="160" height="300" rx="32"></rect>
+
+  <!-- Pantalla (CORREGIDA) -->
+  <rect class="screen" x="196" y="150" width="120" height="210" rx="14"></rect>
+
+  <!-- Cámara -->
+  <rect fill="#ffffff" x="236" y="125" width="40" height="6" rx="3"></rect>
+
+  <!-- Candado -->
+  <!-- Arco más natural -->
+  <path class="lockArc" d="M226 250 C226 210 286 210 286 250"></path>
+
+  <!-- Cuerpo -->
+  <rect class="lockBody" x="216" y="250" width="80" height="65" rx="14"></rect>
+
+  <!-- Cerradura -->
+  <circle cx="256" cy="285" r="6" fill="#1D3C6A"></circle>
+  <rect x="252" y="285" width="8" height="14" rx="2" fill="#1D3C6A"></rect>
+
+  <!-- Botón -->
+  <circle fill="#ffffff" cx="256" cy="380" r="6"></circle>
+
+</svg>

@@ -1,0 +1,64 @@
+<!--?xml version="1.0" encoding="UTF-8"?-->
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Fondo -->
+    <linearGradient id="bgGradient" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2D2E5F"></stop>
+      <stop offset="100%" stop-color="#1A1A2E"></stop>
+    </linearGradient>
+
+    <!-- Consola -->
+    <linearGradient id="bodyGradient" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#D9D9D9"></stop>
+      <stop offset="100%" stop-color="#A6A6A6"></stop>
+    </linearGradient>
+
+    <!-- Pantalla retro -->
+    <linearGradient id="screenGradient" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#9BBC0F"></stop>
+      <stop offset="100%" stop-color="#556B2F"></stop>
+    </linearGradient>
+
+    <!-- Replay -->
+    <linearGradient id="replayGradient" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#00F5FF"></stop>
+      <stop offset="100%" stop-color="#00A8FF"></stop>
+    </linearGradient>
+
+    <style>
+      .bg { fill: url(#bgGradient); }
+      .body { fill: url(#bodyGradient); stroke: #ffffff; stroke-width: 4; }
+      .screen { fill: url(#screenGradient); }
+      .dpad { fill: #333; }
+      .btnA { fill: #B00020; }
+      .btnB { fill: #E53935; }
+      .replay { fill: none; stroke: url(#replayGradient); stroke-width: 6; stroke-linecap: round; }
+    </style>
+  </defs>
+
+  <!-- Base hex -->
+  <path class="bg" d="M256 40L446 150V362L256 472L66 362V150Z"></path>
+
+  <!-- Consola -->
+  <rect class="body" x="156" y="90" width="200" height="320" rx="24"></rect>
+
+  <!-- Pantalla -->
+  <rect class="screen" x="186" y="120" width="140" height="120" rx="8"></rect>
+
+  <!-- Replay dentro de la pantalla -->
+  <path class="replay" d="M300 180 A40 40 0 1 0 250 210"></path>
+  <polygon points="250,210 262,200 262,220" fill="url(#replayGradient)"></polygon>
+
+  <!-- D-Pad -->
+  <rect class="dpad" x="190" y="270" width="20" height="60" rx="4"></rect>
+  <rect class="dpad" x="170" y="290" width="60" height="20" rx="4"></rect>
+
+  <!-- Botones -->
+  <circle class="btnA" cx="300" cy="290" r="12"></circle>
+  <circle class="btnB" cx="330" cy="310" r="12"></circle>
+
+  <!-- Start / Select -->
+  <rect x="230" y="330" width="20" height="6" rx="3" fill="#666"></rect>
+  <rect x="260" y="330" width="20" height="6" rx="3" fill="#666"></rect>
+
+</svg>
