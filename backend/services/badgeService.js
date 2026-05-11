@@ -12,18 +12,18 @@ class BadgeService {
     }
 
     async createBadge(badgeData) {
-        const { name, description, icon_name, image_url, criteria_type, criteria_value, points } = badgeData;
+        const { name, description, icon_name, image_url, criteria_type, criteria_value, points, is_public } = badgeData;
         
         const result = await db.query(
-            'INSERT INTO badges (name, description, icon_name, image_url, criteria_type, criteria_value, points) VALUES (?, ?, ?, ?, ?, ?, ?)',
-            [name, description, icon_name || 'Award', image_url || null, criteria_type || 'manual', criteria_value || null, points ?? 10]
+            'INSERT INTO badges (name, description, icon_name, image_url, criteria_type, criteria_value, points, is_public) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            [name, description, icon_name || 'Award', image_url || null, criteria_type || 'manual', criteria_value || null, points ?? 10, is_public ?? true]
         );
         
         return result.insertId;
     }
 
     async updateBadge(id, badgeData) {
-        const { name, description, icon_name, image_url, criteria_type, criteria_value, points } = badgeData;
+        const { name, description, icon_name, image_url, criteria_type, criteria_value, points, is_public } = badgeData;
         
         // Use COALESCE to keep existing values if new ones are null/undefined
         return await db.query(
@@ -34,9 +34,10 @@ class BadgeService {
                 image_url = COALESCE(?, image_url),
                 criteria_type = COALESCE(?, criteria_type), 
                 criteria_value = COALESCE(?, criteria_value),
-                points = COALESCE(?, points)
+                points = COALESCE(?, points),
+                is_public = COALESCE(?, is_public)
             WHERE id = ?`,
-            [name ?? null, description ?? null, icon_name ?? null, image_url ?? null, criteria_type ?? null, criteria_value ?? null, points ?? null, id]
+            [name ?? null, description ?? null, icon_name ?? null, image_url ?? null, criteria_type ?? null, criteria_value ?? null, points ?? null, is_public ?? null, id]
         );
     }
 

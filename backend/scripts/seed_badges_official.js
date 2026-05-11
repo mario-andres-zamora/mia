@@ -175,13 +175,13 @@ async function seedBadges() {
             if (existing && existing.length > 0) {
                 logger.info(`Actualizando insignia: ${badge.name}`);
                 await db.query(
-                    'UPDATE badges SET description = ?, icon_name = ?, image_url = ?, criteria_type = ?, criteria_value = ?, points = ? WHERE name = ?',
+                    'UPDATE badges SET description = ?, icon_name = ?, image_url = ?, criteria_type = ?, criteria_value = ?, points = ?, is_public = 1 WHERE name = ?',
                     [badge.description, badge.icon_name, badge.image_url, badge.criteria_type, badge.criteria_value, badgePoints, badge.name]
                 );
             } else {
                 logger.info(`Insertando nueva insignia: ${badge.name}`);
                 await db.query(
-                    'INSERT INTO badges (name, description, icon_name, image_url, criteria_type, criteria_value, points) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                    'INSERT INTO badges (name, description, icon_name, image_url, criteria_type, criteria_value, points, is_public) VALUES (?, ?, ?, ?, ?, ?, ?, 1)',
                     [badge.name, badge.description, badge.icon_name, badge.image_url, badge.criteria_type, badge.criteria_value, badgePoints]
                 );
             }

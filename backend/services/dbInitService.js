@@ -100,9 +100,12 @@ const initializeDatabase = async () => {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         `);
 
-        // Actualizar tabla de insignias para incluir puntos
+        // Actualizar tabla de insignias para incluir puntos y visibilidad
         await db.query(`
             ALTER TABLE badges ADD COLUMN IF NOT EXISTS points INT DEFAULT 10;
+        `);
+        await db.query(`
+            ALTER TABLE badges ADD COLUMN IF NOT EXISTS is_public BOOLEAN DEFAULT TRUE;
         `);
 
         // Asegurar que 'categorization', 'forum' y 'terms_trap' existan en el ENUM de content_type
