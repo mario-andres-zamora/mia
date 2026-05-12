@@ -8,7 +8,7 @@ import DashboardBanner from '../components/dashboard/DashboardBanner';
 import ModuleGrid from '../components/dashboard/ModuleGrid';
 import DashboardSidebar from '../components/dashboard/DashboardSidebar';
 import DashboardLoading from '../components/dashboard/DashboardLoading';
-import BadgesModal from '../components/dashboard/BadgesModal';
+import { useNotificationStore } from '../store/notificationStore';
 import CertificatesModal from '../components/dashboard/CertificatesModal';
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -20,7 +20,7 @@ export default function Dashboard() {
     const [stats, setStats] = useState(null);
     const [modules, setModules] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [isBadgesModalOpen, setIsBadgesModalOpen] = useState(false);
+    const { setIsBadgesModalOpen } = useNotificationStore();
     const [isCertificatesModalOpen, setIsCertificatesModalOpen] = useState(location.state?.openCertificates || false);
 
     useEffect(() => {
@@ -38,7 +38,8 @@ export default function Dashboard() {
             if (dashboardStats) {
                 updateUser({
                     points: dashboardStats.points,
-                    level: dashboardStats.level
+                    level: dashboardStats.level,
+                    earnedBadges: dashboardStats.badges || []
                 });
             }
         } catch (error) {
@@ -78,12 +79,6 @@ export default function Dashboard() {
                     />
                 </aside>
             </div>
-
-            <BadgesModal 
-                isOpen={isBadgesModalOpen}
-                onClose={() => setIsBadgesModalOpen(false)}
-                badges={stats?.badges || []}
-            />
 
             <CertificatesModal 
                 isOpen={isCertificatesModalOpen}

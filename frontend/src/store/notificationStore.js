@@ -13,6 +13,7 @@ export const useNotificationStore = create((set, get) => ({
     pendingModuleCompletion: null,
     badgeQueue: [],
     pendingBadge: null, 
+    isBadgesModalOpen: false,
 
     setPendingLevelUp: (data) => {
         set({ pendingLevelUp: data });
@@ -52,6 +53,7 @@ export const useNotificationStore = create((set, get) => ({
         set({ pendingModuleCompletion: data });
     },
     clearModuleCompletion: () => set({ pendingModuleCompletion: null }),
+    setIsBadgesModalOpen: (isOpen) => set({ isBadgesModalOpen: isOpen }),
 
     fetchNotifications: async () => {
         set({ loading: true });

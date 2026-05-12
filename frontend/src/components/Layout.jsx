@@ -22,6 +22,7 @@ import ScrollToTop from './ScrollToTop';
 import AnnouncementModal from './AnnouncementModal';
 import NotificationBell from './NotificationBell';
 import axios from 'axios';
+import BadgesModal from './dashboard/BadgesModal';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -38,6 +39,7 @@ export default function Layout() {
         pendingLevelUp, clearLevelUp,
         pendingModuleCompletion, clearModuleCompletion,
         pendingBadge, clearBadge,
+        isBadgesModalOpen, setIsBadgesModalOpen,
         fetchNotifications
     } = useNotificationStore();
     const navigate = useNavigate();
@@ -266,7 +268,7 @@ export default function Layout() {
             </nav>
 
             {/* Main Content */}
-            <main className="w-full px-1 sm:px-2 lg:px-6 py-2 md:py-6 flex-grow relative z-10">
+            <main className="w-full px-1 sm:px-2 lg:px-6 py-2 md:py-6 flex-grow relative">
                 <Outlet />
             </main>
 
@@ -326,6 +328,11 @@ export default function Layout() {
                 isOpen={!!pendingBadge}
                 onClose={clearBadge}
                 badge={pendingBadge}
+            />
+            <BadgesModal
+                isOpen={isBadgesModalOpen}
+                onClose={() => setIsBadgesModalOpen(false)}
+                badges={user?.earnedBadges || []}
             />
 
             {/* System Announcement Modal */}
