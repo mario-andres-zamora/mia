@@ -157,7 +157,7 @@ async function seedBadges() {
                 points: 10
             },
             {
-                name: 'Equipo Élite: Módulo X',
+                name: 'Equipo Élite',
                 description: '¡Misión de equipo completada! Cada integrante ha superado el módulo con éxito. Han demostrado que el trabajo en equipo es el mejor "power-up".',
                 icon_name: 'Users',
                 image_url: 'equipo-elite.svg',

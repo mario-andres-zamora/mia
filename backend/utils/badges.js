@@ -355,9 +355,9 @@ async function checkEliteTeamBadge(userId, moduleId) {
         
         const area = user.department;
 
-        // 2. Obtener el número del módulo
-        const [moduleData] = await db.query('SELECT module_number FROM modules WHERE id = ?', [moduleId]);
-        if (!moduleData) return null;
+        // 2. Obtener datos del módulo
+        const [moduleData] = await db.query('SELECT module_number, generates_certificate FROM modules WHERE id = ?', [moduleId]);
+        if (!moduleData || moduleData.generates_certificate === 0) return null;
         
         const modNum = moduleData.module_number;
 
@@ -385,31 +385,11 @@ async function checkEliteTeamBadge(userId, moduleId) {
         if (completions.completed_count >= areaUsers.total) {
             logger.info(`¡Sincronización de Equipo Élite! Área: ${area}, Módulo: ${modNum}`);
             
-            const badgeName = `Equipo Élite: Módulo ${modNum}`;
+            const badgeName = 'Equipo Élite';
             
             // Buscar si ya existe la versión específica
             let [badge] = await db.query('SELECT id FROM badges WHERE name = ?', [badgeName]);
             
-            if (!badge) {
-                // Crear desde la plantilla
-                const [template] = await db.query("SELECT * FROM badges WHERE name = 'Equipo Élite: Módulo X' LIMIT 1");
-                if (template) {
-                    const result = await db.query(
-                        'INSERT INTO badges (name, description, icon_name, image_url, criteria_type, criteria_value, points) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                        [
-                            badgeName, 
-                            template.description.replace('módulo con éxito', `módulo ${modNum} con éxito`), 
-                            template.icon_name, 
-                            template.image_url, 
-                            'manual', 
-                            moduleId, 
-                            template.points || 15
-                        ]
-                    );
-                    badge = { id: result.insertId };
-                }
-            }
-
             if (badge) {
                 // 6. Asignación masiva a todo el departamento
                 const usersToAward = await db.query('SELECT id FROM users WHERE department = ? AND is_active = TRUE', [area]);
