@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Award, Shield, Lock, Trophy } from 'lucide-react';
+import { X, Lock, Trophy } from 'lucide-react';
 import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -54,15 +54,14 @@ export default function BadgesModal({ isOpen, onClose, badges: earnedBadges }) {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={onClose}
-                        className="absolute inset-0 bg-slate-950/90 backdrop-blur-xl pointer-events-auto"
+                        className="absolute inset-0 bg-slate-950/80 backdrop-blur-md pointer-events-auto"
                     />
 
-                    {/* Modal Content */}
                     <motion.div
                         initial={{ scale: 0.9, opacity: 0, y: 20 }}
                         animate={{ scale: 1, opacity: 1, y: 0 }}
                         exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                        className="relative w-full max-w-[95vw] lg:max-w-[90vw] xl:max-w-7xl bg-[var(--card-bg)] border border-[var(--card-border)] rounded-[2.5rem] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col max-h-[90vh] transition-colors duration-300"
+                        className="relative w-full max-w-[95vw] lg:max-w-[90vw] xl:max-w-7xl bg-[var(--card-bg)] border border-[var(--card-border)] rounded-[2.5rem] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] flex flex-col max-h-[85vh] transition-colors duration-300 overflow-hidden"
                     >
                         {/* Decorative background Elements */}
                         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary-500/10 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2 pointer-events-none" />
@@ -71,7 +70,7 @@ export default function BadgesModal({ isOpen, onClose, badges: earnedBadges }) {
                         {/* Scrollable Container (Everything inside) */}
                         <div className="flex-1 overflow-y-auto custom-scrollbar z-10">
                             {/* Header (Inside scroll to avoid clipping tooltips) */}
-                            <div className="relative p-6 md:p-8 md:px-16 border-b border-white/5 flex items-center justify-between">
+                            <div className="sticky top-0 z-[20] bg-[var(--card-bg)] p-6 md:p-8 md:px-16 border-b border-white/5 flex items-center justify-between">
                                 <div className="text-left">
                                     <div className="flex items-center gap-3 mb-1">
                                         <div className="p-2 bg-primary-500/20 rounded-xl">
@@ -91,8 +90,8 @@ export default function BadgesModal({ isOpen, onClose, badges: earnedBadges }) {
                             </div>
 
                             {/* Badges Grid */}
-                            <div className="p-6 pt-10 md:p-12 md:pt-14">
-                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-8 md:gap-10">
+                            <div className="p-6 md:p-12">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-10">
                                     {loading ? (
                                         [...Array(10)].map((_, i) => (
                                             <div key={`loading-${i}`} className="aspect-square rounded-3xl bg-white/5 animate-pulse" />
@@ -108,65 +107,44 @@ export default function BadgesModal({ isOpen, onClose, badges: earnedBadges }) {
                                                     initial={{ opacity: 0, y: 20 }}
                                                     animate={{ opacity: 1, y: 0 }}
                                                     transition={{ delay: i * 0.05 }}
-                                                    className={`group relative flex flex-col gap-4 text-center z-0 hover:z-50 ${!earned ? 'opacity-60 grayscale hover:opacity-100 hover:grayscale-0 transition-all duration-500' : ''}`}
+                                                    className={`group relative flex flex-col gap-6 p-6 rounded-[2rem] bg-white/[0.02] border border-white/5 hover:bg-white/[0.05] hover:border-primary-500/20 transition-all duration-300 ${!earned ? 'grayscale opacity-70' : ''}`}
                                                 >
-                                                    <div className={`aspect-square rounded-3xl bg-[#0d1127] border ${earned ? 'border-primary-500/30' : 'border-white/5'} flex items-center justify-center relative cursor-default shadow-2xl transition-all duration-500 hover:border-primary-500/50 hover:shadow-primary-500/10 group/badge`}>
-                                                        <div className="absolute inset-0 bg-gradient-to-br from-primary-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-3xl"></div>
+                                                    <div className="relative aspect-square flex items-center justify-center">
+                                                        <div className={`absolute inset-0 bg-primary-500/5 blur-3xl rounded-full transition-opacity opacity-0 group-hover:opacity-100 ${earned ? 'opacity-40' : ''}`} />
                                                         
                                                         {!earned && (
-                                                            <div className="absolute top-3 right-3 z-20">
-                                                                <Lock className="w-3.5 h-3.5 text-gray-500 group-hover:text-primary-400 transition-colors" />
-                                                            </div>
+                                                            <div className="absolute top-0 right-0 z-20">
+                                                                 <Lock className="w-4 h-4 text-gray-600" />
+                                                             </div>
                                                         )}
 
                                                         <img
                                                             src={badge.image_url ? (badge.image_url.startsWith('http') ? badge.image_url : `/images/badges/${badge.image_url}`) : '/images/shield.svg'}
                                                             alt={badge.name}
-                                                            className={`w-full h-full object-contain p-4 transition-transform duration-700 group-hover/badge:scale-110 ${earned ? 'drop-shadow-[0_0_20px_rgba(56,74,153,0.3)]' : 'drop-shadow-none'}`}
+                                                            className={`w-32 h-32 object-contain relative z-10 transition-transform duration-500 group-hover:scale-110 ${earned ? 'drop-shadow-[0_0_20px_rgba(56,74,153,0.4)]' : ''}`}
                                                             onError={(e) => {
                                                                 e.target.onerror = null;
                                                                 e.target.src = '/images/shield.svg';
                                                             }}
                                                         />
-
-                                                        {/* Floating Tooltip Detail */}
-                                                        <div className="absolute -top-4 left-1/2 -translate-x-1/2 -translate-y-full w-64 p-5 bg-[#0d1127] border border-primary-500/40 rounded-[2rem] shadow-[0_25px_60px_rgba(0,0,0,0.8)] opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none text-center z-[100] backdrop-blur-xl group-hover:-top-6 scale-90 group-hover:scale-100">
-                                                            {/* Tooltip Triangle */}
-                                                            <div className="absolute top-full left-1/2 -translate-x-1/2 w-4 h-4 bg-[#0d1127] border-r border-b border-primary-500/40 rotate-45 -translate-y-2"></div>
-                                                            
-                                                            <div className="relative z-10">
-                                                                <div className="w-full mb-3 pb-2 border-b border-white/10">
-                                                                    <p className={`text-[11px] font-black ${earned ? 'text-primary-400' : 'text-secondary-500'} uppercase tracking-[0.2em] leading-none`}>
-                                                                        {badge.name}
-                                                                    </p>
-                                                                    <div className="mt-1 flex items-center justify-center gap-1">
-                                                                        <span className="text-[9px] font-black text-primary-400">+{badge.points || 10}</span>
-                                                                        <span className="text-[8px] text-gray-500 font-black uppercase tracking-widest">puntos</span>
-                                                                    </div>
-                                                                </div>
-                                                                
-                                                                <p className="text-[11px] text-gray-100 font-bold leading-relaxed italic">
-                                                                    "{badge.description}"
-                                                                </p>
-
-                                                                {!earned && (
-                                                                    <div className="mt-4 pt-3 w-full border-t border-white/5">
-                                                                        <p className="text-[9px] text-primary-400 font-black uppercase tracking-widest flex items-center justify-center gap-2">
-                                                                            <Lock className="w-3 h-3" />
-                                                                            Insignia Bloqueada
-                                                                        </p>
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        </div>
                                                     </div>
 
-                                                    <div className="space-y-1">
-                                                        <p className={`text-[11px] font-bold uppercase tracking-tight transition-colors px-1 line-clamp-2 min-h-[2.4rem] leading-[1.2] text-center pt-1 ${earned ? 'text-[var(--text-color)] group-hover:text-primary-400' : 'text-gray-500'}`}>
+                                                    <div className="space-y-3 text-center flex-1 flex flex-col">
+                                                        <h3 className={`text-sm font-black uppercase tracking-tight leading-tight ${earned ? 'text-[var(--text-color)]' : 'text-gray-500'}`}>
                                                             {badge.name}
+                                                        </h3>
+                                                        
+                                                        <p className="text-[11px] text-gray-400 font-medium leading-relaxed italic line-clamp-none flex-1">
+                                                            "{badge.description}"
                                                         </p>
-                                                        <div className="flex items-center justify-center gap-1.5 mt-0.5">
-                                                            <span className={`text-[9px] font-black ${earned ? 'text-primary-400' : 'text-gray-600'}`}>+{badge.points || 10} PTS</span>
+
+                                                        <div className="pt-4 flex items-center justify-center gap-2 border-t border-white/5">
+                                                            <div className="flex items-center gap-1">
+                                                                <Trophy className={`w-3 h-3 ${earned ? 'text-primary-400' : 'text-gray-600'}`} />
+                                                                <span className={`text-[10px] font-black ${earned ? 'text-primary-400' : 'text-gray-600'}`}>
+                                                                    +{badge.points || 10}
+                                                                </span>
+                                                            </div>
                                                             <span className="text-gray-800 text-[10px]">•</span>
                                                             <p className="text-[9px] text-gray-500 font-black uppercase tracking-widest">
                                                                 {earned ? (earnedDate ? new Date(earnedDate).toLocaleDateString() : 'Obtenida') : 'Bloqueada'}
@@ -192,7 +170,9 @@ export default function BadgesModal({ isOpen, onClose, badges: earnedBadges }) {
                                 </div>
                             </div>
                         </div>
+
                     </motion.div>
+
                 </div>
             )}
         </AnimatePresence>
