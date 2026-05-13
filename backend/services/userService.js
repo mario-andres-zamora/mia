@@ -99,7 +99,10 @@ class UserService {
 
         // Logic for Rankings (Consistent Logic)
         const { getUserRank } = require('../utils/gamification');
+        const badgeService = require('./badgeService');
+        
         const rankData = await getUserRank(userId, user.email, user.department);
+        const totalBadgesAvailable = await badgeService.getTotalPublicBadgesCount();
         
         const rank = rankData.institutionalRank;
         const departmentRank = rankData.departmentalRank;
@@ -144,6 +147,7 @@ class UserService {
             level_progress_percentage: levelProgressPercentage,
             badges: userBadges,
             badges_count: userBadges.length,
+            total_badges_available: totalBadgesAvailable,
             rank: rank,
             departmentRank: departmentRank,
             totalUsers: totalUsersCount

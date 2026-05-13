@@ -59,6 +59,11 @@ class BadgeService {
         const badgesUtil = require('../utils/badges');
         return await badgesUtil.awardBadge(userId, badgeId, shouldNotify);
     }
+
+    async getTotalPublicBadgesCount() {
+        const [result] = await db.query('SELECT COUNT(*) as total FROM badges WHERE is_public = 1');
+        return result.total || 0;
+    }
 }
 
 module.exports = new BadgeService();

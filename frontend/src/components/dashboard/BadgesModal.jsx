@@ -22,7 +22,7 @@ export default function BadgesModal({ isOpen, onClose, badges: earnedBadges }) {
             if (response.data.success) {
                 // Filter and sort badges by name
                 const publicBadges = response.data.badges
-                    .filter(b => b.is_public !== 0)
+                    .filter(b => b.is_public === 1)
                     .sort((a, b) => a.name.localeCompare(b.name));
                 setAllBadges(publicBadges);
             }

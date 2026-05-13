@@ -40,7 +40,7 @@ export default function UserTable({ users, currentUserId, onEdit, onReset, onDel
             sortableUsers.sort((a, b) => {
                 let aValue = a[sortConfig.key];
                 let bValue = b[sortConfig.key];
-                
+
                 if (sortConfig.key === 'name') {
                     aValue = `${a.first_name} ${a.last_name}`.toLowerCase();
                     bValue = `${b.first_name} ${b.last_name}`.toLowerCase();
@@ -75,8 +75,8 @@ export default function UserTable({ users, currentUserId, onEdit, onReset, onDel
 
     const SortIndicator = ({ columnKey }) => {
         if (sortConfig.key !== columnKey) return <ArrowUpDown className="w-3 h-3 ml-1.5 inline-block opacity-40 group-hover/th:opacity-100 transition-opacity" />;
-        return sortConfig.direction === 'asc' 
-            ? <ArrowUp className="w-3 h-3 ml-1.5 inline-block text-primary-400" /> 
+        return sortConfig.direction === 'asc'
+            ? <ArrowUp className="w-3 h-3 ml-1.5 inline-block text-primary-400" />
             : <ArrowDown className="w-3 h-3 ml-1.5 inline-block text-primary-400" />;
     };
 
@@ -88,12 +88,12 @@ export default function UserTable({ users, currentUserId, onEdit, onReset, onDel
                 <table className="w-full text-left border-collapse">
                     <thead>
                         <tr className="bg-white/5 border-b border-white/5">
-                            <th onClick={() => handleSort('name')} className="group/th cursor-pointer pl-4 md:pl-5 py-4 text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] text-left hover:bg-white/5 transition-colors">Funcionario <SortIndicator columnKey="name" /></th>
-                            <th onClick={() => handleSort('department')} className="group/th cursor-pointer px-3 py-4 text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] text-left hover:bg-white/5 transition-colors">Unidad / Cargo <SortIndicator columnKey="department" /></th>
-                            <th onClick={() => handleSort('created_at')} className="group/th cursor-pointer hidden md:table-cell px-3 py-4 text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] text-center hover:bg-white/5 transition-colors">Protocolo de Acceso <SortIndicator columnKey="created_at" /></th>
-                            <th onClick={() => handleSort('points')} className="group/th cursor-pointer px-3 py-4 text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] text-center hover:bg-white/5 transition-colors">Nivel Académico <SortIndicator columnKey="points" /></th>
+                            <th onClick={() => handleSort('name')} className="group/th cursor-pointer pl-4 md:pl-5 py-4 text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] text-left hover:bg-white/5 transition-colors">Nombre <SortIndicator columnKey="name" /></th>
+                            <th onClick={() => handleSort('department')} className="group/th cursor-pointer px-3 py-4 text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] text-left hover:bg-white/5 transition-colors">Unidad / Puesto <SortIndicator columnKey="department" /></th>
+                            <th onClick={() => handleSort('created_at')} className="group/th cursor-pointer hidden md:table-cell px-3 py-4 text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] text-center hover:bg-white/5 transition-colors">Datos de Registro <SortIndicator columnKey="created_at" /></th>
+                            <th onClick={() => handleSort('points')} className="group/th cursor-pointer px-3 py-4 text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] text-center hover:bg-white/5 transition-colors">Puntaje <SortIndicator columnKey="points" /></th>
                             <th onClick={() => handleSort('login_streak')} className="group/th cursor-pointer px-3 py-4 text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] text-center hover:bg-white/5 transition-colors">Racha <SortIndicator columnKey="login_streak" /></th>
-                            <th onClick={() => handleSort('is_active')} className="group/th cursor-pointer hidden lg:table-cell px-3 py-4 text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] text-center hover:bg-white/5 transition-colors">Disponibilidad <SortIndicator columnKey="is_active" /></th>
+                            <th onClick={() => handleSort('is_active')} className="group/th cursor-pointer hidden lg:table-cell px-3 py-4 text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] text-center hover:bg-white/5 transition-colors">¿Activo? <SortIndicator columnKey="is_active" /></th>
                             <th className="pr-4 md:pr-5 py-4 text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] text-right">Acciones</th>
                         </tr>
                     </thead>

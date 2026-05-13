@@ -41,11 +41,11 @@ export default function CertificatesAndBadges({ certificates, badges, stats, onC
                 <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-3 text-left">
                     <div>
                         <h3 className="text-xl font-black text-[var(--text-color)] uppercase tracking-tight">Insignias Obtenidas</h3>
-                        <p className="text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-widest mt-0.5">Tu colección de logros y reconocimientos</p>
+                        <p className="text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-widest mt-0.5">Tu colección de logros</p>
                     </div>
                     <div className="flex items-center gap-2">
                         <span className="px-2.5 py-1 bg-primary-500/10 border border-primary-500/20 rounded-full text-[9px] font-black text-primary-500 uppercase tracking-widest">
-                            {badges?.length || 0} / 24
+                            {badges?.length || 0} / {stats?.total_badges_available || 0}
                         </span>
                     </div>
                 </div>
