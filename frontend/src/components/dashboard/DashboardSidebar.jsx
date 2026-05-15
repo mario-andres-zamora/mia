@@ -1,5 +1,6 @@
 import { TrendingUp, Award, CheckCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { getProfilePictureUrl } from '../../utils/imageUtils';
 
 export default function DashboardSidebar({ user, stats, onShowBadges, onShowCertificates }) {
     return (
@@ -10,7 +11,7 @@ export default function DashboardSidebar({ user, stats, onShowBadges, onShowCert
                 <div className="relative mb-4">
                     <div className="w-28 h-28 rounded-full bg-[var(--bg-color)] p-1">
                         <img
-                            src={user?.profilePicture || `https://ui-avatars.com/api/?name=${user?.firstName}+${user?.lastName}&background=384A99&color=fff`}
+                            src={getProfilePictureUrl(user?.profilePicture, `${user?.firstName} ${user?.lastName}`)}
                             alt="Avatar"
                             className="w-full h-full rounded-full object-cover"
                         />

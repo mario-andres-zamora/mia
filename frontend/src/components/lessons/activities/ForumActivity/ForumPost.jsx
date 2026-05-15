@@ -8,6 +8,7 @@ import { useAuthStore } from '../../../../store/authStore';
 import { useSoundStore } from '../../../../store/soundStore';
 import { linkify } from '../../../../utils/textUtils';
 import CyberCat from '../../../CyberCat';
+import { getProfilePictureUrl } from '../../../../utils/imageUtils';
 
 export default function ForumPost({
     post,
@@ -60,17 +61,11 @@ export default function ForumPost({
 
             {/* Avatar Column */}
             <div className="flex-shrink-0 flex flex-col items-center">
-                {post.profile_picture ? (
-                    <img
-                        src={post.profile_picture}
-                        alt={`${post.first_name} ${post.last_name}`}
-                        className={`rounded-full object-cover border border-white/10 ${isReply ? 'w-8 h-8' : 'w-12 h-12'}`}
-                    />
-                ) : (
-                    <div className={`bg-slate-800 rounded-full flex items-center justify-center border border-white/10 ${isReply ? 'w-8 h-8' : 'w-10 h-10'}`}>
-                        <User className={`${isReply ? 'w-4 h-4' : 'w-5 h-5'} text-gray-500`} />
-                    </div>
-                )}
+                <img
+                    src={getProfilePictureUrl(post.profile_picture, `${post.first_name} ${post.last_name}`)}
+                    alt={`${post.first_name} ${post.last_name}`}
+                    className={`rounded-full object-cover border border-white/10 ${isReply ? 'w-8 h-8' : 'w-12 h-12'}`}
+                />
             </div>
 
             {/* Content Column */}

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Mail, Briefcase, Building2, Shield, Zap } from 'lucide-react';
+import { getProfilePictureUrl } from '../../utils/imageUtils';
 
 export default function ProfileHero({ user, stats }) {
     return (
@@ -23,7 +24,7 @@ export default function ProfileHero({ user, stats }) {
                     <div className="w-36 h-36 rounded-[2rem] p-[3px] bg-gradient-to-tr from-primary-500 via-secondary-500 to-accent-500 shadow-xl">
                         <div className="w-full h-full bg-[var(--bg-color)] rounded-[1.8rem] overflow-hidden">
                             <img
-                                src={user.profile_picture || `https://ui-avatars.com/api/?name=${user.first_name}+${user.last_name}&background=384A99&color=fff&size=200`}
+                                src={getProfilePictureUrl(user.profile_picture, `${user.first_name} ${user.last_name}`)}
                                 alt={user.first_name}
                                 className="w-full h-full object-cover"
                                 referrerPolicy="no-referrer"

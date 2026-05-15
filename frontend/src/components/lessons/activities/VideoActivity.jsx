@@ -2,11 +2,13 @@ import React from 'react';
 import { PlayCircle, CheckCircle, Clock, Eye, Award } from 'lucide-react';
 import YouTubePlayer from '../YouTubePlayer';
 
-export default function VideoActivity({ item, data, watchedVideos, markVideoAsWatched, ytApiLoaded, lastTimeRef, API_URL }) {
+import { getFileUrl } from '../../../utils/imageUtils';
+
+export default function VideoActivity({ item, data, watchedVideos, markVideoAsWatched, ytApiLoaded, lastTimeRef }) {
     const isWatched = watchedVideos.has(item.id);
     const isYT = !!data.url?.includes('youtube.com') || !!data.url?.includes('youtu.be');
     const ytId = isYT ? (data.url.split('v=')[1]?.split('&')[0] || data.url.split('/').pop()) : null;
-    const videoSrc = data.file_url ? `${API_URL.replace('/api', '')}${data.file_url}` : null;
+    const videoSrc = getFileUrl(data.file_url);
 
     return (
         <div className={`space-y-4 p-4 rounded-3xl transition-all duration-700 ${isWatched ? 'bg-green-500/5 border border-green-500/20 shadow-lg shadow-green-500/10' : 'bg-slate-800/10 border border-white/5'}`}>

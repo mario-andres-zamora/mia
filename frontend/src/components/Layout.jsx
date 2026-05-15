@@ -23,6 +23,7 @@ import AnnouncementModal from './AnnouncementModal';
 import NotificationBell from './NotificationBell';
 import axios from 'axios';
 import BadgesModal from './dashboard/BadgesModal';
+import { getProfilePictureUrl } from '../utils/imageUtils';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -171,7 +172,7 @@ export default function Layout() {
                                 <div className="relative flex-shrink-0">
                                     <div className="p-0.5 bg-gradient-to-tr from-primary-500 to-secondary-500 rounded-full">
                                         <img
-                                            src={user?.profilePicture || `https://ui-avatars.com/api/?name=${user?.firstName}+${user?.lastName}&background=384A99&color=fff`}
+                                            src={getProfilePictureUrl(user?.profilePicture, `${user?.firstName} ${user?.lastName}`)}
                                             alt={user?.firstName}
                                             className="w-7 h-7 xl:w-8 xl:h-8 rounded-full border-2 border-[#0d1127] object-cover"
                                             referrerPolicy="no-referrer"

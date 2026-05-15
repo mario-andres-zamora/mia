@@ -3,6 +3,7 @@ const axios = require('axios');
 const db = require('../config/database');
 const logger = require('../config/logger');
 const AppError = require('../utils/appError');
+const { downloadProfilePicture } = require('../utils/fileUtils');
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -23,6 +24,10 @@ class AuthService {
         const given_name = payload.given_name || '';
         const family_name = payload.family_name || '';
         const picture = payload.picture || null;
+
+        // Intentar descargar la imagen localmente para evitar URLs caducadas
+        const localPicture = await downloadProfilePicture(picture, googleId);
+        const finalPicture = localPicture || picture;
 
         // Buscar o crear usuario
         let userResults = await db.query(
@@ -54,7 +59,7 @@ class AuthService {
                     googleId,
                     given_name,
                     family_name,
-                    picture,
+                    finalPicture,
                     role,
                     directoryInfo?.department || null,
                     directoryInfo?.position || null
@@ -92,7 +97,7 @@ class AuthService {
             // Actualizar última conexión y foto de perfil
             await db.query(
                 'UPDATE users SET last_login = NOW(), profile_picture = ? WHERE id = ?',
-                [picture || user.profile_picture, user.id]
+                [finalPicture || user.profile_picture, user.id]
             );
 
             // Gestionar racha de login
