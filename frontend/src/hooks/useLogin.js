@@ -23,7 +23,7 @@ export function useLogin() {
                     toast.error('Tu cuenta está deshabilitada');
                     navigate('/disabled');
                 } else {
-                    toast.success(`¡Bienvenido ${result.user.firstName}!`);
+                    toast.success(`¡Hola! ${result.user.firstName}`);
                     navigate('/dashboard');
                 }
             }
