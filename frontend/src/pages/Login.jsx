@@ -23,7 +23,7 @@ export default function Login() {
             });
         };
 
-        playAudio();
+        //playAudio();
 
         // Also try to play on any click if it was blocked
         window.addEventListener('click', playAudio, { once: true });
@@ -36,7 +36,7 @@ export default function Login() {
     }, []);
 
     return (
-        <div className="min-h-screen flex flex-col bg-[#1e2648] relative overflow-hidden">
+        <div className="min-h-screen flex flex-col bg-[#f5ede4] relative overflow-hidden">
             <LoginBackground />
 
             <div className="flex-1 flex flex-col items-center justify-center p-4 relative z-10 py-12">

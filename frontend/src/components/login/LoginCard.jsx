@@ -8,14 +8,14 @@ export default function LoginCard({ onLogin, isLoading }) {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.6, duration: 0.5 }}
-            className="w-full glass-card overflow-hidden rounded-[2.5rem] bg-white/10 backdrop-blur-2xl border border-white/20 shadow-[0_40px_100px_rgba(0,0,0,0.6)] relative group"
+            className="w-full glass-card overflow-hidden rounded-[2.5rem] bg-[#582c19] backdrop-blur-2xl border border-[#6b3a24] shadow-[0_40px_100px_rgba(0,0,0,0.3)] relative group"
         >
             {/* Interactive hover gradient */}
             <div className="absolute inset-0 bg-gradient-to-br from-primary-500/5 via-transparent to-secondary-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
 
             <div className="p-8 md:p-12 space-y-8 relative z-10">
                 <div className="space-y-2 flex justify-center">
-                    <h2 className="text-2xl md:text-3xl font-black text-white tracking-tight">Bienvenido al Portal</h2>
+                    <h2 className="text-2xl md:text-3xl font-black text-[#e8dbbe] tracking-tight">Bienvenido al Portal</h2>
                 </div>
 
                 <div className="space-y-6">
@@ -69,13 +69,13 @@ export default function LoginCard({ onLogin, isLoading }) {
                     </motion.button>
 
                     {/* System Info Box */}
-                    <div className="p-5 rounded-2xl bg-primary-500/5 border border-primary-500/10 flex gap-4 items-start">
-                        <div className="p-2 bg-primary-500/10 rounded-lg text-primary-400">
+                    <div className="p-5 rounded-2xl bg-[#4a2414] border border-[#6b3a24] flex gap-4 items-start">
+                        <div className="p-2 bg-[#6b3a24] rounded-lg text-[#e8dbbe]">
                             <Shield className="w-5 h-5 font-black" />
                         </div>
                         <div className="space-y-1">
-                            <h4 className="text-[10px] font-black text-primary-400 uppercase tracking-widest">Acceso Restringido</h4>
-                            <p className="text-xs text-gray-500 leading-relaxed font-medium">
+                            <h4 className="text-[14px] font-black text-[#e8dbbe] uppercase tracking-widest">Acceso Restringido</h4>
+                            <p className="text-[12px] text-[#e8dbbe]/80 leading-relaxed font-medium">
                                 Sistema exclusivo para funcionarios de la Contraloría General de la República. Debe iniciar sesión con su cuenta de Google institucional.
                             </p>
                         </div>
