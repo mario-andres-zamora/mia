@@ -18,7 +18,7 @@ export default function LoginHeader() {
                 />
             </motion.div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 relative w-full flex justify-center">
                 <motion.div
                     initial={{ scale: 1.1, opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -28,7 +28,21 @@ export default function LoginHeader() {
                     <img
                         src="/images/logo-mia.png"
                         alt="MIA - Modelo Integrado de Aprendizaje"
-                        className="w-full max-w-md object-contain"
+                        className="w-full max-w-md object-contain relative z-10"
+                    />
+                </motion.div>
+
+                {/* Colibrí (Hummingbird) */}
+                <motion.div
+                    initial={{ opacity: 0, x: 50, y: -20, rotate: 5 }}
+                    animate={{ opacity: 1, x: 0, y: 0, rotate: 0 }}
+                    transition={{ delay: 0.6, duration: 1.2, type: "spring", stiffness: 60 }}
+                    className="absolute -right-72 md:-right-86 top-[-200px] md:top-[-230px] w-64 h-64 md:w-96 md:h-96 pointer-events-none z-20"
+                >
+                    <img
+                        src="/images/colibri.svg"
+                        alt="Colibrí"
+                        className="w-full h-full object-contain"
                     />
                 </motion.div>
             </div>
