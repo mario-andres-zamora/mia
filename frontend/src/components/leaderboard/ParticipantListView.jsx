@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight, ChevronDown, Trophy, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { getProfilePictureUrl } from '../../utils/imageUtils';
 
 export default function ParticipantListView({
     view,
@@ -59,7 +60,11 @@ export default function ParticipantListView({
                             </div>
                             <div className="col-span-4 md:col-span-5 flex items-center gap-4">
                                 <div className="w-10 h-10 rounded-xl overflow-hidden bg-[var(--card-bg)] border border-[var(--card-border)]">
-                                    <img src={(isMe ? loggedUser?.profilePicture : p.profile_picture) || `https://ui-avatars.com/api/?name=${p.first_name}+${p.last_name}&background=384A99&color=fff`} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                                    <img 
+                                        src={getProfilePictureUrl(isMe ? loggedUser?.profilePicture : p.profile_picture, `${p.first_name} ${p.last_name}`)} 
+                                        className="w-full h-full object-cover" 
+                                        referrerPolicy="no-referrer" 
+                                    />
                                 </div>
                                 <div className="px-2">
                                     <p className={`font-black uppercase text-sm ${isMe ? 'text-primary-600' : 'text-[var(--text-color)]'}`}>

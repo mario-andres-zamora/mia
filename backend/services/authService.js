@@ -3,6 +3,7 @@ const axios = require('axios');
 const db = require('../config/database');
 const logger = require('../config/logger');
 const AppError = require('../utils/appError');
+const { downloadProfilePicture } = require('../utils/fileUtils');
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -30,15 +31,9 @@ class AuthService {
         const family_name = payload.family_name || '';
         const picture = payload.picture || null;
 
-        // Opcional: Validar dominios permitidos (ej: @cgr.go.cr o dominios en .env)
-        const allowedDomains = process.env.ALLOWED_EMAIL_DOMAINS ? process.env.ALLOWED_EMAIL_DOMAINS.split(',') : [];
-        if (allowedDomains.length > 0) {
-            const userDomain = email.split('@')[1];
-            if (!allowedDomains.includes(userDomain)) {
-                logger.warn(`Intento de login con dominio no permitido: ${email}`);
-                throw new AppError(`El correo ${email} no pertenece a una organización autorizada.`, 403);
-            }
-        }
+        // Intentar descargar la imagen localmente para evitar URLs caducadas
+        const localPicture = await downloadProfilePicture(picture, googleId);
+        const finalPicture = localPicture || picture;
 
         // Buscar o crear usuario
         let userResults;
@@ -86,7 +81,7 @@ class AuthService {
                     googleId,
                     given_name,
                     family_name,
-                    picture,
+                    finalPicture,
                     role,
                     directoryInfo?.department || (isDefaultAdmin ? 'Administración' : null),
                     directoryInfo?.position || (isDefaultAdmin ? 'Súper Administrador' : null)
@@ -114,7 +109,7 @@ class AuthService {
             // Actualizar datos existentes
             await db.query(
                 'UPDATE users SET last_login = NOW(), profile_picture = ? WHERE id = ?',
-                [picture || user.profile_picture, user.id]
+                [finalPicture || user.profile_picture, user.id]
             );
 
             // Gestionar racha de login

@@ -14,7 +14,7 @@ class BadgeController {
 
     async createBadge(req, res) {
         try {
-            const { name, description } = req.body;
+            const { name, description, is_public } = req.body;
             if (!name || !description) {
                 return res.status(400).json({ error: 'Nombre y descripción son obligatorios' });
             }

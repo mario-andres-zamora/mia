@@ -301,13 +301,23 @@ async function checkComboX5Badge(userId) {
         const [user] = await db.query('SELECT login_streak, last_streak_date FROM users WHERE id = ?', [userId]);
         if (!user) return null;
 
-        const today = new Date().toISOString().split('T')[0];
+        // Configurar formateador para Costa Rica (YYYY-MM-DD)
+        const crFormatter = new Intl.DateTimeFormat('en-CA', { 
+            timeZone: 'America/Costa_Rica', 
+            year: 'numeric', 
+            month: '2-digit', 
+            day: '2-digit' 
+        });
+
+        const now = new Date();
+        const today = crFormatter.format(now);
         
-        // Manejar el caso de last_streak_date que viene de la DB
         let lastDate = null;
         if (user.last_streak_date) {
-            const d = new Date(user.last_streak_date);
-            lastDate = d.toISOString().split('T')[0];
+            // Asegurar formato YYYY-MM-DD independientemente de si la DB lo entrega como string o objeto Date
+            lastDate = (typeof user.last_streak_date === 'string') 
+                ? user.last_streak_date.split('T')[0] 
+                : crFormatter.format(new Date(user.last_streak_date));
         }
 
         if (lastDate === today) {
@@ -317,9 +327,9 @@ async function checkComboX5Badge(userId) {
 
         let newStreak = 1;
         if (lastDate) {
-            const yesterday = new Date();
-            yesterday.setDate(yesterday.getDate() - 1);
-            const yesterdayStr = yesterday.toISOString().split('T')[0];
+            const yesterdayDate = new Date(now);
+            yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+            const yesterdayStr = crFormatter.format(yesterdayDate);
 
             if (lastDate === yesterdayStr) {
                 newStreak = (user.login_streak || 0) + 1;
@@ -355,9 +365,9 @@ async function checkEliteTeamBadge(userId, moduleId) {
         
         const area = user.department;
 
-        // 2. Obtener el número del módulo
-        const [moduleData] = await db.query('SELECT module_number FROM modules WHERE id = ?', [moduleId]);
-        if (!moduleData) return null;
+        // 2. Obtener datos del módulo
+        const [moduleData] = await db.query('SELECT module_number, generates_certificate FROM modules WHERE id = ?', [moduleId]);
+        if (!moduleData || moduleData.generates_certificate === 0) return null;
         
         const modNum = moduleData.module_number;
 
@@ -385,31 +395,11 @@ async function checkEliteTeamBadge(userId, moduleId) {
         if (completions.completed_count >= areaUsers.total) {
             logger.info(`¡Sincronización de Equipo Élite! Área: ${area}, Módulo: ${modNum}`);
             
-            const badgeName = `Equipo Élite: Módulo ${modNum}`;
+            const badgeName = 'Equipo Élite';
             
             // Buscar si ya existe la versión específica
             let [badge] = await db.query('SELECT id FROM badges WHERE name = ?', [badgeName]);
             
-            if (!badge) {
-                // Crear desde la plantilla
-                const [template] = await db.query("SELECT * FROM badges WHERE name = 'Equipo Élite: Módulo X' LIMIT 1");
-                if (template) {
-                    const result = await db.query(
-                        'INSERT INTO badges (name, description, icon_name, image_url, criteria_type, criteria_value, points) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                        [
-                            badgeName, 
-                            template.description.replace('módulo con éxito', `módulo ${modNum} con éxito`), 
-                            template.icon_name, 
-                            template.image_url, 
-                            'manual', 
-                            moduleId, 
-                            template.points || 15
-                        ]
-                    );
-                    badge = { id: result.insertId };
-                }
-            }
-
             if (badge) {
                 // 6. Asignación masiva a todo el departamento
                 const usersToAward = await db.query('SELECT id FROM users WHERE department = ? AND is_active = TRUE', [area]);

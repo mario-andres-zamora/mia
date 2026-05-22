@@ -33,8 +33,8 @@ export default function StrategicView({ filteredDepts }) {
 
     const SortIcon = ({ column }) => {
         if (sortConfig.key !== column) return <ArrowUpDown className="w-3 h-3 opacity-30 group-hover:opacity-50 transition-opacity" />;
-        return sortConfig.direction === 'asc' 
-            ? <ChevronUp className="w-3 h-3 text-secondary-400" /> 
+        return sortConfig.direction === 'asc'
+            ? <ChevronUp className="w-3 h-3 text-secondary-400" />
             : <ChevronDown className="w-3 h-3 text-secondary-400" />;
     };
 
@@ -43,8 +43,8 @@ export default function StrategicView({ filteredDepts }) {
             <div className="space-y-3">
                 <div className="grid grid-cols-12 px-8 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">
                     <div className="col-span-1 text-center">Pos</div>
-                    
-                    <button 
+
+                    <button
                         onClick={() => requestSort('department')}
                         className="col-span-5 md:col-span-4 flex items-center gap-2 text-left pl-4 hover:text-white transition-colors group"
                     >
@@ -52,15 +52,15 @@ export default function StrategicView({ filteredDepts }) {
                         <SortIcon column="department" />
                     </button>
 
-                    <button 
+                    <button
                         onClick={() => requestSort('top_performer')}
                         className="col-span-6 md:col-span-3 flex items-center gap-2 italic text-gray-600 hover:text-white transition-colors group"
                     >
-                        Mejor Funcionario
+                        Funcionario Líder
                         <SortIcon column="top_performer" />
                     </button>
 
-                    <button 
+                    <button
                         onClick={() => requestSort('average_points')}
                         className="hidden md:flex col-span-2 items-center justify-end gap-2 uppercase hover:text-white transition-colors group"
                     >
@@ -68,7 +68,7 @@ export default function StrategicView({ filteredDepts }) {
                         <SortIcon column="average_points" />
                     </button>
 
-                    <button 
+                    <button
                         onClick={() => requestSort('total_points')}
                         className="hidden md:flex col-span-2 items-center justify-end gap-2 uppercase hover:text-white transition-colors group"
                     >

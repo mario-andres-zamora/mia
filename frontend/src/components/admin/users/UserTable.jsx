@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { User, Mail, Briefcase, Clock, ShieldCheck, Activity, XCircle, History, Edit2, RefreshCcw, Trash2, ChevronDown, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, BarChart3 } from 'lucide-react';
+import { User, Mail, Briefcase, Clock, ShieldCheck, Activity, XCircle, History, Edit2, RefreshCcw, Trash2, ChevronDown, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, BarChart3, Flame } from 'lucide-react';
 
 const formatRelativeTime = (dateString) => {
     if (!dateString) return 'Nunca';
@@ -40,7 +40,7 @@ export default function UserTable({ users, currentUserId, onEdit, onReset, onDel
             sortableUsers.sort((a, b) => {
                 let aValue = a[sortConfig.key];
                 let bValue = b[sortConfig.key];
-                
+
                 if (sortConfig.key === 'name') {
                     aValue = `${a.first_name} ${a.last_name}`.toLowerCase();
                     bValue = `${b.first_name} ${b.last_name}`.toLowerCase();
@@ -56,6 +56,9 @@ export default function UserTable({ users, currentUserId, onEdit, onReset, onDel
                 } else if (sortConfig.key === 'is_active') {
                     aValue = a.is_active ? 1 : 0;
                     bValue = b.is_active ? 1 : 0;
+                } else if (sortConfig.key === 'login_streak') {
+                    aValue = Number(a.login_streak || 0);
+                    bValue = Number(b.login_streak || 0);
                 }
 
                 if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
@@ -72,8 +75,8 @@ export default function UserTable({ users, currentUserId, onEdit, onReset, onDel
 
     const SortIndicator = ({ columnKey }) => {
         if (sortConfig.key !== columnKey) return <ArrowUpDown className="w-3 h-3 ml-1.5 inline-block opacity-40 group-hover/th:opacity-100 transition-opacity" />;
-        return sortConfig.direction === 'asc' 
-            ? <ArrowUp className="w-3 h-3 ml-1.5 inline-block text-primary-400" /> 
+        return sortConfig.direction === 'asc'
+            ? <ArrowUp className="w-3 h-3 ml-1.5 inline-block text-primary-400" />
             : <ArrowDown className="w-3 h-3 ml-1.5 inline-block text-primary-400" />;
     };
 
@@ -85,11 +88,12 @@ export default function UserTable({ users, currentUserId, onEdit, onReset, onDel
                 <table className="w-full text-left border-collapse">
                     <thead>
                         <tr className="bg-white/5 border-b border-white/5">
-                            <th onClick={() => handleSort('name')} className="group/th cursor-pointer pl-4 md:pl-5 py-4 text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] text-left hover:bg-white/5 transition-colors">Funcionario <SortIndicator columnKey="name" /></th>
-                            <th onClick={() => handleSort('department')} className="group/th cursor-pointer px-3 py-4 text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] text-left hover:bg-white/5 transition-colors">Unidad / Cargo <SortIndicator columnKey="department" /></th>
-                            <th onClick={() => handleSort('created_at')} className="group/th cursor-pointer hidden md:table-cell px-3 py-4 text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] text-center hover:bg-white/5 transition-colors">Protocolo de Acceso <SortIndicator columnKey="created_at" /></th>
-                            <th onClick={() => handleSort('points')} className="group/th cursor-pointer px-3 py-4 text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] text-center hover:bg-white/5 transition-colors">Nivel Académico <SortIndicator columnKey="points" /></th>
-                            <th onClick={() => handleSort('is_active')} className="group/th cursor-pointer hidden lg:table-cell px-3 py-4 text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] text-center hover:bg-white/5 transition-colors">Disponibilidad <SortIndicator columnKey="is_active" /></th>
+                            <th onClick={() => handleSort('name')} className="group/th cursor-pointer pl-4 md:pl-5 py-4 text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] text-left hover:bg-white/5 transition-colors">Nombre <SortIndicator columnKey="name" /></th>
+                            <th onClick={() => handleSort('department')} className="group/th cursor-pointer px-3 py-4 text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] text-left hover:bg-white/5 transition-colors">Unidad / Puesto <SortIndicator columnKey="department" /></th>
+                            <th onClick={() => handleSort('created_at')} className="group/th cursor-pointer hidden md:table-cell px-3 py-4 text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] text-center hover:bg-white/5 transition-colors">Datos de Registro <SortIndicator columnKey="created_at" /></th>
+                            <th onClick={() => handleSort('points')} className="group/th cursor-pointer px-3 py-4 text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] text-center hover:bg-white/5 transition-colors">Puntaje <SortIndicator columnKey="points" /></th>
+                            <th onClick={() => handleSort('login_streak')} className="group/th cursor-pointer px-3 py-4 text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] text-center hover:bg-white/5 transition-colors">Racha <SortIndicator columnKey="login_streak" /></th>
+                            <th onClick={() => handleSort('is_active')} className="group/th cursor-pointer hidden lg:table-cell px-3 py-4 text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] text-center hover:bg-white/5 transition-colors">¿Activo? <SortIndicator columnKey="is_active" /></th>
                             <th className="pr-4 md:pr-5 py-4 text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] text-right">Acciones</th>
                         </tr>
                     </thead>
@@ -154,6 +158,17 @@ export default function UserTable({ users, currentUserId, onEdit, onReset, onDel
                                             <div className="flex items-center gap-1 mx-auto justify-center">
                                                 <span className="text-[9px] font-black text-white/60 uppercase tracking-widest">{u.level || 'NOVATO'}</span>
                                             </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td className="px-3 py-4">
+                                    <div className="flex flex-col items-center">
+                                        <div className="text-center group-hover/row:scale-110 transition-transform">
+                                            <div className="flex items-center justify-center gap-1.5">
+                                                <Flame className={`w-4 h-4 ${u.login_streak > 0 ? 'text-orange-500 fill-orange-500/20' : 'text-white/20'}`} />
+                                                <p className="text-sm font-black text-white">{u.login_streak || 0}</p>
+                                            </div>
+                                            <p className="text-[9px] font-black text-white/40 uppercase tracking-widest mt-0.5">DÍAS</p>
                                         </div>
                                     </div>
                                 </td>

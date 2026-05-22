@@ -7,7 +7,7 @@ async function test() {
         const mockBadge = {
             name: 'Anomalía del Sistema II. +50pts',
             description: 'Has encontrado un fallo en la Matrix que no debería existir. Al reportarlo, has demostrado que tu percepción va más allá de lo que la Matrix intenta mostrarte y has mejorado la plataforma.',
-            image_url: 'bienvenida-seguridad.svg' // Usamos la de bienvenida para la prueba
+            image_url: 'anomalia-sistema.svg'
         };
 
         await emailService.sendBadgeNotification(

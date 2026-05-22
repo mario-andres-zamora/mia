@@ -1,8 +1,10 @@
 import React from 'react';
 import { FileText, Download } from 'lucide-react';
 
-export default function FileActivity({ item, data, API_URL, handleResourceDownload }) {
-    const fileLink = data.file_url ? `${API_URL.replace('/api', '')}${data.file_url}` : '#';
+import { getFileUrl } from '../../../utils/imageUtils';
+
+export default function FileActivity({ item, data, handleResourceDownload }) {
+    const fileLink = getFileUrl(data.file_url);
     return (
         <a
             href={fileLink}

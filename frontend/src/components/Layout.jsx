@@ -22,6 +22,8 @@ import ScrollToTop from './ScrollToTop';
 import AnnouncementModal from './AnnouncementModal';
 import NotificationBell from './NotificationBell';
 import axios from 'axios';
+import BadgesModal from './dashboard/BadgesModal';
+import { getProfilePictureUrl } from '../utils/imageUtils';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -38,6 +40,7 @@ export default function Layout() {
         pendingLevelUp, clearLevelUp,
         pendingModuleCompletion, clearModuleCompletion,
         pendingBadge, clearBadge,
+        isBadgesModalOpen, setIsBadgesModalOpen,
         fetchNotifications
     } = useNotificationStore();
     const navigate = useNavigate();
@@ -169,15 +172,13 @@ export default function Layout() {
                                 <div className="relative flex-shrink-0">
                                     <div className="p-0.5 bg-gradient-to-tr from-primary-500 to-secondary-500 rounded-full">
                                         <img
-                                            src={user?.profilePicture || `https://ui-avatars.com/api/?name=${user?.firstName}+${user?.lastName}&background=384A99&color=fff`}
+                                            src={getProfilePictureUrl(user?.profilePicture, `${user?.firstName} ${user?.lastName}`)}
                                             alt={user?.firstName}
                                             className="w-7 h-7 xl:w-8 xl:h-8 rounded-full border-2 border-[#161b33] object-cover"
                                             referrerPolicy="no-referrer"
                                         />
                                     </div>
-                                    {hasAdminPanelAccess(user) && (
-                                        <div className="absolute -top-1 -right-1 w-2.5 h-2.5 xl:w-3 xl:h-3 bg-secondary-500 rounded-full border-2 border-[#0d1127] shadow-sm"></div>
-                                    )}
+
                                 </div>
                                 <div className="hidden lg:flex flex-col overflow-hidden min-w-0 flex-1 max-w-[15vw] xl:max-w-[20vw]">
                                     <p className="text-[10px] font-black !text-white uppercase tracking-tight truncate">
@@ -268,7 +269,7 @@ export default function Layout() {
             </nav>
 
             {/* Main Content */}
-            <main className="w-full px-1 sm:px-2 lg:px-6 py-2 md:py-6 flex-grow relative z-10">
+            <main className="w-full px-1 sm:px-2 lg:px-6 py-2 md:py-6 flex-grow relative">
                 <Outlet />
             </main>
 
@@ -328,6 +329,11 @@ export default function Layout() {
                 isOpen={!!pendingBadge}
                 onClose={clearBadge}
                 badge={pendingBadge}
+            />
+            <BadgesModal
+                isOpen={isBadgesModalOpen}
+                onClose={() => setIsBadgesModalOpen(false)}
+                badges={user?.earnedBadges || []}
             />
 
             {/* System Announcement Modal */}

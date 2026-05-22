@@ -1,5 +1,6 @@
 import React from 'react';
 import { Mail, Briefcase, Building2, Shield, Zap } from 'lucide-react';
+import { getProfilePictureUrl } from '../../utils/imageUtils';
 
 export default function ProfileHero({ user, stats }) {
     return (
@@ -23,7 +24,7 @@ export default function ProfileHero({ user, stats }) {
                     <div className="w-36 h-36 rounded-[2rem] p-[3px] bg-gradient-to-tr from-primary-500 via-secondary-500 to-accent-500 shadow-xl">
                         <div className="w-full h-full bg-[var(--bg-color)] rounded-[1.8rem] overflow-hidden">
                             <img
-                                src={user.profile_picture || `https://ui-avatars.com/api/?name=${user.first_name}+${user.last_name}&background=384A99&color=fff&size=200`}
+                                src={getProfilePictureUrl(user.profile_picture, `${user.first_name} ${user.last_name}`)}
                                 alt={user.first_name}
                                 className="w-full h-full object-cover"
                                 referrerPolicy="no-referrer"
@@ -40,16 +41,19 @@ export default function ProfileHero({ user, stats }) {
                     <div className="space-y-2">
                         <h1 className="text-3xl lg:text-4xl font-black text-[var(--text-color)] tracking-tighter uppercase leading-none flex items-center justify-center md:justify-start gap-3 flex-wrap">
                             {user.first_name} {user.last_name}
-                            {user.login_streak > 1 && (
+                            {user.login_streak >= 1 && (
                                 <div className="group relative cursor-help">
-                                    <div className="flex items-center gap-1 bg-secondary-500/10 border border-secondary-500/20 rounded-full px-2 py-0.5">
-                                        <Zap className="w-3.5 h-3.5 text-secondary-500 fill-secondary-500/20 animate-pulse" />
-                                        <span className="text-[9px] font-black text-secondary-500 uppercase tracking-widest">x{user.login_streak}</span>
+                                    <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full border transition-all duration-300 ${user.login_streak >= 5 ? 'bg-orange-500/20 border-orange-500/30 shadow-[0_0_15px_rgba(249,115,22,0.2)]' : 'bg-secondary-500/10 border-secondary-500/20'}`}>
+                                        <Zap className={`w-3.5 h-3.5 ${user.login_streak >= 5 ? 'text-orange-500 fill-orange-500/20' : 'text-secondary-500 fill-secondary-500/20'} animate-pulse`} />
+                                        <span className={`text-[10px] font-black uppercase tracking-widest ${user.login_streak >= 5 ? 'text-orange-500' : 'text-secondary-500'}`}>
+                                            Racha: {user.login_streak} {user.login_streak === 1 ? 'Día' : 'Días'}
+                                        </span>
                                     </div>
                                     <div className="absolute left-1/2 -translate-x-1/2 top-full mt-3 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none z-50">
                                         <div className="w-2 h-2 bg-[#1a2347] border-l border-t border-white/15 rotate-45 mx-auto -mb-1 relative z-10" />
-                                        <div className="bg-[#1a2347] border border-white/15 text-white text-[9px] font-black uppercase tracking-[0.2em] px-3 py-1.5 rounded-full shadow-2xl whitespace-nowrap">
-                                            Racha activa: <span className="text-secondary-400">x{user.login_streak} días</span>
+                                        <div className="bg-[#1a2347] border border-white/15 text-white text-[9px] font-black uppercase tracking-[0.2em] px-4 py-2 rounded-2xl shadow-2xl whitespace-nowrap">
+                                            {user.login_streak >= 5 ? '¡Nivel de compromiso: ÉLITE! 🔥' : '¡Mantén la racha diaria!'}
+                                            <div className="text-secondary-400 mt-0.5">{user.login_streak} días seguidos entrando a la plataforma</div>
                                         </div>
                                     </div>
                                 </div>
