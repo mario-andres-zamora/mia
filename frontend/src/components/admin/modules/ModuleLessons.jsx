@@ -59,7 +59,7 @@ export default function ModuleLessons({
                                 key={lesson.id}
                                 className="group/item flex flex-col lg:flex-row items-start lg:items-center justify-between p-5 bg-slate-900/60 border border-white/5 rounded-[2rem] hover:border-primary-500/30 transition-all hover:bg-slate-900 shadow-xl"
                             >
-                                <div className="flex items-center gap-5 w-full lg:w-auto mb-4 lg:mb-0">
+                                <div className="flex items-center gap-5 w-full lg:flex-1 min-w-0 mb-4 lg:mb-0">
                                     <div className="relative group/idx w-14 h-14 bg-slate-950 rounded-2xl flex items-center justify-center text-lg font-black text-gray-600 border border-white/10 shadow-inner group-hover/item:text-primary-400 transition-colors group-hover/item:scale-105 duration-500">
                                         <div className="absolute inset-x-0 -top-6 flex justify-center opacity-0 group-hover/idx:opacity-100 transition-opacity">
                                             <button
@@ -87,8 +87,8 @@ export default function ModuleLessons({
                                             {lesson.is_published ? <CheckCircle2 className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
                                         </div>
                                     </div>
-                                    <div className="min-w-0 pr-4">
-                                        <h5 className="text-base font-black text-white group-hover/item:text-primary-400 transition-colors uppercase tracking-tight truncate max-w-[280px]">
+                                    <div className="min-w-0 pr-4 flex-1">
+                                        <h5 className="text-base font-black text-white group-hover/item:text-primary-400 transition-colors uppercase tracking-tight">
                                             {lesson.title}
                                         </h5>
                                         <div className="flex flex-wrap items-center gap-3 mt-1">
@@ -120,7 +120,7 @@ export default function ModuleLessons({
                                     </div>
                                 </div>
 
-                                <div className="flex items-center flex-wrap gap-3 w-full lg:w-auto justify-end border-t lg:border-t-0 border-white/5 pt-4 lg:pt-0">
+                                <div className="flex items-center flex-wrap gap-3 w-full lg:w-auto lg:flex-shrink-0 justify-end border-t lg:border-t-0 border-white/5 pt-4 lg:pt-0">
                                     <div className="flex items-center flex-wrap gap-1 bg-slate-950 p-1.5 rounded-2xl border border-white/5 justify-end">
                                         <button
                                             onClick={() => onTogglePublish(lesson)}
