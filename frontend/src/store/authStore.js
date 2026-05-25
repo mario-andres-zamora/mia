@@ -37,7 +37,7 @@ export const useAuthStore = create(
 
                     return { success: true, user };
                 } catch (error) {
-                    const errorMessage = error.response?.data?.message || error.message || 'Error al iniciar sesión';
+                    const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message || 'Error al iniciar sesion';
                     console.error('[AuthStore] Login failed:', {
                         message: error.message,
                         response: error.response?.data,

@@ -14,9 +14,31 @@ class AuthService {
      */
     async googleAuth(credential) {
         // Obtener información del usuario usando el access_token
-        const googleResponse = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
-            headers: { Authorization: `Bearer ${credential}` }
-        });
+        let googleResponse;
+        try {
+            googleResponse = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
+                headers: { Authorization: `Bearer ${credential}` },
+                timeout: 10000
+            });
+        } catch (error) {
+            logger.error('Error de red o verificacion con Google:', error.message);
+            
+            // Si el servidor no tiene conexion a internet (error de red o sin respuesta)
+            if (!error.response && error.request) {
+                throw new AppError('No se pudo establecer conexion con los servidores de Google. Verifique la conexion a internet del servidor o intente mas tarde.', 503);
+            }
+            
+            // Si Google respondio con un codigo de estado de error (ej. token invalido o expirado)
+            if (error.response) {
+                const status = error.response.status;
+                if (status >= 400 && status < 500) {
+                    throw new AppError('El token de autenticacion de Google es invalido o ha expirado. Intente iniciar sesion de nuevo.', 401);
+                }
+            }
+            
+            // Error generico controlado
+            throw new AppError('Error al validar la sesion con Google. Intente nuevamente en unos minutos.', 500);
+        }
 
         const payload = googleResponse.data;
         const email = payload.email;

@@ -2,6 +2,7 @@ const authService = require('../services/authService');
 const logger = require('../config/logger');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
+const db = require('../config/database');
 
 exports.googleAuth = catchAsync(async (req, res, next) => {
     const { credential } = req.body;
@@ -12,6 +13,20 @@ exports.googleAuth = catchAsync(async (req, res, next) => {
 
     // Delegar a la capa de servicio (el servicio lanzará AppError si está inactivo)
     const user = await authService.googleAuth(credential);
+
+    // Verificar si el sistema está en modo mantenimiento (los administradores pueden entrar)
+    const [maintenanceSetting] = await db.query(
+        "SELECT setting_value FROM system_settings WHERE setting_key = 'maintenance_mode'"
+    );
+    const isMaintenance = maintenanceSetting && maintenanceSetting.setting_value === 'true';
+
+    if (isMaintenance && user.role !== 'admin') {
+        return res.status(503).json({
+            success: false,
+            maintenance: true,
+            error: 'El sistema se encuentra en mantenimiento programado. Por favor, intente mas tarde.'
+        });
+    }
 
     // Guardar sesión (Cookie HTTP-Only se enviará automáticamente)
     req.session.userId = user.id;
