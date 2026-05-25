@@ -38,8 +38,8 @@ Thumbs.db
 *.pid.lock
 
 # Uploads Si se van a subir a git
-# uploads/
-# backend/uploads/
+uploads/
+backend/uploads/
 
 # Database. Tambien se pueden subir a git
 # *.sql.gz
