@@ -1,4 +1,4 @@
-import primaryBanner from '../../assets/primary-banner.svg';
+import primaryBanner from '../../assets/Banner-principal.jpg';
 import dashboardHero from '../../assets/dashboard-hero.avif';
 
 export default function DashboardBanner({ user, stats }) {

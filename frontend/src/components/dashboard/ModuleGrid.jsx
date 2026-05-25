@@ -8,7 +8,7 @@ export default function ModuleGrid({ modules }) {
     const navigate = useNavigate();
 
     return (
-        <div className="bg-[var(--card-bg)] px-8 py-5 rounded-3xl border border-[var(--card-border)] transition-colors duration-300">
+        <div className="bg-[var(--bg-color)] px-8 py-5 rounded-3xl border border-[rgba(0,0,0,0.04)] shadow-[4px_4px_10px_rgba(168,145,116,0.3),-4px_-4px_10px_rgba(255,255,255,0.4)] transition-colors duration-300">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6 text-left">
                 <div className="flex items-center gap-4">
                     <div className="w-10 h-10 bg-[#6D71F9]/10 rounded-xl flex items-center justify-center border border-[#6D71F9]/20 text-[#6D71F9]">
@@ -58,11 +58,11 @@ function ModuleCard({ module, navigate }) {
     return (
         <div
             onClick={handleCardClick}
-            className={`group relative flex flex-col p-6 rounded-[2rem] border transition-all cursor-pointer overflow-hidden shadow-2xl ${isCompleted
-                    ? 'bg-[var(--success-card-bg)] border-[var(--success-card-border)] hover:border-[var(--success)]/60 shadow-emerald-500/10'
+            className={`group relative flex flex-col p-6 rounded-[2rem] border transition-all cursor-pointer overflow-hidden ${isCompleted
+                    ? 'bg-[var(--success-card-bg)] border-[var(--success-card-border)] hover:border-[var(--success)]/60 shadow-[6px_6px_16px_rgba(168,145,116,0.25),-2px_-2px_8px_rgba(255,255,255,0.4)]'
                     : isUpcoming
-                        ? 'bg-[var(--bg-color)]/40 border-[var(--card-border)] opacity-80 hover:opacity-100'
-                        : 'bg-[var(--card-bg)] border-[var(--card-border)] hover:border-primary-500/40 hover:bg-[var(--bg-color)]/30'
+                        ? 'bg-[var(--card-bg)]/40 border-[var(--card-border)] opacity-80 hover:opacity-100 shadow-[inset_4px_4px_10px_rgba(168,145,116,0.2)]'
+                        : 'bg-[var(--card-bg)] border-t-[rgba(255,255,255,0.3)] border-l-[rgba(255,255,255,0.3)] border-b-[rgba(0,0,0,0.03)] border-r-[rgba(0,0,0,0.03)] shadow-[6px_6px_16px_rgba(168,145,116,0.25),-2px_-2px_8px_rgba(255,255,255,0.4)] hover:shadow-[8px_8px_20px_rgba(168,145,116,0.3),-4px_-4px_12px_rgba(255,255,255,0.5)] hover:-translate-y-1'
                 }`}
         >
             {/* Completion Badge Overlay */}
