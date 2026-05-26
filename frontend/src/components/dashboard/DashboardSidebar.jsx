@@ -1,8 +1,25 @@
 import { TrendingUp, Award, CheckCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getProfilePictureUrl } from '../../utils/imageUtils';
+import { useState } from 'react';
+import toast from 'react-hot-toast';
 
 export default function DashboardSidebar({ user, stats, onShowBadges, onShowCertificates }) {
+    const [testToastType, setTestToastType] = useState('error');
+
+    const handleTestToast = () => {
+        if (testToastType === 'error') {
+            toast.error('¡Ups! Algo salió mal de prueba');
+            setTestToastType('success');
+        } else if (testToastType === 'success') {
+            toast.success('¡Excelente! Todo salió bien de prueba');
+            setTestToastType('info');
+        } else {
+            toast('Mensaje informativo de prueba', { icon: null });
+            setTestToastType('error');
+        }
+    };
+
     return (
         <div className="space-y-4 flex flex-col h-full animate-fade-in text-center">
             {/* Main Posición Global Card */}
@@ -66,6 +83,14 @@ export default function DashboardSidebar({ user, stats, onShowBadges, onShowCert
                     <span className="text-[10px] font-bold text-[var(--text-color)] uppercase tracking-widest">CERTIFICADOS</span>
                 </button>
             </div>
+
+            {/* Test Toasts Button */}
+            <button
+                onClick={handleTestToast}
+                className="w-full mt-4 py-3 bg-[var(--card-bg)] border border-[var(--card-border)] shadow-md rounded-xl text-[10px] font-bold uppercase tracking-widest text-[var(--text-color)] hover:bg-[#e8dbbe] transition-all"
+            >
+                Probar Mensajes (Colibrí)
+            </button>
         </div>
     );
 }

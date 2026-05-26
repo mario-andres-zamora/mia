@@ -290,8 +290,8 @@ export default function Layout() {
                                     Version {import.meta.env.VITE_APP_VERSION}
                                 </p>
                                 {hasAdminPanelAccess(user) && (
-                                    <div className="flex items-center gap-2 px-3 py-1 bg-slate-900/50 rounded-full border border-white/5 shadow-lg mt-1">
-                                        <span className={`text-[8px] font-black uppercase tracking-[0.2em] ${!viewAsStudent ? 'text-secondary-500' : 'text-gray-500'}`}>
+                                    <div className="flex items-center gap-2 px-3 py-1 bg-[#582c19] rounded-full border border-white/5 shadow-lg mt-1">
+                                        <span className="text-[8px] font-black uppercase tracking-[0.2em] text-white">
                                             {!viewAsStudent ? 'Panel Administrador' : 'Vista Estudiante'}
                                         </span>
                                         <button
