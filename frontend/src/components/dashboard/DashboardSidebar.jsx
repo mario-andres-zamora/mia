@@ -1,12 +1,29 @@
 import { TrendingUp, Award, CheckCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getProfilePictureUrl } from '../../utils/imageUtils';
+import { useState } from 'react';
+import toast from 'react-hot-toast';
 
 export default function DashboardSidebar({ user, stats, onShowBadges, onShowCertificates }) {
+    const [testToastType, setTestToastType] = useState('error');
+
+    const handleTestToast = () => {
+        if (testToastType === 'error') {
+            toast.error('¡Ups! Algo salió mal de prueba');
+            setTestToastType('success');
+        } else if (testToastType === 'success') {
+            toast.success('¡Excelente! Todo salió bien de prueba');
+            setTestToastType('info');
+        } else {
+            toast('Mensaje informativo de prueba', { icon: null });
+            setTestToastType('error');
+        }
+    };
+
     return (
         <div className="space-y-4 flex flex-col h-full animate-fade-in text-center">
             {/* Main Posición Global Card */}
-            <div className="bg-[var(--card-bg)] rounded-3xl p-6 border border-[var(--card-border)] flex flex-col items-center transition-colors duration-300">
+            <div className="bg-[var(--bg-color)] rounded-3xl p-6 border border-transparent flex flex-col items-center transition-colors duration-300">
                 {/* Avatar */}
                 <div className="relative mb-4">
                     <div className="w-28 h-28 rounded-full bg-[var(--bg-color)] p-1">
@@ -26,7 +43,7 @@ export default function DashboardSidebar({ user, stats, onShowBadges, onShowCert
                 </p>
 
                 {/* Inner Stats Card */}
-                <div className="w-full bg-[var(--bg-color)] rounded-2xl border border-[var(--card-border)] p-4 flex flex-row items-center gap-2 mb-5">
+                <div className="w-full bg-[var(--card-bg)] rounded-2xl border-t-[rgba(255,255,255,0.3)] border-l-[rgba(255,255,255,0.3)] border-b-[rgba(0,0,0,0.03)] border-r-[rgba(0,0,0,0.03)] shadow-[6px_6px_16px_rgba(168,145,116,0.25),-2px_-2px_8px_rgba(255,255,255,0.4)] p-4 flex flex-row items-center gap-2 mb-5">
                     <div className="flex-1 flex flex-col items-center justify-center border-r border-[var(--card-border)] pr-2">
                         <span className="text-[7px] text-gray-500 font-bold uppercase tracking-widest mb-1">INSTITUCIONAL</span>
                         <span className="text-xl font-bold text-[#EF8843] mb-0.5 leading-none">#{stats?.rank || 1}</span>
@@ -53,19 +70,27 @@ export default function DashboardSidebar({ user, stats, onShowBadges, onShowCert
             <div className="grid grid-cols-2 gap-4">
                 <button
                     onClick={onShowBadges}
-                    className="bg-[var(--card-bg)] rounded-3xl p-6 border border-[var(--card-border)] flex flex-col items-center justify-center gap-3 hover:bg-[var(--bg-color)] transition-all w-full"
+                    className="bg-[var(--card-bg)] rounded-3xl p-6 border-t-[rgba(255,255,255,0.3)] border-l-[rgba(255,255,255,0.3)] border-b-[rgba(0,0,0,0.03)] border-r-[rgba(0,0,0,0.03)] shadow-[6px_6px_16px_rgba(168,145,116,0.25),-2px_-2px_8px_rgba(255,255,255,0.4)] hover:shadow-[8px_8px_20px_rgba(168,145,116,0.3),-4px_-4px_12px_rgba(255,255,255,0.5)] hover:-translate-y-1 flex flex-col items-center justify-center gap-3 transition-all w-full"
                 >
                     <Award className="w-8 h-8 text-[#EF8843]" />
                     <span className="text-[10px] font-bold text-[var(--text-color)] uppercase tracking-widest">INSIGNIAS</span>
                 </button>
                 <button
                     onClick={onShowCertificates}
-                    className="bg-[var(--card-bg)] rounded-3xl p-6 border border-[var(--card-border)] flex flex-col items-center justify-center gap-3 hover:bg-[var(--bg-color)] transition-all w-full"
+                    className="bg-[var(--card-bg)] rounded-3xl p-6 border-t-[rgba(255,255,255,0.3)] border-l-[rgba(255,255,255,0.3)] border-b-[rgba(0,0,0,0.03)] border-r-[rgba(0,0,0,0.03)] shadow-[6px_6px_16px_rgba(168,145,116,0.25),-2px_-2px_8px_rgba(255,255,255,0.4)] hover:shadow-[8px_8px_20px_rgba(168,145,116,0.3),-4px_-4px_12px_rgba(255,255,255,0.5)] hover:-translate-y-1 flex flex-col items-center justify-center gap-3 transition-all w-full"
                 >
                     <CheckCircle className="w-8 h-8 text-[#6D71F9]" />
                     <span className="text-[10px] font-bold text-[var(--text-color)] uppercase tracking-widest">CERTIFICADOS</span>
                 </button>
             </div>
+
+            {/* Test Toasts Button */}
+            <button
+                onClick={handleTestToast}
+                className="w-full mt-4 py-3 bg-[var(--card-bg)] border border-[var(--card-border)] shadow-md rounded-xl text-[10px] font-bold uppercase tracking-widest text-[var(--text-color)] hover:bg-[#e8dbbe] transition-all"
+            >
+                Probar Mensajes (Colibrí)
+            </button>
         </div>
     );
 }

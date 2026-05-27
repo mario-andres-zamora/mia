@@ -8,8 +8,10 @@ import LoginFooter from '../components/login/LoginFooter';
 
 export default function Login() {
     const { googleLogin, isLoading } = useLogin();
-    const audioRef = useRef(new Audio('/sounds/login.mp3'));
+    // CAMBIAR SONIDO MIA AQUI
+    // const audioRef = useRef(new Audio('/sounds/login.mp3'));
 
+    /*
     useEffect(() => {
         const audio = audioRef.current;
         audio.loop = true;
@@ -34,6 +36,7 @@ export default function Login() {
             audio.currentTime = 0;
         };
     }, []);
+    */
 
     return (
         <div className="min-h-screen flex flex-col bg-[#f5ede4] relative overflow-hidden">
