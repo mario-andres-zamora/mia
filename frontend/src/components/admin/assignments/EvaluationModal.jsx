@@ -1,10 +1,11 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { ClipboardList, FileText, XCircle, CheckCircle } from 'lucide-react';
 
 export default function EvaluationModal({ gradingSubmission, gradeData, setGradeData, onClose, onSubmit, API_URL }) {
     if (!gradingSubmission) return null;
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-fade-in text-left">
             <div className="card w-full max-w-2xl bg-gradient-to-b from-[#1b2341] to-[#0a0f1e] border-slate-700/50 p-0 overflow-hidden shadow-[0_0_50px_-12px_rgba(30,58,138,0.5)] animate-fade-in-up">
                 <div className="p-6 border-b border-white/5 bg-slate-900/50 flex justify-between items-center relative overflow-hidden">
@@ -32,7 +33,7 @@ export default function EvaluationModal({ gradingSubmission, gradeData, setGrade
                         <div className="flex-1">
                             <p className="text-white font-black text-xl tracking-tight leading-none mb-1 uppercase">{gradingSubmission.first_name} {gradingSubmission.last_name}</p>
                             <p className="text-gray-400 text-sm font-medium mb-3">{gradingSubmission.email}</p>
-                            <div className="flex flex-wrap gap-2 justify-start">
+                            <div className="flex wrap gap-2 justify-start">
                                 <span className="text-[9px] text-primary-400 uppercase font-black bg-primary-500/10 px-2 py-0.5 rounded border border-primary-500/10">{gradingSubmission.module_title}</span>
                                 <span className="text-[9px] text-gray-500 uppercase font-black bg-white/5 px-2 py-0.5 rounded border border-white/5">{gradingSubmission.lesson_title}</span>
                             </div>
@@ -115,6 +116,7 @@ export default function EvaluationModal({ gradingSubmission, gradeData, setGrade
                     </button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }

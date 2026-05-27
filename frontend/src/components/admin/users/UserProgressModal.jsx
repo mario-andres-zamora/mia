@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { X, BookOpen, CheckCircle2, Circle, Clock, Award, BarChart3, ChevronRight, Activity } from 'lucide-react';
 
 export default function UserProgressModal({ isOpen, onClose, user, progress }) {
@@ -6,7 +7,7 @@ export default function UserProgressModal({ isOpen, onClose, user, progress }) {
 
     const detailedProgress = progress?.detailed || [];
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             {/* Backdrop */}
             <div 
@@ -159,6 +160,7 @@ export default function UserProgressModal({ isOpen, onClose, user, progress }) {
                     </button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }

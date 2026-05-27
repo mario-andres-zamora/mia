@@ -1,4 +1,4 @@
-import { Video, Youtube } from 'lucide-react';
+import { CirclePlay, Video } from 'lucide-react';
 
 export default function VideoEditor({ 
     videoSource, 
@@ -56,7 +56,7 @@ export default function VideoEditor({
                             value={url}
                             onChange={e => onSetUrl(e.target.value)}
                         />
-                        <Youtube className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-red-500/50" />
+                        <CirclePlay className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-red-500/50" />
                     </div>
                 </div>
             )}

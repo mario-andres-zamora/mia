@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { AlertCircle, X } from 'lucide-react';
 
 export default function ConfirmModal({
@@ -13,7 +14,7 @@ export default function ConfirmModal({
 }) {
     if (!isOpen) return null;
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-[4000] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md animate-fade-in">
             <div className="relative w-full max-w-md bg-[#0f121d] rounded-3xl border border-white/10 shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
                 <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${isDestructive ? 'from-red-600 via-red-400 to-red-600' : 'from-yellow-600 via-yellow-400 to-yellow-600'}`}></div>
@@ -54,6 +55,7 @@ export default function ConfirmModal({
                     </div>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }

@@ -13,18 +13,34 @@ class AuthService {
      * @param {string} credential - Access Token de Google
      */
     async googleAuth(credential) {
-        let payload;
+        // Obtener información del usuario usando el access_token
+        let googleResponse;
         try {
-            // Obtener información del usuario usando el access_token
-            const googleResponse = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
-                headers: { Authorization: `Bearer ${credential}` }
+            googleResponse = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
+                headers: { Authorization: `Bearer ${credential}` },
+                timeout: 10000
             });
-            payload = googleResponse.data;
         } catch (error) {
-            logger.error('Error al verificar token con Google:', error.message);
-            throw new AppError('No se pudo validar la identidad con Google. Intente de nuevo.', 401);
+            logger.error('Error de red o verificacion con Google:', error.message);
+            
+            // Si el servidor no tiene conexion a internet (error de red o sin respuesta)
+            if (!error.response && error.request) {
+                throw new AppError('No se pudo establecer conexion con los servidores de Google. Verifique la conexion a internet del servidor o intente mas tarde.', 503);
+            }
+            
+            // Si Google respondio con un codigo de estado de error (ej. token invalido o expirado)
+            if (error.response) {
+                const status = error.response.status;
+                if (status >= 400 && status < 500) {
+                    throw new AppError('El token de autenticacion de Google es invalido o ha expirado. Intente iniciar sesion de nuevo.', 401);
+                }
+            }
+            
+            // Error generico controlado
+            throw new AppError('Error al validar la sesion con Google. Intente nuevamente en unos minutos.', 500);
         }
 
+        const payload = googleResponse.data;
         const email = payload.email.toLowerCase();
         const googleId = payload.sub;
         const given_name = payload.given_name || '';
