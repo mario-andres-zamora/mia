@@ -1,4 +1,5 @@
 import { HelpCircle, Save, Layout, Plus } from 'lucide-react';
+import { createPortal } from 'react-dom';
 import { useAuthStore } from '../store/authStore';
 import { useQuizEditor } from '../hooks/useQuizEditor';
 import QuizBasicSettings from './admin/quiz-editor/QuizBasicSettings';
@@ -30,7 +31,7 @@ export default function QuizEditorModal({ isOpen, onClose, quizId, moduleId, les
 
     if (!isOpen) return null;
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-[3000] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md overflow-hidden">
             <div className="card w-full max-w-5xl bg-[#0f172a] border-slate-700 p-0 flex flex-col max-h-[90vh] shadow-2xl animate-fade-in-up">
                 {/* Header */}
@@ -107,6 +108,7 @@ export default function QuizEditorModal({ isOpen, onClose, quizId, moduleId, les
                     </button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }

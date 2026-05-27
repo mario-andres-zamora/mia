@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import {
@@ -190,7 +191,7 @@ export default function SurveyEditorModal({ isOpen, onClose, surveyId, moduleId,
 
     if (!isOpen) return null;
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-[3000] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md overflow-hidden">
             <div className="card w-full max-w-5xl bg-[#0f172a] border-slate-700 p-0 flex flex-col max-h-[90vh] shadow-2xl animate-fade-in-up">
                 {/* Header */}
@@ -278,32 +279,38 @@ export default function SurveyEditorModal({ isOpen, onClose, surveyId, moduleId,
                             ) : (
                                 questions.map((q, qIdx) => (
                                     <div key={q.id} className="card p-8 bg-slate-900/40 border-white/5 relative group hover:border-yellow-500/20 transition-all">
-                                        <div className="absolute -left-3 top-8 w-8 h-8 bg-slate-900 rounded-lg border border-white/10 flex items-center justify-center font-black text-xs text-yellow-500 shadow-xl">
-                                            {qIdx + 1}
-                                        </div>
-
                                         <div className="space-y-6">
-                                            <div className="flex gap-4">
-                                                <div className="flex-1 space-y-2">
-                                                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest flex items-center gap-1.5">
-                                                        <Target className="w-3 h-3" /> Texto de la Pregunta
+                                            {/* Question Text (Full Row Width) */}
+                                            <div className="space-y-2">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="w-6 h-6 bg-yellow-500/10 rounded-lg border border-yellow-500/30 flex items-center justify-center font-black text-xs text-yellow-500 shadow-inner">
+                                                        {qIdx + 1}
+                                                    </span>
+                                                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest flex items-center gap-1.5 text-left">
+                                                        <Target className="w-3 h-3 text-yellow-500" /> Texto de la Pregunta
                                                     </label>
-                                                    <textarea
-                                                        className="input-field bg-slate-950/50 border-white/10 font-bold text-white h-20"
-                                                        value={q.question_text}
-                                                        onChange={e => handleUpdateQuestion(q.id, 'question_text', e.target.value)}
-                                                    />
                                                 </div>
-                                                <div className="w-40 space-y-2">
-                                                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Tipo</label>
-                                                    <div className="px-3 py-2 bg-slate-950/50 rounded-lg border border-white/10 text-xs text-gray-400 font-bold uppercase">
+                                                <textarea
+                                                    className="input-field bg-slate-950/50 border-white/10 font-bold text-white w-full h-24 text-sm"
+                                                    value={q.question_text}
+                                                    onChange={e => handleUpdateQuestion(q.id, 'question_text', e.target.value)}
+                                                />
+                                            </div>
+
+                                            {/* Settings & Actions Row */}
+                                            <div className="flex items-end gap-4">
+                                                <div className="flex-1 space-y-2">
+                                                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest text-left block">Tipo</label>
+                                                    <div className="px-3 py-3.5 bg-slate-950/50 rounded-lg border border-white/10 text-xs text-gray-400 font-bold uppercase">
                                                         {q.question_type === 'multiple_choice' ? 'Opción Múltiple' :
                                                             q.question_type === 'rating' ? 'Calificación' : 'Texto Libre'}
                                                     </div>
                                                 </div>
                                                 <button
+                                                    type="button"
                                                     onClick={() => handleRemoveQuestion(q.id)}
-                                                    className="mt-6 p-3 bg-red-500/10 text-red-400 rounded-xl hover:bg-red-500 hover:text-white transition-all self-start border border-red-500/20"
+                                                    className="p-3.5 bg-red-500/10 text-red-400 rounded-xl hover:bg-red-500 hover:text-white transition-all border border-red-500/20 hover:scale-105 active:scale-95 shrink-0"
+                                                    title="Eliminar Pregunta"
                                                 >
                                                     <Trash2 className="w-5 h-5" />
                                                 </button>
@@ -382,6 +389,7 @@ export default function SurveyEditorModal({ isOpen, onClose, surveyId, moduleId,
                     </button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }

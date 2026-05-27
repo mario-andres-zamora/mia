@@ -38,12 +38,12 @@ export const useAuthStore = create(
                     return { success: true, user };
                 } catch (error) {
                     // Extraer el mensaje más específico posible
-                    const errorMessage = 
+                    const errorMessage = error.response?.data?.error || 
                         error.response?.data?.message || 
                         error.response?.data?.error || 
                         (typeof error.response?.data === 'string' ? error.response.data : null) ||
                         error.message || 
-                        'Error al iniciar sesión';
+                        'Error al iniciar sesion';
 
                     console.error('[AuthStore] Login failed details:', {
                         serverMessage: error.response?.data?.message,

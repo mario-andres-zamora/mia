@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import { Pencil, Plus, Award, Shield, Save, X } from 'lucide-react';
 import { getTypeLabel } from './editorUtils.js';
 import TextEditor from './editors/TextEditor.jsx';
@@ -156,7 +157,7 @@ export default function ContentEditorModal({
         }
     };
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-[3000] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in">
             <div className="relative w-full max-w-2xl bg-[#0f121d] rounded-3xl border border-white/10 shadow-2xl flex flex-col max-h-[95vh]">
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-600 via-indigo-500 to-blue-600 rounded-t-3xl"></div>
@@ -258,6 +259,7 @@ export default function ContentEditorModal({
                     </div>
                 </form>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }

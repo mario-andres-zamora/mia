@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import { Download, X } from 'lucide-react';
 
 export default function ResourceModal({ 
@@ -10,7 +11,7 @@ export default function ResourceModal({
 }) {
     if (!isOpen) return null;
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-[3000] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-xl animate-fade-in">
             <div className="relative w-full max-w-xl bg-slate-900 rounded-[3rem] border border-white/10 shadow-[0_0_80px_rgba(0,0,0,0.8)] overflow-hidden">
                 <div className="p-10 border-b border-white/5 bg-slate-950/40">
@@ -151,6 +152,7 @@ export default function ResourceModal({
                     </div>
                 </form>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }

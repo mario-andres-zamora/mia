@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import { Plus, X, HelpCircle } from 'lucide-react';
 import PremiumSelect from '../../PremiumSelect';
 
@@ -19,7 +20,7 @@ export default function LessonModal({
         { value: 'survey', label: 'Encuesta de Satisfacción' }
     ];
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-[3000] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in">
             <div className="relative w-full max-w-xl bg-[#0f121d] rounded-3xl border border-white/10 shadow-2xl">
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-600 via-indigo-500 to-blue-600 rounded-t-3xl"></div>
@@ -137,6 +138,7 @@ export default function LessonModal({
                     </div>
                 </form>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }

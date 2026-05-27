@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Gift } from 'lucide-react';
 
 export default function BadgeAwardModal({ isOpen, onClose, badge, onAward }) {
@@ -15,7 +16,7 @@ export default function BadgeAwardModal({ isOpen, onClose, badge, onAward }) {
         }
     };
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in text-left">
             <div className="card w-full max-w-md !p-0 overflow-hidden border-white/10 shadow-[0_0_100px_rgba(56,74,153,0.2)]">
                 <div className="p-8 border-b border-white/5 bg-white/[0.02]">
@@ -61,6 +62,7 @@ export default function BadgeAwardModal({ isOpen, onClose, badge, onAward }) {
                     </footer>
                 </form>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }

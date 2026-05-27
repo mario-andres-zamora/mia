@@ -69,23 +69,62 @@ El sistema incluye un servicio de correo electrónico robusto configurado en `ba
 ### 🚀 Configuración y Despliegue
 
 #### **Variables de Entorno (.env)**
-Es crítico configurar correctamente los parámetros de correo para el funcionamiento de las insignias:
+El proyecto usa un solo archivo de entorno en la raíz del repositorio. Copia el ejemplo y actualiza los valores antes de ejecutar la aplicación.
+
+```bash
+cp .env.example .env
+```
+
+El archivo `.env` se utiliza tanto para el backend como para el frontend local, porque `backend/server.js` carga `../.env` y `frontend/vite.config.js` usa `envDir: '../'`.
+
+Ejemplo parcial para correo y Google OAuth:
 
 ```env
-# Email Config
+NODE_ENV=development
+PORT=5000
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=cgr_user
+DB_PASSWORD=secret_db_password
+DB_NAME=cgr_lms
+REDIS_HOST=localhost
+REDIS_PORT=6379
+SESSION_SECRET=super_secret_session_key
+JWT_SECRET=super_secret_jwt_key
+GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
 EMAIL_HOST=smtp.gmail.com
 EMAIL_PORT=587
 EMAIL_USER=tu.usuario@cgr.go.cr
-EMAIL_PASSWORD=tu_contraseña_de_aplicacion_sin_espacios
-EMAIL_FROM=Seguridad de la Información <seguridad.informacion@cgr.go.cr>
+EMAIL_PASSWORD=your-email-password
+EMAIL_FROM="Seguridad de la Información <seguridad.informacion@cgr.go.cr>"
+FRONTEND_URL=http://localhost:3000
+VITE_API_URL=http://localhost:5000/api
+VITE_GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
+VITE_ALLOWED_HOSTS=localhost,127.0.0.1
 ```
 
-#### **Levantar el entorno**
-```bash
-# Construir y levantar contenedores
-docker-compose up -d --build
+> Importante: No subas el archivo `.env` al repositorio. Solo comparte el `.env.example`.
 
-# Verificar estado
+#### **Levantar el entorno en desarrollo**
+```bash
+# Backend
+cd backend
+npm install
+npm run dev
+
+# Frontend
+cd frontend
+npm install
+npm run dev
+```
+
+#### **Levantar con Docker Compose**
+```bash
+docker-compose up -d --build
+```
+
+#### **Verificar estado**
+```bash
 docker ps
 ```
 

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { User, X, ShieldCheck, Activity, Building2, RefreshCcw, Briefcase, ChevronDown, Check } from 'lucide-react';
 
 const CustomSelect = ({ label, value, options, onChange, icon: Icon, placeholder = 'Seleccionar...' }) => {
@@ -78,7 +79,7 @@ export default function UserEditModal({ user, departments, isOpen, onClose, onUp
         label: d.name
     }));
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-[3000] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in text-left">
             <div className="bg-[#121625] w-full max-w-xl p-0 overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.6)] border border-white/5 rounded-3xl">
                 {/* Header Section */}
@@ -158,6 +159,7 @@ export default function UserEditModal({ user, departments, isOpen, onClose, onUp
                     </button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }
