@@ -25,37 +25,39 @@ export default function QuestionItem({
 
     return (
         <div className="card p-8 bg-slate-900/40 border-white/5 relative group hover:border-primary-500/20 transition-all text-left">
-            <div className="absolute -left-3 top-8 w-8 h-8 bg-slate-900 rounded-lg border border-white/10 flex items-center justify-center font-black text-xs text-primary-400 shadow-xl">
-                {index + 1}
-            </div>
-
             <div className="space-y-6">
-                {/* Question Text */}
-                <div className="flex gap-4">
-                    <div className="flex-1 space-y-2">
+                {/* Question Text (Full Row Width) */}
+                <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                        <span className="w-6 h-6 bg-primary-500/10 rounded-lg border border-primary-500/30 flex items-center justify-center font-black text-xs text-primary-400 shadow-inner">
+                            {index + 1}
+                        </span>
                         <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest flex items-center gap-1.5 text-left">
-                            <Target className="w-3 h-3" /> Texto de la Pregunta
+                            <Target className="w-3 h-3 text-primary-400" /> Texto de la Pregunta
                         </label>
-                        <textarea
-                            className={`input-field bg-slate-950/50 border-white/10 font-bold text-white transition-all ${
-                                isInteractiveGame 
-                                ? 'h-32 text-lg' 
-                                : 'h-20 text-sm'
-                            }`}
-                            placeholder="¿Cuál es el protocolo de seguridad...?"
-                            value={question.question_text}
-                            onChange={e => onUpdateQuestion(question.id, 'question_text', e.target.value)}
-                        />
                     </div>
+                    <textarea
+                        className={`input-field bg-slate-950/50 border-white/10 font-bold text-white transition-all w-full ${
+                            isInteractiveGame 
+                            ? 'h-28 text-lg' 
+                            : 'h-24 text-sm'
+                        }`}
+                        placeholder="¿Cuál es el protocolo de seguridad...?"
+                        value={question.question_text}
+                        onChange={e => onUpdateQuestion(question.id, 'question_text', e.target.value)}
+                    />
+                </div>
 
+                {/* Settings & Actions Row */}
+                <div className="flex flex-col md:flex-row md:items-end gap-4">
                     {!isInteractiveGame && (
-                        <div className="w-64 space-y-2">
+                        <div className="flex-1 min-w-[200px] space-y-2">
                             <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest flex items-center gap-1.5 text-left">
                                 <ImageIcon className="w-3 h-3 text-secondary-500" /> Imagen (URL)
                             </label>
                             <input
                                 type="text"
-                                className="input-field bg-slate-950/50 border-white/10 text-[10px]"
+                                className="input-field bg-slate-950/50 border-white/10 text-[11px] py-3.5"
                                 placeholder="https://ejemplo.com/imagen.jpg"
                                 value={question.image_url || ''}
                                 onChange={e => onUpdateQuestion(question.id, 'image_url', e.target.value)}
@@ -71,26 +73,31 @@ export default function QuestionItem({
                         </div>
                     )}
 
-                    <div className="w-24 space-y-2">
-                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest text-left">Puntos</label>
+                    <div className="flex-1 min-w-[200px] space-y-2">
+                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest text-left block">Puntos</label>
                         <input
                             type="number"
-                            className="input-field bg-slate-950/50 border-white/10"
+                            className="input-field bg-slate-950/50 border-white/10 py-3.5"
                             value={question.points}
-                            onChange={e => onUpdateQuestion(question.id, 'points', parseInt(e.target.value))}
+                            onChange={e => onUpdateQuestion(question.id, 'points', parseInt(e.target.value) || 0)}
                         />
                     </div>
-                    <div className="w-64">
+
+                    <div className="flex-1 min-w-[200px] space-y-2">
+                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest text-left block">Tipo</label>
                         <PremiumSelect
-                            label="Tipo"
                             options={questionTypes}
                             value={question.question_type || 'multiple_choice'}
                             onChange={value => onUpdateQuestion(question.id, 'question_type', value)}
+                            className="input-field bg-slate-950/50 border-white/10 py-3.5 text-xs text-left"
                         />
                     </div>
+
                     <button
+                        type="button"
                         onClick={() => onRemoveQuestion(question.id)}
-                        className="mt-6 p-3 bg-red-500/10 text-red-400 rounded-xl hover:bg-red-500 hover:text-white transition-all self-start border border-red-500/20"
+                        className="p-3.5 bg-red-500/10 text-red-400 rounded-xl hover:bg-red-500 hover:text-white transition-all border border-red-500/20 hover:scale-105 active:scale-95 shrink-0 self-end md:mb-[1px]"
+                        title="Eliminar Pregunta"
                     >
                         <Trash2 className="w-5 h-5" />
                     </button>

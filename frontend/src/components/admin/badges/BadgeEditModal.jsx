@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { Edit2, Plus, Info } from 'lucide-react';
 
 // Obtenemos todas las imágenes de la carpeta dinámicamente usando Vite
@@ -8,7 +9,7 @@ const badgeImages = Object.keys(imagesContext).map(path => path.split('/').pop()
 export default function BadgeEditModal({ isOpen, onClose, editingBadge, formData, setFormData, onSave }) {
     if (!isOpen) return null;
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in text-left">
             <div className="card w-full max-w-2xl !p-0 overflow-hidden border-white/10 shadow-[0_0_100px_rgba(56,74,153,0.2)]">
                 <div className="p-10 border-b border-white/5 bg-white/[0.02]">
@@ -115,6 +116,7 @@ export default function BadgeEditModal({ isOpen, onClose, editingBadge, formData
                     </button>
                 </footer>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }

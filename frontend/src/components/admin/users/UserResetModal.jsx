@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X, RotateCcw, AlertTriangle, Layers, User } from 'lucide-react';
 import PremiumSelect from '../../PremiumSelect';
 
@@ -20,7 +21,7 @@ export default function UserResetModal({ isOpen, onClose, user, modules, onConfi
         setIsConfirming(false);
     };
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             {/* Backdrop */}
             <div 
@@ -69,7 +70,7 @@ export default function UserResetModal({ isOpen, onClose, user, modules, onConfi
                                 resetType === 'all' 
                                     ? 'bg-orange-500/20 border-orange-500/40' 
                                     : 'bg-white/5 border-white/5 hover:border-white/10'
-                            }`}
+                             }`}
                         >
                             <User className={`w-6 h-6 ${resetType === 'all' ? 'text-orange-400' : 'text-gray-500'}`} />
                             <span className={`text-xs font-black uppercase tracking-widest ${resetType === 'all' ? 'text-white' : 'text-gray-500'}`}>Reiniciar Todo</span>
@@ -123,6 +124,7 @@ export default function UserResetModal({ isOpen, onClose, user, modules, onConfi
                     </button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }

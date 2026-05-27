@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, FileText, Award, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -8,7 +9,7 @@ export default function CertificatesModal({ isOpen, onClose, certificates }) {
 
     return (
         <AnimatePresence>
-            {isOpen && (
+            {isOpen && createPortal(
                 <div className="fixed inset-0 z-[5000] flex items-center justify-center p-4">
                     {/* Backdrop */}
                     <motion.div
@@ -98,7 +99,8 @@ export default function CertificatesModal({ isOpen, onClose, certificates }) {
                             </div>
                         </div>
                     </motion.div>
-                </div>
+                </div>,
+                document.body
             )}
         </AnimatePresence>
     );

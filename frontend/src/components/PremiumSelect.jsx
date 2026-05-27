@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronDown, Check } from 'lucide-react';
 
-export default function PremiumSelect({ options, value, onChange, placeholder = "Seleccionar...", label }) {
+export default function PremiumSelect({ options, value, onChange, placeholder = "Seleccionar...", label, className = "" }) {
     const [isOpen, setIsOpen] = useState(false);
     const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
     const dropdownRef = useRef(null);
@@ -95,11 +95,18 @@ export default function PremiumSelect({ options, value, onChange, placeholder = 
                 ref={triggerRef}
                 type="button"
                 onClick={() => setIsOpen(!isOpen)}
-                className={`w-full flex items-center justify-between bg-slate-950/50 border-2 rounded-xl py-3 px-4 text-xs transition-all duration-300 hover:bg-slate-900/50 ${
-                    isOpen 
-                        ? 'border-indigo-500 shadow-[0_0_20px_rgba(79,70,229,0.15)] ring-1 ring-indigo-500/20' 
-                        : 'border-white/5 hover:border-white/10'
-                }`}
+                className={className
+                    ? `${className} flex items-center justify-between transition-all duration-300 ${
+                        isOpen 
+                            ? '!border-indigo-500 shadow-[0_0_20px_rgba(79,70,229,0.15)] ring-1 ring-indigo-500/20' 
+                            : 'hover:border-white/20'
+                      }`
+                    : `w-full flex items-center justify-between bg-slate-950/50 border-2 rounded-xl py-3 px-4 text-xs transition-all duration-300 hover:bg-slate-900/50 ${
+                        isOpen 
+                            ? 'border-indigo-500 shadow-[0_0_20px_rgba(79,70,229,0.15)] ring-1 ring-indigo-500/20' 
+                            : 'border-white/5 hover:border-white/10'
+                      }`
+                }
             >
                 <span className={selectedOption ? "text-white font-bold" : "text-gray-500 font-medium"}>
                     {selectedOption ? selectedOption.label : placeholder}
