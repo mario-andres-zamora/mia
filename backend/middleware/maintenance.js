@@ -6,16 +6,8 @@ const logger = require('../config/logger');
  */
 const maintenanceMiddleware = async (req, res, next) => {
     try {
-        let role = req.user?.role;
-
-        // Si no está req.user pero hay una sesión activa, podemos obtener el rol del usuario
-        if (!role && req.session?.userId) {
-            const [user] = await db.query('SELECT role FROM users WHERE id = ?', [req.session.userId]);
-            role = user?.role;
-        }
-
         // Los administradores SIEMPRE pueden entrar al sistema
-        if (role === 'admin') {
+        if (req.user && req.user.role === 'admin') {
             return next();
         }
 

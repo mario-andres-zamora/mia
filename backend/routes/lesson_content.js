@@ -5,7 +5,7 @@ const { authMiddleware, adminMiddleware, analystMiddleware } = require('../middl
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const crypto = require('crypto');
+const { v4: uuidv4 } = require('uuid');
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -14,7 +14,7 @@ const storage = multer.diskStorage({
         cb(null, uploadPath);
     },
     filename: (req, file, cb) => {
-        cb(null, crypto.randomUUID() + path.extname(file.originalname).toLowerCase());
+        cb(null, uuidv4() + path.extname(file.originalname).toLowerCase());
     }
 });
 

@@ -3,7 +3,6 @@ const router = express.Router();
 const authController = require('../controllers/authController');
 const { body } = require('express-validator');
 const { validateRequest } = require('../middleware/validator');
-const maintenanceMiddleware = require('../middleware/maintenance');
 
 /**
  * @route   POST /api/auth/google
@@ -30,6 +29,6 @@ router.post('/logout', authController.logout);
  * @desc    Verificar sesión activa
  * @access  Private
  */
-router.get('/verify', maintenanceMiddleware, authController.verifySession);
+router.get('/verify', authController.verifySession);
 
 module.exports = router;
