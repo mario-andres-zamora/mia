@@ -1,4 +1,5 @@
 import { ChevronRight, Search } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export default function LeaderboardControls({
     view,
@@ -13,25 +14,36 @@ export default function LeaderboardControls({
 }) {
     const currentLevel = levels.find(l => l.id === filterLevel) || levels[0];
 
+    const handleViewChange = (newView, label) => {
+        setView(newView);
+        toast.success(`${label} seleccionado`, { id: 'leaderboard-view-change' });
+    };
+
+    const handleLevelSelect = (level) => {
+        setFilterLevel(level.id);
+        setIsFilterOpen(false);
+        toast.success(`${level.name} seleccionado`, { id: 'leaderboard-filter-change' });
+    };
+
     return (
         <div className="flex flex-col xl:flex-row gap-4 xl:gap-6 items-center justify-between">
             <div className="flex flex-col lg:flex-row w-full xl:w-auto gap-4">
                 {/* View Switcher Tabs */}
                 <div className="flex flex-col sm:flex-row w-full flex-1 p-1 bg-[#582c19] rounded-xl border border-white/5 items-stretch gap-1 sm:gap-0 h-[58px] shadow-2xl">
                     <button
-                        onClick={() => setView('global')}
+                        onClick={() => handleViewChange('global', 'Institucional')}
                         className={`flex-1 px-4 lg:px-6 h-full rounded-lg text-[10px] whitespace-nowrap font-black uppercase tracking-widest transition-all ${view === 'global' ? 'bg-[#e8dbbe] text-[#582c19] font-black shadow-[0_0_15px_rgba(232,219,190,0.3)]' : 'text-white/70 hover:text-white hover:bg-white/5'}`}
                     >
                         Institucional
                     </button>
                     <button
-                        onClick={() => setView('area')}
+                        onClick={() => handleViewChange('area', 'Mi Área')}
                         className={`flex-1 px-4 lg:px-6 h-full rounded-lg text-[10px] whitespace-nowrap font-black uppercase tracking-widest transition-all ${view === 'area' ? 'bg-[#e8dbbe] text-[#582c19] font-black shadow-[0_0_15px_rgba(232,219,190,0.3)]' : 'text-white/70 hover:text-white hover:bg-white/5'}`}
                     >
                         Mi Área
                     </button>
                     <button
-                        onClick={() => setView('strategic')}
+                        onClick={() => handleViewChange('strategic', 'Por Áreas')}
                         className={`flex-1 px-4 lg:px-6 h-full rounded-lg text-[10px] whitespace-nowrap font-black uppercase tracking-widest transition-all ${view === 'strategic' ? 'bg-[#e8dbbe] text-[#582c19] font-black shadow-[0_0_15px_rgba(232,219,190,0.3)]' : 'text-white/70 hover:text-white hover:bg-white/5'}`}
                     >
                         Por Áreas
@@ -43,13 +55,13 @@ export default function LeaderboardControls({
                     <div className="relative w-full lg:w-64">
                         <button
                             onClick={() => setIsFilterOpen(!isFilterOpen)}
-                            className="w-full flex items-center justify-between px-6 py-4 bg-[#582c19] border border-white/5 rounded-2xl text-white text-[10px] font-black uppercase tracking-widest hover:bg-white/5 transition-all shadow-md group"
+                            className={`w-full flex items-center justify-between px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-md group ${currentLevel.id === 'all' ? 'bg-[#e8dbbe] text-[#582c19] border border-[#582c19] shadow-[0_0_15px_rgba(88,44,25,0.22)]' : 'bg-[#582c19] text-white border border-white/5 hover:bg-white/5 hover:text-white'}`}
                         >
                             <div className="flex items-center gap-3">
-                                <currentLevel.icon className="w-4 h-4 text-[#e8dbbe]" />
+                                <currentLevel.icon className={`w-4 h-4 ${currentLevel.id === 'all' ? 'text-[#582c19]' : 'text-[#e8dbbe]'}`} />
                                 <span>{currentLevel.name}</span>
                             </div>
-                            <ChevronRight className={`w-4 h-4 text-white/40 transition-transform duration-300 ${isFilterOpen ? '-rotate-90' : 'rotate-90'}`} />
+                            <ChevronRight className={`w-4 h-4 ${currentLevel.id === 'all' ? 'text-[#582c19]' : 'text-white/40'} transition-transform duration-300 ${isFilterOpen ? '-rotate-90' : 'rotate-90'}`} />
                         </button>
 
                         {isFilterOpen && (
@@ -60,11 +72,8 @@ export default function LeaderboardControls({
                                         {levels.map((level) => (
                                             <button
                                                 key={level.id}
-                                                onClick={() => {
-                                                    setFilterLevel(level.id);
-                                                    setIsFilterOpen(false);
-                                                }}
-                                                className={`w-full flex items-center gap-3 px-5 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${filterLevel === level.id ? 'bg-[#e8dbbe] text-[#582c19]' : 'text-white/70 hover:bg-white/5 hover:text-white'}`}
+                                                onClick={() => handleLevelSelect(level)}
+                                                className={`w-full flex items-center gap-3 px-5 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${filterLevel === level.id ? 'bg-[#e8dbbe] text-[#582c19] shadow-[0_0_15px_rgba(232,219,190,0.3)]' : 'text-white/70 hover:bg-white/5 hover:text-white'}`}
                                             >
                                                 <level.icon className={`w-4 h-4 ${filterLevel === level.id ? 'text-[#582c19]' : 'text-white/40'}`} />
                                                 {level.name}
