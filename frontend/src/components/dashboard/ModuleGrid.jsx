@@ -108,9 +108,9 @@ function ModuleCard({ module, navigate }) {
                 ) : (
                     <>
                         <div className="space-y-2.5">
-                            <div className="flex justify-between items-end text-[9px] font-bold uppercase tracking-widest">
-                                <span className={isCompleted ? 'text-[var(--success)]' : 'text-gray-500'}>PROGRESO</span>
-                                <span className={isCompleted ? 'text-[var(--success)]' : 'text-[var(--text-color)]'}>{module.progress || 0}%</span>
+                            <div className="flex justify-between items-end text-[9px] font-bold uppercase tracking-widest text-[#582c19]">
+                                <span>PROGRESO</span>
+                                <span>{module.progress || 0}%</span>
                             </div>
                             <div className={`h-1.5 rounded-full overflow-hidden ${isCompleted ? 'bg-[var(--success)]/10' : 'bg-gray-200 dark:bg-black/20'}`}>
                                 <div

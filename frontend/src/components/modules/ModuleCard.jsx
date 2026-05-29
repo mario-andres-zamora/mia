@@ -152,9 +152,9 @@ export default function ModuleCard({ module, user, viewAsStudent }) {
                             ) : (
                                 <>
                                     <div className="space-y-2">
-                                        <div className="flex justify-between items-end text-[9px] font-bold uppercase tracking-widest">
-                                            <span className={module.completionPercentage === 100 ? 'text-emerald-500/50' : 'text-[#582c19]'}>PROGRESO</span>
-                                            <span className={module.completionPercentage === 100 ? 'text-[var(--success)]' : 'text-[#582c19]'}>{module.completionPercentage || 0}%</span>
+                                        <div className="flex justify-between items-end text-[9px] font-bold uppercase tracking-widest text-[#582c19]">
+                                            <span>PROGRESO</span>
+                                            <span>{module.completionPercentage || 0}%</span>
                                         </div>
                                         <div className={`h-1.5 rounded-full overflow-hidden ${module.completionPercentage === 100 ? 'bg-emerald-500/10' : 'bg-gray-200 dark:bg-black/20'}`}>
                                             <div
