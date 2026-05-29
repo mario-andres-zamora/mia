@@ -275,18 +275,18 @@ export default function Layout() {
 
             {/* Footer - Hidden in Quiz/Survey views to avoid overlap */}
             {!location.pathname.includes('/quiz/') && !location.pathname.includes('/survey/') && (
-                <footer className="mt-auto border-t border-primary-500/10 bg-[var(--bg-color)]/50 backdrop-blur-sm relative z-0">
+                <footer className="mt-auto border-t border-[#d6997a]/20 bg-[var(--bg-color)]/50 backdrop-blur-sm relative z-0">
                     <div className="w-full px-4 sm:px-6 lg:px-12 py-6">
                         <div className="flex flex-col sm:flex-row justify-between items-center gap-6">
-                            <div className="flex items-center gap-4 opacity-70">
+                            <div className="flex items-center gap-4 opacity-95">
                                 <img src="/images/logo-cgr-blanco.webp" alt="CGR Logo" className="h-8 object-contain" />
                                 <div className="h-8 w-[1px] bg-white/10 hidden sm:block"></div>
-                                <p className="text-[10px] font-bold text-gray-400 leading-tight uppercase tracking-wider">
+                                <p className="text-[10px] font-bold text-[#d6997a] leading-tight uppercase tracking-wider">
                                     Contraloría General de la República | Costa Rica
                                 </p>
                             </div>
                             <div className="text-right flex flex-col items-end gap-1">
-                                <p className="text-[10px] text-white/70 font-bold uppercase tracking-widest">
+                                <p className="text-[10px] text-[#d6997a] font-bold uppercase tracking-widest">
                                     Version {import.meta.env.VITE_APP_VERSION}
                                 </p>
                                 {hasAdminPanelAccess(user) && (
