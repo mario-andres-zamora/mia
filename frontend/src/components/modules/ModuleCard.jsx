@@ -23,9 +23,16 @@ export default function ModuleCard({ module, user, viewAsStudent }) {
         ? releaseDate.toLocaleDateString('es-CR', { day: 'numeric', month: 'long' })
         : module.month;
 
-    const cardSrc = module.module_number === 1
-        ? '/images/modules/Banner-moodulo-0.jpg'
-        : new URL(`../../assets/card-banner/Tar-Sec-${(module.module_number ?? 0).toString().padStart(2, '0')}.svg`, import.meta.url).href;
+    const moduleNumber = module.module_number ?? 1;
+    const publicJpg = `/images/modules/Banner-moodulo-${moduleNumber - 1}.jpg`;
+    const fallbackX = '/images/modules/Banner-moodulo-X.jpg';
+    const svgFallback = new URL(`../../assets/card-banner/Tar-Sec-${(moduleNumber).toString().padStart(2, '0')}.svg`, import.meta.url).href;
+
+    const [imgSrc, setImgSrc] = React.useState(publicJpg);
+
+    React.useEffect(() => {
+        setImgSrc(publicJpg);
+    }, [publicJpg]);
 
     return (
         <div className="relative h-full">
@@ -47,16 +54,23 @@ export default function ModuleCard({ module, user, viewAsStudent }) {
                 {/* Banner Image */}
                 <div className="h-36 w-full relative overflow-hidden">
                     <img
-                        src={cardSrc}
+                        src={imgSrc}
                         alt={module.title}
                         className={`w-full h-full object-cover transition-transform duration-700 ${
                             isLocked ? 'grayscale opacity-40' : 'group-hover:scale-110'
                         } ${
-                            module.module_number === 1 ? 'object-left' : 'object-center'
+                            imgSrc === publicJpg || imgSrc === fallbackX ? 'object-left' : 'object-center'
                         }`}
                         onError={(e) => {
-                            if (module.image_url) e.target.src = module.image_url;
-                            else e.target.style.display = 'none';
+                            if (imgSrc === publicJpg) {
+                                setImgSrc(fallbackX);
+                            } else if (imgSrc === fallbackX) {
+                                setImgSrc(svgFallback);
+                            } else if (imgSrc === svgFallback && module.image_url) {
+                                setImgSrc(module.image_url);
+                            } else {
+                                e.target.style.display = 'none';
+                            }
                         }}
                     />
 

@@ -16,7 +16,7 @@ export default function ModulesHero() {
                     <h1
                         className="text-4xl md:text-5xl lg:text-6xl font-black tracking-tighter uppercase leading-none text-transparent bg-clip-text"
                         style={{
-                            backgroundImage: 'linear-gradient(to right, #582c19 0%, #8f032a 50%, #e57b3c 100%)'
+                            backgroundImage: 'linear-gradient(to right, #582c19 0%, #582c19 45%, #8f032a 100%)'
                         }}
                     >
                         Ruta de Aprendizaje
