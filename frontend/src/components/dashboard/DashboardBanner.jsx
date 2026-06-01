@@ -1,18 +1,8 @@
-import primaryBanner from '../../assets/Banner-principal.jpg';
 import dashboardHero from '../../assets/dashboard-hero.avif';
 
 export default function DashboardBanner({ user, stats }) {
     return (
         <div className="space-y-2 md:space-y-3">
-            {/* Banner Principal del Curso */}
-            <div className="relative w-full h-24 md:h-32 rounded-[1.5rem] overflow-hidden bg-[var(--bg-color)] border border-white/5 shadow-2xl">
-                <img
-                    src={primaryBanner}
-                    alt="Banner Principal del Curso"
-                    className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 ring-1 ring-inset ring-white/10 rounded-[1.5rem]"></div>
-            </div>
 
             {/* Master Welcome Banner */}
             <div className="relative rounded-[1.5rem] overflow-hidden bg-[var(--card-bg)] border border-[var(--card-border)] shadow-2xl group transition-colors duration-300">
@@ -28,7 +18,7 @@ export default function DashboardBanner({ user, stats }) {
                 <div className="relative z-10 px-4 py-2 md:px-8 md:py-3 flex flex-col md:flex-row justify-between items-center gap-4">
                     <div className="space-y-1 text-center md:text-left">
                         <h1 className="text-2xl md:text-3xl font-black text-[var(--text-color)] tracking-tighter leading-none italic uppercase">
-                            ¡Hola de nuevo, <span className="text-primary-400 not-italic">{user?.firstName}</span>!
+                            ¡Hola de nuevo, <span className="text-[#8f032a] not-italic">{user?.firstName}</span>!
                         </h1>
 
                     </div>
@@ -37,11 +27,11 @@ export default function DashboardBanner({ user, stats }) {
                     <div className="flex gap-4 md:gap-8">
                         <div className="px-6 py-3 bg-[var(--bg-color)] backdrop-blur-xl border border-[var(--card-border)] rounded-2xl text-center min-w-[120px] shadow-xl transition-all duration-300">
                             <p className="text-[9px] font-black text-gray-500 uppercase tracking-[0.3em] mb-0.5 italic">Puntos</p>
-                            <p className="text-2xl font-black text-[var(--text-color)] tracking-tighter">{stats?.points || 0}</p>
+                            <p className="text-2xl font-black text-[#582c19] tracking-tighter">{stats?.points || 0}</p>
                         </div>
                         <div className="px-6 py-3 bg-[var(--bg-color)] backdrop-blur-xl border border-[var(--card-border)] rounded-2xl text-center min-w-[120px] shadow-xl transition-all duration-300">
-                            <p className="text-[9px] font-black text-primary-400 uppercase tracking-[0.3em] mb-0.5 italic">Nivel</p>
-                            <p className="text-2xl font-black text-secondary-500 tracking-tighter">{user?.level || '1'}</p>
+                            <p className="text-[9px] font-black text-gray-500 uppercase tracking-[0.3em] mb-0.5 italic">Nivel</p>
+                            <p className="text-2xl font-black text-[#8f032a] tracking-tighter">{user?.level || '1'}</p>
                         </div>
                     </div>
                 </div>
